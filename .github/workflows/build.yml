@@ -1,0 +1,122 @@
+name: Verificar e compilar (Android)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.3"
+  GODOT_CHANNEL: stable
+
+jobs:
+  verify:
+    name: Verificações headless (parse + testes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache do Godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_CHANNEL }}-linux
+
+      - name: Instalar Godot
+        run: bash tools/ci/setup_godot.sh
+
+      - name: Importar projeto
+        run: bash tools/ci/import_project.sh
+
+      - name: Checar scripts (--check-only)
+        run: bash tools/ci/check_scripts.sh
+
+      - name: Testes de lógica (economia, atributos, habilidades, inimigos, progressão, save)
+        if: always()
+        run: bash tools/ci/run_tests.sh
+
+      - name: Smoke run (jogo real com autoloads, 30 s simulados)
+        if: always()
+        run: bash tools/ci/smoke_run.sh
+
+      - name: Relatório de economia (projeção do modelo)
+        if: always()
+        run: |
+          mkdir -p build
+          godot --headless --path . --script res://tools/economy_report.gd 2>&1 | tee build/economy_report.txt
+
+      - name: Resumo
+        if: always()
+        run: |
+          {
+            echo "## Verificações (job verify)"
+            echo '```'
+            grep -A30 "RESUMO DOS TESTES" build/test.log 2>/dev/null | head -40 || echo "sem log de testes"
+            echo '```'
+            echo "### Projeção de economia (modelo, não medição)"
+            echo '```'
+            cat build/economy_report.txt 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enviar logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-verify
+          path: |
+            build/*.log
+            build/*.json
+            build/*.txt
+          if-no-files-found: warn
+
+  build-android:
+    name: Gerar APK de depuração
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache do Godot e templates
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-export-${{ env.GODOT_VERSION }}-${{ env.GODOT_CHANNEL }}-linux
+
+      - name: Instalar Godot
+        run: bash tools/ci/setup_godot.sh
+
+      - name: Instalar export templates
+        run: bash tools/ci/setup_templates.sh
+
+      - name: Configurar Android (SDK, keystore debug, Editor Settings)
+        run: bash tools/ci/setup_android.sh
+
+      - name: Importar projeto
+        run: bash tools/ci/import_project.sh
+
+      - name: Exportar APK debug
+        run: bash tools/ci/build_apk.sh
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AngelicAscension-debug-apk
+          path: build/AngelicAscension-debug.apk
+          if-no-files-found: error
+
+      - name: Enviar logs de build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-build-android
+          path: build/*.log
+          if-no-files-found: warn
