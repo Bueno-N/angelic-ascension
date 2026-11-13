@@ -37,3 +37,8 @@ Depois abra a aba **Actions** do repositório.
 ## Notas
 - APK de **debug** (assinado com keystore de debug). Versão final/release exige keystore próprio (guardado em *secrets*); ainda não configurado.
 - Versão do Godot fixada em 4.3 via `GODOT_VERSION` no workflow.
+
+## Modo de teste
+O menu ganha a aba **Teste** (dar ouro/gemas/fragmentos, pular de fase, curar, zerar recargas, desbloquear tudo, resetar progresso)
+e o HUD mostra `[TESTE]`. Isso existe só quando `Balance.DEBUG_TOOLS = true` **e** o build é de debug (`OS.is_debug_build()`).
+**Antes do APK final:** coloque `DEBUG_TOOLS := false` em `data/balance.gd` (e exporte em release). Há um teste que verifica a coerência da flag.

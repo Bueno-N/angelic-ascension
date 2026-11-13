@@ -8,4 +8,7 @@ signal player_died
 signal boss_hp_changed(hp: float, max_hp: float)
 signal enemy_died(pos: Vector2, def: Dictionary, is_boss: bool, gold: int)
 signal stage_cleared(stage: int, seconds: float)
+signal debug_goto_stage(stage: int)
+signal debug_heal
+signal debug_reset_cooldowns
 signal boss_defeated(stage: int, gems: int, shards: int)

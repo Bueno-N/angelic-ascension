@@ -55,6 +55,10 @@ const ATTRIBUTES := {
     "aura":         {"name": "Aura",               "base": 5.0,   "per_level": 1.5,  "base_cost": 12.0, "cost_growth": 1.15},
 }
 
+# --- Modo de teste (aba "Teste" no menu: dar ouro/gemas, pular fase, desbloquear tudo) ---
+# Para o APK FINAL: coloque false. Mesmo com true, só funciona em builds de debug (OS.is_debug_build()).
+const DEBUG_TOOLS := true
+
 # --- Salvamento ---
 const AUTOSAVE_SECONDS := 30.0
 

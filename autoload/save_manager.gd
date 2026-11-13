@@ -24,7 +24,7 @@ func load_state() -> Dictionary:
             if f != null:
                 var txt := f.get_as_text()
                 f.close()
-                var parsed = JSON.parse_string(txt)
+                var parsed = SaveData.parse_dict(txt)
                 if parsed is Dictionary:
                     return SaveData.sanitize(parsed)
     return SaveData.default_state()

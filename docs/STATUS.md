@@ -24,7 +24,9 @@ Legenda: ✅ executado e passou · ❌ executado e falhou · ⬜ escrito, **nunc
 
 Testes: 43 testes / 5.774 verificações / 0 falhas (run anterior). Smoke run sem erro de script. Ritmo e menus ainda **não validados em celular**.
 
-## Rodada 3 — Etapa 1: habilidades em combate (escrita, ainda NÃO executada no CI)
+## Rodada 3 — Etapa 1: habilidades em combate
+
+**Evidência do CI (logs enviados pelo usuário):** testes 62 / 6.097 verificações / 0 falhas / 0 avisos; smoke run `stage=2 gold=36 hp=100 casts=18` (10 habilidades executadas + 8 auto-casts). O job `verify` ficou vermelho só por falso positivo de `--check-only` em cascata (autoload via SkillCaster); filtro corrigido (⬜ aguardando novo run). **O APK desta versão ainda não foi gerado** (job build-android depende do verify).
 
 | Item | Estado | Observação |
 |---|---|---|
@@ -36,6 +38,13 @@ Testes: 43 testes / 5.774 verificações / 0 falhas (run anterior). Smoke run se
 | Smoke run: executa as 10 habilidades (`debug_cast_all`) + auto-cast, exige casts >= 10 | ⬜ | Cobre o código, não a sensação nem os visuais |
 
 Decisões de design que eu tomei (revise): Apocalipse Sagrado limita dano em chefes a 25% da vida máx. por uso (garante "sem execução"); Morte do Inferno dobra ataque/armadura/velocidades/aura, mas **não** a vida máxima; Exército dos Arcanjos: 2000% por golpe, cada guerreiro golpeia a cada 2 s (ambiguidade do design); Escudo limitado a 90% de absorção mesmo com brilho alto; habilidade recém-equipada começa com 2 s de recarga.
+
+## Rodada 4 — Modo de teste (escrito, ainda NÃO executado no CI)
+
+| Item | Estado | Observação |
+|---|---|---|
+| Aba "Teste" (ouro, gemas, fragmentos, fase, cura, recargas, desbloquear tudo, reset) | ⬜ | `DebugTools` + testes em `test_debug_tools.gd` |
+| Desligamento no APK final | ⬜ | `Balance.DEBUG_TOOLS` + `OS.is_debug_build()`. **Lembrar de pôr false antes da versão final** |
 
 ## Implementado (código escrito) × planejado
 

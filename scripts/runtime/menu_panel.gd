@@ -4,6 +4,8 @@ extends PanelContainer
 ## As linhas são criadas UMA vez e só têm texto/estado atualizados (não perde a rolagem do toque).
 
 const TAB_NAMES := ["Atributos", "Equip.", "Asas", "Habilid."]
+var _tab_names: Array = []
+var _reset_armed := false
 var _pages: Array = []
 var _updaters: Array = []      # por aba: lista de Callables que atualizam os controles
 var _tab_buttons: Array = []
@@ -21,16 +23,19 @@ func _ready() -> void:
     offset_top = 96.0
     offset_bottom = -112.0
     visible = false
+    _tab_names = TAB_NAMES.duplicate()
+    if DebugTools.enabled():
+        _tab_names.append("Teste")
     var root := VBoxContainer.new()
     add_child(root)
     var tabs := HBoxContainer.new()
     root.add_child(tabs)
-    for i in range(TAB_NAMES.size()):
+    for i in range(_tab_names.size()):
         var tb := Button.new()
-        tb.text = TAB_NAMES[i]
+        tb.text = _tab_names[i]
         tb.custom_minimum_size = Vector2(0, 60)
         tb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        tb.add_theme_font_size_override("font_size", 22)
+        tb.add_theme_font_size_override("font_size", 20)
         tb.pressed.connect(_select_tab.bind(i))
         tabs.add_child(tb)
         _tab_buttons.append(tb)
@@ -48,7 +53,8 @@ func _ready() -> void:
             0: _build_attrs(box, upd)
             1: _build_equip(box, upd)
             2: _build_wings(box, upd)
-            _: _build_skills(box, upd)
+            3: _build_skills(box, upd)
+            _: _build_debug(box, upd)
     Events.state_changed.connect(func(): _dirty = true)
     visibility_changed.connect(func(): _dirty = true)
     _select_tab(0)
@@ -253,3 +259,42 @@ func _upd_skill(b: Button, id: String) -> void:
         _:
             b.text = head + "EQUIPADA (tocar p/ remover)"
             b.disabled = false
+
+# ---------- aba de teste (só aparece em builds de debug) ----------
+const DEBUG_BUTTONS := [
+    ["+1.000 ouro", "gold", 1000], ["+100.000 ouro", "gold", 100000],
+    ["+1.000 gemas", "gems", 1000], ["+100.000 gemas", "gems", 100000], ["+2.000.000 gemas", "gems", 2000000],
+    ["+10 fragmentos de asa", "shards", 10], ["+100 fragmentos de asa", "shards", 100],
+    ["Ir para a fase 9 (o chefe é o próximo)", "stage", 9], ["Ir para a fase 10 (chefe)", "stage", 10],
+    ["Fase +10", "stage_add", 10],
+    ["Curar totalmente", "heal", 0], ["Zerar recargas das habilidades", "cooldowns", 0],
+    ["Desbloquear tudo (itens, asas, brilho, habilidades)", "unlock_all", 0],
+]
+
+func _build_debug(box: VBoxContainer, upd: Array) -> void:
+    box.add_child(_label("MODO DE TESTE (só existe em builds de debug). As alterações são salvas no progresso: use o reset no fim.", 18, Color(1.0, 0.6, 0.5)))
+    for d in DEBUG_BUTTONS:
+        var b := _button(20, 56)
+        b.text = d[0]
+        b.pressed.connect(_on_debug.bind(d[1], d[2]))
+        box.add_child(b)
+    var rb := _button(20, 56)
+    rb.pressed.connect(_on_debug_reset)
+    box.add_child(rb)
+    upd.append(_upd_reset.bind(rb))
+
+func _on_debug(action: String, arg: int) -> void:
+    _reset_armed = false
+    GameState.debug_apply(action, arg)
+    _refresh()
+
+func _on_debug_reset() -> void:
+    if not _reset_armed:
+        _reset_armed = true
+    else:
+        _reset_armed = false
+        GameState.debug_apply("reset", 0)
+    _refresh()
+
+func _upd_reset(b: Button) -> void:
+    b.text = "TOQUE DE NOVO PARA CONFIRMAR O RESET" if _reset_armed else "Resetar progresso (2 toques)"

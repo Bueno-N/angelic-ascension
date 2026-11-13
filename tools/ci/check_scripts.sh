@@ -15,7 +15,10 @@ while IFS= read -r f; do
   if [ $rc -ne 0 ] || echo "$out" | grep -q "SCRIPT ERROR\|Parse Error"; then
     all=$(echo "$out" | grep -c "SCRIPT ERROR")
     auto=$(echo "$out" | grep -cE "SCRIPT ERROR: Compile Error: Identifier not found: (${AUTOLOADS})\$")
-    if [ "$all" -gt 0 ] && [ "$all" -eq "$auto" ]; then
+    # Em cascata: script A usa classe B que usa um autoload -> o Godot também emite uma linha
+    # "Compile Error:" vazia para A. Isso só é tolerado quando há ao menos 1 erro de autoload.
+    bare=$(echo "$out" | grep -cE "SCRIPT ERROR: Compile Error: *\$")
+    if [ "$auto" -gt 0 ] && [ "$all" -eq $((auto + bare)) ]; then
       echo "AUTOLOAD (falso positivo, validado no smoke): $f"; skipped=$((skipped+1))
     else
       echo "FALHOU: $f"; echo "$out" | head -20; fail=$((fail+1))

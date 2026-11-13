@@ -21,6 +21,10 @@ func sync(state: Dictionary) -> void:
     equipped = new_eq
     cooldowns = new_cd
 
+func reset_cooldowns() -> void:
+    for id in cooldowns.keys():
+        cooldowns[id] = 0.0
+
 func tick(delta: float) -> void:
     for id in cooldowns.keys():
         cooldowns[id] = maxf(0.0, float(cooldowns[id]) - delta)

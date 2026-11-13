@@ -69,6 +69,30 @@ func toggle_auto_skills() -> void:
     save()
     Events.state_changed.emit()
 
+## Ações do modo de teste (ignoradas fora de builds de debug).
+func debug_apply(action: String, arg: int) -> void:
+    if not DebugTools.enabled():
+        return
+    match action:
+        "gold", "gems", "shards":
+            DebugTools.add(state, action, arg)
+        "unlock_all":
+            DebugTools.unlock_all(state)
+        "stage":
+            Events.debug_goto_stage.emit(maxi(1, arg))
+        "stage_add":
+            Events.debug_goto_stage.emit(maxi(1, int(state["stage"]) + arg))
+        "heal":
+            Events.debug_heal.emit()
+        "cooldowns":
+            Events.debug_reset_cooldowns.emit()
+        "reset":
+            state = SaveData.default_state()
+            Events.debug_goto_stage.emit(1)
+            Events.debug_heal.emit()
+    recalc()
+    save()
+
 func set_stage(stage: int) -> void:
     state["stage"] = stage
     state["max_stage"] = maxi(int(state["max_stage"]), stage)

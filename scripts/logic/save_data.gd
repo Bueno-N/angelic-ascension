@@ -25,9 +25,16 @@ static func default_state() -> Dictionary:
 static func to_json(state: Dictionary) -> String:
     return JSON.stringify(state)
 
+## Parse silencioso (JSON.parse_string imprime ERROR no log em entrada inválida).
+static func parse_dict(text: String) -> Variant:
+    var j := JSON.new()
+    if j.parse(text) != OK:
+        return null
+    return j.data
+
 ## Nunca falha: JSON inválido/ausente devolve o estado padrão.
 static func from_json(text: String) -> Dictionary:
-    var parsed = JSON.parse_string(text)
+    var parsed = parse_dict(text)
     if not (parsed is Dictionary):
         return default_state()
     return sanitize(parsed)

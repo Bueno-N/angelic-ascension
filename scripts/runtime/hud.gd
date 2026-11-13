@@ -94,7 +94,7 @@ func _process(delta: float) -> void:
     _pace_timer -= delta
     if _pace_timer <= 0.0:
         _pace_timer = 1.0
-        _pace.text = "Última fase: %s | Gemas/h (sessão): %s" % [
+        _pace.text = ("[TESTE] " if DebugTools.enabled() else "") + "Última fase: %s | Gemas/h (sessão): %s" % [
             "-" if _last_stage_secs <= 0.0 else "%d s" % int(_last_stage_secs),
             "-" if GameState.session_gems_per_hour() <= 0.0 else "%.0f" % GameState.session_gems_per_hour()]
 

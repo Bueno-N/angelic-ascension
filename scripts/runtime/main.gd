@@ -37,6 +37,9 @@ func _ready() -> void:
     add_child(stage_mgr)
     stage_mgr.setup(player, enemies)
     Events.player_died.connect(_on_player_died)
+    Events.debug_goto_stage.connect(func(s: int): stage_mgr.start_stage(s))
+    Events.debug_heal.connect(func(): player.heal(player.max_hp))
+    Events.debug_reset_cooldowns.connect(func(): caster.slots.reset_cooldowns())
     stage_mgr.start_stage(int(GameState.state["stage"]))
     if _smoke:
         _prepare_smoke()
