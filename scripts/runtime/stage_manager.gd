@@ -69,13 +69,17 @@ func _process(delta: float) -> void:
         start_stage(stage if repeat_mode else stage + 1)
 
 ## Só para o smoke do CI: cria um tipo específico de inimigo.
-func debug_spawn_type(type_id: String) -> void:
+func debug_spawn_type(type_id: String, pos: Vector2, tanky: bool) -> void:
     for t in EnemiesDB.TYPES:
         if t["id"] == type_id:
-            _spawn(false, t)
+            var e := _spawn(false, t)
+            e.position = pos
+            if tanky:
+                e.max_hp = 1.0e9
+                e.hp = 1.0e9
             return
 
-func _spawn(boss: bool, forced: Dictionary = {}) -> void:
+func _spawn(boss: bool, forced: Dictionary = {}) -> Enemy:
     var e := Enemy.new()
     var area := get_viewport().get_visible_rect().size
     var side := rng.randi_range(0, 3)
@@ -89,3 +93,4 @@ func _spawn(boss: bool, forced: Dictionary = {}) -> void:
     container.add_child(e)
     e.setup({} if boss else (forced if not forced.is_empty() else EnemiesDB.pick_type(stage, rng)), stage, boss, player)
     alive += 1
+    return e

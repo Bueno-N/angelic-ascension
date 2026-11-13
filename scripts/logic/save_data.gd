@@ -4,6 +4,23 @@ extends RefCounted
 
 const VERSION := 1
 
+## Conversores SEGUROS para dados vindos de disco (bool("x") / int({}) abortam o script em GDScript).
+static func as_int(v, default: int = 0) -> int:
+    if v is int:
+        return v
+    if v is float:
+        return int(v)
+    if v is String and v.is_valid_int():
+        return v.to_int()
+    return default
+
+static func as_bool(v, default: bool = false) -> bool:
+    if v is bool:
+        return v
+    if v is int or v is float:
+        return v != 0
+    return default
+
 static func default_state() -> Dictionary:
     var ups := {}
     for a in Balance.ATTRIBUTE_ORDER:
@@ -43,34 +60,34 @@ static func sanitize(raw: Dictionary) -> Dictionary:
     var s := default_state()
     for key in ["gold", "gems", "shards"]:
         if raw.has(key) and (raw[key] is int or raw[key] is float):
-            s[key] = maxi(0, int(raw[key]))
+            s[key] = maxi(0, as_int(raw[key]))
     if raw.has("stage") and (raw["stage"] is int or raw["stage"] is float):
-        s["stage"] = maxi(1, int(raw["stage"]))
+        s["stage"] = maxi(1, as_int(raw["stage"], 1))
     s["max_stage"] = maxi(int(s["stage"]), 1)
     if raw.has("max_stage") and (raw["max_stage"] is int or raw["max_stage"] is float):
-        s["max_stage"] = maxi(int(s["stage"]), int(raw["max_stage"]))
+        s["max_stage"] = maxi(int(s["stage"]), as_int(raw["max_stage"], 1))
 
     if raw.get("upgrades") is Dictionary:
         for a in Balance.ATTRIBUTE_ORDER:
             if raw["upgrades"].has(a):
-                s["upgrades"][a] = maxi(0, int(raw["upgrades"][a]))
+                s["upgrades"][a] = maxi(0, as_int(raw["upgrades"][a]))
 
     if raw.get("owned_equipment") is Dictionary:
         for c in EquipmentDB.CATEGORIES:
             var arr = raw["owned_equipment"].get(c, [])
             if arr is Array:
                 for t in arr:
-                    var ti: int = int(t)
+                    var ti: int = as_int(t)
                     if ti >= 1 and ti <= EquipmentDB.TIER_COUNT and not s["owned_equipment"][c].has(ti):
                         s["owned_equipment"][c].append(ti)
     if raw.get("equipped") is Dictionary:
         for c in EquipmentDB.CATEGORIES:
-            var t: int = int(raw["equipped"].get(c, 0))
+            var t: int = as_int(raw["equipped"].get(c, 0))
             if t == 0 or s["owned_equipment"][c].has(t):
                 s["equipped"][c] = t
 
-    s["wings_level"] = clampi(int(raw.get("wings_level", 0)), 0, WingsDB.MAX_LEVEL)
-    s["glow_tier"] = clampi(int(raw.get("glow_tier", 0)), 0, WingsDB.GLOW.size())
+    s["wings_level"] = clampi(as_int(raw.get("wings_level", 0)), 0, WingsDB.MAX_LEVEL)
+    s["glow_tier"] = clampi(as_int(raw.get("glow_tier", 0)), 0, WingsDB.GLOW.size())
 
     var valid_ids := SkillsDB.ids()
     if raw.get("skills_owned") is Array:
@@ -85,13 +102,14 @@ static func sanitize(raw: Dictionary) -> Dictionary:
 
     if raw.get("settings") is Dictionary:
         var rs: Dictionary = raw["settings"]
-        s["settings"]["speed_2x"] = bool(rs.get("speed_2x", false))
+        s["settings"]["speed_2x"] = as_bool(rs.get("speed_2x", false), false)
         if rs.get("auto_slots") is Array:
-            var arr: Array = []
+            var src: Array = rs["auto_slots"]
+            var arr2: Array = []
             for k in range(SkillsDB.MAX_EQUIPPED):
-                arr.append(bool(rs["auto_slots"][k]) if k < rs["auto_slots"].size() else true)
-            s["settings"]["auto_slots"] = arr
+                arr2.append(as_bool(src[k], true) if k < src.size() else true)
+            s["settings"]["auto_slots"] = arr2
         elif rs.has("auto_skills"):
-            var v: bool = bool(rs["auto_skills"])
+            var v: bool = as_bool(rs["auto_skills"], true)
             s["settings"]["auto_slots"] = [v, v, v]
     return s

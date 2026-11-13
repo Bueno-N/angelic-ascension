@@ -21,7 +21,7 @@ static func rule_text(id: String) -> String:
 static func slot_auto(settings: Dictionary, i: int) -> bool:
     var a = settings.get("auto_slots", [true, true, true])
     if a is Array and i >= 0 and i < a.size():
-        return bool(a[i])
+        return SaveData.as_bool(a[i], true)
     return true
 
 static func auto_count(settings: Dictionary) -> int:

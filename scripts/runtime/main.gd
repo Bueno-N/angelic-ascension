@@ -116,23 +116,24 @@ func _process(_delta: float) -> void:
             stage_mgr.start_stage(20)    # chefe 2: invocação + projéteis infernais
         2100:
             stage_mgr.start_stage(12)    # inimigos especiais: bola de fogo + drenar vida
-            stage_mgr.debug_spawn_type("hex_caster")
-            stage_mgr.debug_spawn_type("soul_leech")
-        2500:
+            # Dentro do alcance e muito resistentes (só no smoke): o anjo desbloqueado os mataria antes de agirem.
+            stage_mgr.debug_spawn_type("hex_caster", player.position + Vector2(350.0, 0.0), true)
+            stage_mgr.debug_spawn_type("soul_leech", player.position + Vector2(0.0, -260.0), true)
+        2700:
             var before: int = stage_mgr.stage      # morte: volta 1 fase e entra em modo repetir
             Events.player_died.emit()
             _repeat_ok = stage_mgr.stage == maxi(1, before - 1) and stage_mgr.repeat_mode
-        2600:
+        2800:
             var b2: int = stage_mgr.stage          # "Próxima fase": avança 1 e sai do modo repetir
             stage_mgr.request_next()
             _next_ok = stage_mgr.stage == b2 + 1 and not stage_mgr.repeat_mode
-        2650:
+        2850:
             GameState.toggle_speed()
             _speed_ok = is_equal_approx(Engine.time_scale, Balance.FAST_MODE_SCALE)
-        2680:
+        2880:
             GameState.toggle_speed()
             _speed_ok = _speed_ok and is_equal_approx(Engine.time_scale, 1.0)
-    if _frames >= 2700:
+    if _frames >= 2900:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()

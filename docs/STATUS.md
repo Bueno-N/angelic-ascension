@@ -45,7 +45,12 @@ Etapa 1 (habilidades em combate): testes 62 / 6.097 verificações / 0 falhas; s
 ## Rodada 5: CI verde (confirmado pelo usuário)
 Trava de troca, automático por slot, rolagem do menu e habilidades de chefes/especiais passaram no CI. **Validação em celular ainda pendente** (dificuldade dos chefes, rolagem real, multitoque).
 
-## Rodada 6 (escrita, ainda NÃO executada no CI)
+## Rodada 6: evidência parcial do CI + correções (rodada 7)
+Log do usuário: smoke `stage=12 cleared=2 repeat=1 next=1 speed=1` (morrer→repetir, próxima fase e 2x funcionaram); abilities de chefe executadas: area_slam, charge, summon_demons, hellfire_projectiles. **Faltaram fire_bolt e life_steal**: o anjo desbloqueado matou os especiais antes de agirem (corrigido no smoke: especiais posicionados no alcance e resistentes).
+Testes: 89 testes / 8.136 verificações, mas com **2 SCRIPT ERROR** (`bool("x")` no `sanitize` do save). Corrigido com conversores seguros (`SaveData.as_int/as_bool`) + teste com lixo em todos os campos. Aguardando novo run.
+Obs.: "0 falhas" no resumo **não** inclui erros de script; o CI os detecta lendo o log.
+
+## Rodada 6 (escrita)
 
 | Item | Estado | Observação |
 |---|---|---|

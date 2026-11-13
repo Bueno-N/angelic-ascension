@@ -82,7 +82,7 @@ static func total_bonus_text(state: Dictionary) -> String:
     return ", ".join(parts)
 
 static func time_scale(settings: Dictionary) -> float:
-    return Balance.FAST_MODE_SCALE if bool(settings.get("speed_2x", false)) else 1.0
+    return Balance.FAST_MODE_SCALE if SaveData.as_bool(settings.get("speed_2x", false), false) else 1.0
 
 ## Margens (em coordenadas da viewport) para a área segura do aparelho (notch, cantos arredondados).
 static func safe_margins(safe_pos: Vector2, safe_size: Vector2, win: Vector2, view: Vector2) -> Dictionary:
