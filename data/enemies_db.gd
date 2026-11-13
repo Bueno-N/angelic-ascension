@@ -28,6 +28,34 @@ const BOSSES := [
     {"id": "azazel", "name": "Azazel, Arauto do Abismo", "color": "#4a0f3a", "abilities": ["hellfire_projectiles", "summon_demons"]},
 ]
 
+# Habilidades de chefes e inimigos especiais (todos os números aqui).
+# telegraph = segundos de AVISO VISUAL antes do golpe; dmg_mult multiplica o dano do inimigo (já escalado pela fase).
+# min_range/max_range = distância ao anjo em que a habilidade pode começar.
+const ABILITY_INITIAL_FRACTION := 0.5   # recarga inicial = 50% da recarga cheia
+const MAX_SUMMONS_ALIVE := 8
+const ABILITIES := {
+    "area_slam": {"name": "Pancada em área", "cooldown": 7.0, "telegraph": 1.0, "min_range": 0.0, "max_range": 260.0,
+        "radius": 150.0, "dmg_mult": 1.5},
+    "charge": {"name": "Investida", "cooldown": 9.0, "telegraph": 1.0, "min_range": 140.0, "max_range": 700.0,
+        "speed": 700.0, "duration": 0.6, "width": 40.0, "dmg_mult": 1.3},
+    "summon_demons": {"name": "Invocação de demônios", "cooldown": 14.0, "telegraph": 0.8, "min_range": 0.0, "max_range": 99999.0,
+        "count": 3},
+    "hellfire_projectiles": {"name": "Projéteis infernais", "cooldown": 8.0, "telegraph": 0.8, "min_range": 0.0, "max_range": 800.0,
+        "count": 5, "speed": 260.0, "spread_deg": 60.0, "dmg_mult": 0.6, "hit_radius": 14.0},
+    "fire_bolt": {"name": "Bola de fogo", "cooldown": 3.5, "telegraph": 0.4, "min_range": 0.0, "max_range": 420.0,
+        "speed": 300.0, "dmg_mult": 1.0, "hit_radius": 12.0},
+    "life_steal": {"name": "Drenar vida", "cooldown": 4.0, "telegraph": 0.5, "min_range": 0.0, "max_range": 200.0,
+        "dmg_mult": 0.8, "heal_pct": 0.5},
+}
+
+## Sorteia só tipos NÃO especiais (usado por invocações).
+static func pick_normal(stage: int, rng: RandomNumberGenerator) -> Dictionary:
+    var normals: Array = []
+    for t in available_types(stage):
+        if not t["special"]:
+            normals.append(t)
+    return normals[rng.randi_range(0, normals.size() - 1)]
+
 static func available_types(stage: int) -> Array:
     var out: Array = []
     for t in TYPES:

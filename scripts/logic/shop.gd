@@ -84,3 +84,13 @@ static func unequip_skill(state: Dictionary, id: String) -> bool:
         return false
     state["skills_equipped"].erase(id)
     return true
+
+static func toggle_slot_auto(state: Dictionary, i: int) -> bool:
+    if i < 0 or i >= SkillsDB.MAX_EQUIPPED:
+        return false
+    var a: Array = state["settings"]["auto_slots"]
+    a[i] = not bool(a[i])
+    return true
+
+static func set_all_auto(state: Dictionary, on: bool) -> void:
+    state["settings"]["auto_slots"] = [on, on, on]

@@ -59,15 +59,30 @@ func equip_skill(id: String) -> bool:
     return _commit(Shop.equip_skill(state, id))
 
 func unequip_skill(id: String) -> bool:
+    if skill_remaining(id) > 0.0:
+        return false   # trava: não dá para trocar habilidade em recarga
     return _commit(Shop.unequip_skill(state, id))
 
 func session_gems_per_hour() -> float:
     return UiLogic.gems_per_hour(session_gems, float(Time.get_ticks_msec() - session_start_msec) / 1000.0)
 
-func toggle_auto_skills() -> void:
-    state["settings"]["auto_skills"] = not bool(state["settings"].get("auto_skills", true))
+func toggle_slot_auto(i: int) -> void:
+    if Shop.toggle_slot_auto(state, i):
+        save()
+        Events.state_changed.emit()
+
+func set_all_auto(on: bool) -> void:
+    Shop.set_all_auto(state, on)
     save()
     Events.state_changed.emit()
+
+## Fornecido pelo SkillCaster: segundos de recarga restantes de uma habilidade equipada.
+var cooldown_provider := Callable()
+
+func skill_remaining(id: String) -> float:
+    if cooldown_provider.is_valid():
+        return float(cooldown_provider.call(id))
+    return 0.0
 
 ## Ações do modo de teste (ignoradas fora de builds de debug).
 func debug_apply(action: String, arg: int) -> void:
@@ -98,6 +113,8 @@ func set_stage(stage: int) -> void:
     state["max_stage"] = maxi(int(state["max_stage"]), stage)
 
 func _on_enemy_died(_pos: Vector2, def: Dictionary, is_boss: bool, gold: int) -> void:
+    if def.get("summon", false):
+        return   # invocações de chefes não dão recompensa
     var stage: int = int(state["stage"])
     state["gold"] = int(state["gold"]) + gold
     if is_boss:

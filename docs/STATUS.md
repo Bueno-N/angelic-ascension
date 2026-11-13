@@ -39,11 +39,27 @@ Testes: 43 testes / 5.774 verificações / 0 falhas (run anterior). Smoke run se
 
 Decisões de design que eu tomei (revise): Apocalipse Sagrado limita dano em chefes a 25% da vida máx. por uso (garante "sem execução"); Morte do Inferno dobra ataque/armadura/velocidades/aura, mas **não** a vida máxima; Exército dos Arcanjos: 2000% por golpe, cada guerreiro golpeia a cada 2 s (ambiguidade do design); Escudo limitado a 90% de absorção mesmo com brilho alto; habilidade recém-equipada começa com 2 s de recarga.
 
-## Rodada 4 — Modo de teste (escrito, ainda NÃO executado no CI)
+## Rodada 3 e 4: evidência do CI
+Etapa 1 (habilidades em combate): testes 62 / 6.097 verificações / 0 falhas; smoke `casts=18`. O APK com as habilidades e o modo de teste **ainda não foi gerado/validado** (o job verify ficou vermelho por falso positivo de `--check-only`, filtro corrigido na rodada seguinte; aguardando run).
+
+## Rodada 5 (escrita, ainda NÃO executada no CI)
 
 | Item | Estado | Observação |
 |---|---|---|
-| Aba "Teste" (ouro, gemas, fragmentos, fase, cura, recargas, desbloquear tudo, reset) | ⬜ | `DebugTools` + testes em `test_debug_tools.gd` |
+| Trava: só remove/troca habilidade fora de recarga | ⬜ | `SkillSlots.can_unequip` + `GameState.unequip_skill`; botão mostra "EM RECARGA Xs". Limitação: recargas **não são salvas**: fechar e reabrir o app zera as recargas |
+| Automático por slot (1, 2, 3; qualquer combinação) + aba **Auto** + selo "A" nos botões | ⬜ | Migra o save antigo (`auto_skills`). Botão AUTO da barra liga/desliga todos |
+| Rolagem dos menus: botões `MOUSE_FILTER_PASS`, deadzone, barra larga, botões Topo/Subir/Descer | ⬜ | Hipótese: botões com filtro STOP bloqueavam o arrasto. **Só o celular confirma** |
+| Etapa 2: habilidades dos chefes (área, investida, invocação, projéteis) e especiais (bola de fogo, drenar vida) com aviso visual | ⬜ | Dados em `EnemiesDB.ABILITIES`; smoke exige as 6 habilidades inimigas executadas |
+| Smoke: chefes nas fases 10 e 20 + 2 especiais, anjo em `god_mode` | ⬜ | Cobre código, **não** a dificuldade/justiça dos golpes |
+| Testes novos: `test_auto_slots.gd`, `test_enemy_abilities.gd` | ⬜ | |
+
+Decisões minhas (revise): invocações não dão ouro/gemas nem contam para limpar a fase; limite de 8 invocações vivas; dano das habilidades inimigas = dano do inimigo × `dmg_mult` (reduzido por armadura/escudo); chefe e especiais usam `ABILITY_INITIAL_FRACTION = 0,5` (começam com 50% da recarga).
+
+## Rodada 4 — Modo de teste (escrito)
+
+| Item | Estado | Observação |
+|---|---|---|
+| Aba "Teste" (ouro, gemas, fragmentos, fase, cura, recargas, desbloquear tudo, reset) | ⬜ | `DebugTools` + testes |
 | Desligamento no APK final | ⬜ | `Balance.DEBUG_TOOLS` + `OS.is_debug_build()`. **Lembrar de pôr false antes da versão final** |
 
 ## Implementado (código escrito) × planejado
@@ -55,7 +71,7 @@ Decisões de design que eu tomei (revise): Apocalipse Sagrado limita dano em che
 | 2 Combate (ataque auto + aura) | executado no CI (smoke) | Arte provisória |
 | 3 Fases/ondas/escala | executado no CI (smoke); ritmo novo ⬜ | |
 | 4 Ouro + upgrades | executado no CI; menu novo ⬜ | |
-| 5 Chefes + fragmentos | parcial | **As 2 habilidades de cada chefe NÃO estão implementadas** (só dados) |
+| 5 Chefes + fragmentos | escrito (rodada 5) ⬜ | 2 habilidades por chefe com telegraph; especiais com habilidade própria |
 | 6 Gemas e drops | lógica testada no CI | |
 | 7 Equipamentos | lógica testada + menu ⬜ | Preços placeholders |
 | 8 Asas e brilho | lógica testada + menu ⬜ | Prévia das asas no menu |

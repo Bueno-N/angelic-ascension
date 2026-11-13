@@ -31,7 +31,9 @@ func start_stage(s: int) -> void:
     Events.boss_hp_changed.emit(0.0, 0.0)
     Events.stage_changed.emit(stage)
 
-func _on_enemy_died(_pos: Vector2, _def: Dictionary, _boss: bool, _gold: int) -> void:
+func _on_enemy_died(_pos: Vector2, d: Dictionary, _boss: bool, _gold: int) -> void:
+    if d.get("summon", false):
+        return   # invocações não contam para a limpeza da fase
     alive = maxi(0, alive - 1)
 
 func _process(delta: float) -> void:
@@ -53,7 +55,14 @@ func _process(delta: float) -> void:
         player.heal(StatsCalc.stage_clear_heal(player.max_hp))
         start_stage(stage + 1)
 
-func _spawn(boss: bool) -> void:
+## Só para o smoke do CI: cria um tipo específico de inimigo.
+func debug_spawn_type(type_id: String) -> void:
+    for t in EnemiesDB.TYPES:
+        if t["id"] == type_id:
+            _spawn(false, t)
+            return
+
+func _spawn(boss: bool, forced: Dictionary = {}) -> void:
     var e := Enemy.new()
     var area := get_viewport().get_visible_rect().size
     var side := rng.randi_range(0, 3)
@@ -65,5 +74,5 @@ func _spawn(boss: bool) -> void:
         _: pos = Vector2(area.x + 30, rng.randf_range(0, area.y))
     e.position = pos
     container.add_child(e)
-    e.setup({} if boss else EnemiesDB.pick_type(stage, rng), stage, boss, player)
+    e.setup({} if boss else (forced if not forced.is_empty() else EnemiesDB.pick_type(stage, rng)), stage, boss, player)
     alive += 1

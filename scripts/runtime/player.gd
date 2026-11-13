@@ -5,6 +5,7 @@ var hp: float = 100.0
 var max_hp: float = 100.0
 var joystick: VirtualJoystick
 var buffs := BuffState.new()
+var god_mode := false   # só no modo --smoke do CI
 var _atk_timer := 0.0
 var _aura_timer := 0.0
 var _flash := 0.0
@@ -39,6 +40,8 @@ func heal(amount: float) -> void:
 func take_damage(raw: float) -> void:
     var after_shield: float = raw * (1.0 - buffs.absorb())
     hp -= StatsCalc.damage_after_armor(after_shield, get_stat("armor"))
+    if god_mode:
+        hp = maxf(hp, 1.0)
     Events.player_hp_changed.emit(maxf(hp, 0.0), max_hp)
     if hp <= 0.0:
         Events.player_died.emit()

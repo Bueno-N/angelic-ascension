@@ -21,6 +21,10 @@ func sync(state: Dictionary) -> void:
     equipped = new_eq
     cooldowns = new_cd
 
+## Trava anti-burla: só dá para remover/trocar uma habilidade que NÃO está em recarga.
+func can_unequip(id: String) -> bool:
+    return float(cooldowns.get(id, 0.0)) <= 0.0
+
 func reset_cooldowns() -> void:
     for id in cooldowns.keys():
         cooldowns[id] = 0.0

@@ -11,6 +11,7 @@ func setup(p: Player, layer: Node2D) -> void:
     player = p
     fx_layer = layer
     slots.load_from_state(GameState.state)
+    GameState.cooldown_provider = slots.remaining
     Events.state_changed.connect(_on_state_changed)
 
 func _on_state_changed() -> void:
@@ -25,11 +26,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
     slots.tick(delta)
-    if not bool(GameState.state["settings"].get("auto_skills", true)):
+    if AutoCast.auto_count(GameState.state["settings"]) == 0:
         return
     var ctx := _context()
-    for id in slots.equipped:
-        if slots.can_use(id) and AutoCast.should_cast(id, ctx):
+    for i in range(slots.equipped.size()):
+        var id: String = slots.equipped[i]
+        if AutoCast.slot_auto(GameState.state["settings"], i) and slots.can_use(id) and AutoCast.should_cast(id, ctx):
             cast(id)
 
 func _context() -> Dictionary:

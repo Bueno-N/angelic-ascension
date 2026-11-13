@@ -3,7 +3,8 @@ extends PanelContainer
 ## Menu com 4 abas: Atributos (ouro), Equipamentos (gemas), Asas/Brilho (fragmentos/gemas), Habilidades (gemas).
 ## As linhas são criadas UMA vez e só têm texto/estado atualizados (não perde a rolagem do toque).
 
-const TAB_NAMES := ["Atributos", "Equip.", "Asas", "Habilid."]
+const TAB_NAMES := ["Atributos", "Equip.", "Asas", "Habilid.", "Auto"]
+const TAB_SKILLS := 3
 var _tab_names: Array = []
 var _reset_armed := false
 var _pages: Array = []
@@ -35,13 +36,15 @@ func _ready() -> void:
         tb.text = _tab_names[i]
         tb.custom_minimum_size = Vector2(0, 60)
         tb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        tb.add_theme_font_size_override("font_size", 20)
+        tb.add_theme_font_size_override("font_size", 18)
         tb.pressed.connect(_select_tab.bind(i))
         tabs.add_child(tb)
         _tab_buttons.append(tb)
         var sc := ScrollContainer.new()
         sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
         sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+        sc.scroll_deadzone = 12                                   # tolerância: toque curto = clique, arrasto = rolagem
+        sc.get_v_scroll_bar().custom_minimum_size = Vector2(28, 0)  # barra larga e arrastável com o dedo
         root.add_child(sc)
         var box := VBoxContainer.new()
         box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -54,13 +57,26 @@ func _ready() -> void:
             1: _build_equip(box, upd)
             2: _build_wings(box, upd)
             3: _build_skills(box, upd)
+            4: _build_auto(box, upd)
             _: _build_debug(box, upd)
+    var nav := HBoxContainer.new()
+    root.add_child(nav)
+    for pair in [["Topo", -2], ["Subir", -1], ["Descer", 1]]:
+        var nb := Button.new()
+        nb.text = pair[0]
+        nb.custom_minimum_size = Vector2(0, 52)
+        nb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        nb.add_theme_font_size_override("font_size", 20)
+        nb.pressed.connect(_scroll.bind(pair[1]))
+        nav.add_child(nb)
     Events.state_changed.connect(func(): _dirty = true)
     visibility_changed.connect(func(): _dirty = true)
     _select_tab(0)
 
 func _process(delta: float) -> void:
-    if not visible or not _dirty:
+    if not visible:
+        return
+    if not _dirty and _current != TAB_SKILLS:
         return
     _timer -= delta
     if _timer <= 0.0:
@@ -68,8 +84,16 @@ func _process(delta: float) -> void:
         _dirty = false
         _refresh()
 
+func _scroll(mode: int) -> void:
+    var sc: ScrollContainer = _pages[_current]
+    if mode == -2:
+        sc.scroll_vertical = 0
+    else:
+        sc.scroll_vertical = maxi(0, sc.scroll_vertical + mode * int(sc.size.y * 0.8))
+
 func _select_tab(i: int) -> void:
     _current = i
+    _pages[i].scroll_vertical = 0
     for k in range(_pages.size()):
         _pages[k].visible = (k == i)
         _tab_buttons[k].disabled = (k == i)
@@ -86,6 +110,7 @@ func _button(font: int, min_h: float) -> Button:
     b.add_theme_font_size_override("font_size", font)
     b.alignment = HORIZONTAL_ALIGNMENT_LEFT
     b.clip_text = true
+    b.mouse_filter = Control.MOUSE_FILTER_PASS   # deixa o arrasto chegar ao ScrollContainer (rolagem por toque)
     b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     return b
 
@@ -163,6 +188,7 @@ func _upd_equip(b: Button, cat: String, tier: int) -> void:
 func _build_wings(box: VBoxContainer, upd: Array) -> void:
     var prev := WingsPreview.new()
     prev.custom_minimum_size = Vector2(0, 190)
+    prev.mouse_filter = Control.MOUSE_FILTER_PASS
     box.add_child(prev)
     upd.append(prev.queue_redraw)
     var info := _label("", 20, Color(0.95, 0.95, 1.0))
@@ -170,6 +196,7 @@ func _build_wings(box: VBoxContainer, upd: Array) -> void:
     var bar := ProgressBar.new()
     bar.custom_minimum_size = Vector2(0, 26)
     bar.show_percentage = false
+    bar.mouse_filter = Control.MOUSE_FILTER_PASS
     box.add_child(bar)
     var evolve := _button(22, 64)
     evolve.pressed.connect(GameState.evolve_wings)
@@ -237,6 +264,7 @@ func _upd_skill_header(l: Label) -> void:
         txt += "\nTodas as habilidades desbloqueadas!"
     else:
         txt += "\nPróxima: %s - faltam %s gemas" % [goal["name"], UiLogic.fmt_int(int(goal["missing"]))]
+    txt += "\nSó dá para remover/trocar uma habilidade que NÃO está em recarga."
     l.text = txt
 
 func _on_skill_pressed(id: String) -> void:
@@ -257,8 +285,40 @@ func _upd_skill(b: Button, id: String) -> void:
             b.text = head + ("slots cheios (remova uma)" if full else "tocar para equipar")
             b.disabled = full
         _:
-            b.text = head + "EQUIPADA (tocar p/ remover)"
-            b.disabled = false
+            var rem: float = GameState.skill_remaining(id)
+            if rem > 0.0:
+                b.text = head + "EM RECARGA %ds (não pode trocar)" % int(ceil(rem))
+                b.disabled = true
+            else:
+                b.text = head + "EQUIPADA (tocar p/ remover)"
+                b.disabled = false
+
+# ---------- aba 4: habilidades automáticas por slot ----------
+func _build_auto(box: VBoxContainer, upd: Array) -> void:
+    box.add_child(_label("Escolha quais slots lançam sozinhos. AUTOMÁTICA: a habilidade é lançada quando a situação pede (regra abaixo). MANUAL: só ao tocar no botão (ou teclas 1, 2, 3).", 17, Color(0.75, 0.75, 0.8)))
+    for i in range(SkillsDB.MAX_EQUIPPED):
+        var b := _button(20, 84)
+        b.pressed.connect(GameState.toggle_slot_auto.bind(i))
+        box.add_child(b)
+        upd.append(_upd_auto_slot.bind(b, i))
+    var all_on := _button(20, 60)
+    all_on.text = "Todas automáticas"
+    all_on.pressed.connect(GameState.set_all_auto.bind(true))
+    box.add_child(all_on)
+    var all_off := _button(20, 60)
+    all_off.text = "Todas manuais"
+    all_off.pressed.connect(GameState.set_all_auto.bind(false))
+    box.add_child(all_off)
+
+func _upd_auto_slot(b: Button, i: int) -> void:
+    var eq: Array = GameState.state["skills_equipped"]
+    var nm := "vazio"
+    var rule := "Equipe uma habilidade na aba Habilid."
+    if i < eq.size():
+        nm = str(SkillsDB.get_skill(eq[i])["name"])
+        rule = AutoCast.rule_text(eq[i])
+    var on: bool = AutoCast.slot_auto(GameState.state["settings"], i)
+    b.text = "Slot %d: %s   -   %s\n%s" % [i + 1, nm, "AUTOMÁTICA" if on else "MANUAL", rule if on else "Toque para tornar automática"]
 
 # ---------- aba de teste (só aparece em builds de debug) ----------
 const DEBUG_BUTTONS := [

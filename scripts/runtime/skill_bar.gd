@@ -34,7 +34,7 @@ func _gui_input(event: InputEvent) -> void:
     if event is InputEventScreenTouch and event.pressed:
         var x: float = event.position.x
         if x < AUTO_W:
-            GameState.toggle_auto_skills()
+            GameState.set_all_auto(AutoCast.auto_count(GameState.state["settings"]) == 0)
         else:
             for i in range(SkillsDB.MAX_EQUIPPED):
                 if x >= _slot_x(i) and x <= _slot_x(i) + BTN:
@@ -54,11 +54,13 @@ func _draw_pie(center: Vector2, r: float, frac: float, col: Color) -> void:
 
 func _draw() -> void:
     var font := ThemeDB.fallback_font
-    var auto_on: bool = bool(GameState.state["settings"].get("auto_skills", true))
+    var settings: Dictionary = GameState.state["settings"]
+    var auto_n: int = AutoCast.auto_count(settings)
+    var auto_col := Color(0.5, 1.0, 0.6) if auto_n == SkillsDB.MAX_EQUIPPED else (Color(1.0, 0.85, 0.3) if auto_n > 0 else Color(0.7, 0.7, 0.7))
     draw_rect(Rect2(0, 0, AUTO_W, BTN), Color(0.08, 0.08, 0.12, 0.8))
-    draw_rect(Rect2(0, 0, AUTO_W, BTN), Color(0.5, 1.0, 0.6) if auto_on else Color(0.6, 0.6, 0.6), false, 2.0)
+    draw_rect(Rect2(0, 0, AUTO_W, BTN), auto_col, false, 2.0)
     draw_string(font, Vector2(0, 40), "AUTO", HORIZONTAL_ALIGNMENT_CENTER, AUTO_W, 20, Color.WHITE)
-    draw_string(font, Vector2(0, 68), "ON" if auto_on else "OFF", HORIZONTAL_ALIGNMENT_CENTER, AUTO_W, 22, Color(0.5, 1.0, 0.6) if auto_on else Color(0.8, 0.8, 0.8))
+    draw_string(font, Vector2(0, 68), "%d/%d" % [auto_n, SkillsDB.MAX_EQUIPPED], HORIZONTAL_ALIGNMENT_CENTER, AUTO_W, 22, auto_col)
     for i in range(SkillsDB.MAX_EQUIPPED):
         var c := Vector2(_slot_x(i) + BTN / 2.0, BTN / 2.0)
         if caster == null or i >= caster.slots.equipped.size():
@@ -77,3 +79,5 @@ func _draw() -> void:
             _draw_pie(c, 42.0, ratio, Color(0, 0, 0, 0.6))
             draw_string(font, Vector2(_slot_x(i), c.y + 8.0), "%d" % int(ceil(rem)), HORIZONTAL_ALIGNMENT_CENTER, BTN, 34, Color.WHITE)
         draw_string(font, Vector2(_slot_x(i) + 8.0, 18.0), str(i + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1, 1, 1, 0.5))
+        if AutoCast.slot_auto(settings, i):
+            draw_string(font, Vector2(_slot_x(i) + BTN - 22.0, 18.0), "A", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.5, 1.0, 0.6))
