@@ -194,12 +194,35 @@ func _draw() -> void:
     draw_colored_polygon(PackedVector2Array([Vector2(radius * 0.7, -radius * 0.5), Vector2(radius * 0.9, -radius * 1.4), Vector2(radius * 0.2, -radius * 0.8)]), c.darkened(0.3))
     draw_circle(Vector2(-radius * 0.35, -radius * 0.1), radius * 0.15, Color(1.0, 0.9, 0.2))
     draw_circle(Vector2(radius * 0.35, -radius * 0.1), radius * 0.15, Color(1.0, 0.9, 0.2))
+    _draw_kind_details(c)
     if hp < max_hp and not is_boss:
         var w := radius * 2.0
         draw_rect(Rect2(-radius, radius + 4.0, w, 4.0), Color(0, 0, 0, 0.6))
         draw_rect(Rect2(-radius, radius + 4.0, w * clampf(hp / max_hp, 0.0, 1.0), 4.0), Color(0.9, 0.2, 0.2))
     if _cast_id != "":
         _draw_telegraph()
+
+## Detalhes visuais por tipo de demônio (a silhueta ajuda a reconhecer o perigo).
+func _draw_kind_details(c: Color) -> void:
+    var pulse: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 220.0)
+    var kind: String = "boss" if is_boss else str(def.get("kind", "common"))
+    match kind:
+        "warrior":
+            draw_arc(Vector2(radius * 0.9, 0), radius * 0.6, -PI / 2.0, PI / 2.0, 12, c.lightened(0.35), 3.0)
+        "shadow":
+            draw_circle(Vector2(0, radius * 0.9), radius * 0.6, Color(c, 0.35))
+            draw_circle(Vector2(0, radius * 1.5), radius * 0.35, Color(c, 0.2))
+        "beast":
+            for k in range(3):
+                var x: float = (float(k) - 1.0) * radius * 0.6
+                draw_colored_polygon(PackedVector2Array([Vector2(x - 4, -radius * 0.9), Vector2(x, -radius * 1.4), Vector2(x + 4, -radius * 0.9)]), c.darkened(0.4))
+        "special":
+            draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 24, Color(color.lightened(0.4), 0.4 + 0.5 * pulse), 2.0)
+        "boss":
+            for k in range(5):
+                var x2: float = (float(k) - 2.0) * radius * 0.35
+                draw_colored_polygon(PackedVector2Array([Vector2(x2 - 6, -radius * 0.95), Vector2(x2, -radius * 1.5), Vector2(x2 + 6, -radius * 0.95)]), Color(1.0, 0.75, 0.2))
+            draw_arc(Vector2.ZERO, radius * 1.35, 0.0, TAU, 40, Color(1.0, 0.2, 0.1, 0.25 + 0.35 * pulse), 4.0)
 
 ## AVISO VISUAL: a área/linha fica mais vermelha até o golpe acontecer.
 func _draw_telegraph() -> void:

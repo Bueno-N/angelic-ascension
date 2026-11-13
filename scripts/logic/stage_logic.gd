@@ -2,6 +2,10 @@ class_name StageLogic
 extends RefCounted
 ## Escala por fase, chefes e recompensas.
 
+## "Próxima fase" a qualquer momento, mas só até uma fase JÁ alcançada (não dá para furar chefes não vencidos).
+static func can_skip_to_next(stage: int, max_stage: int) -> bool:
+    return stage < max_stage
+
 static func is_boss_stage(stage: int) -> bool:
     return stage > 0 and stage % Balance.BOSS_EVERY == 0
 

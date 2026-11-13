@@ -81,6 +81,27 @@ static func total_bonus_text(state: Dictionary) -> String:
         return "Nenhum bônus percentual ativo"
     return ", ".join(parts)
 
+static func time_scale(settings: Dictionary) -> float:
+    return Balance.FAST_MODE_SCALE if bool(settings.get("speed_2x", false)) else 1.0
+
+## Margens (em coordenadas da viewport) para a área segura do aparelho (notch, cantos arredondados).
+static func safe_margins(safe_pos: Vector2, safe_size: Vector2, win: Vector2, view: Vector2) -> Dictionary:
+    var zero := {"l": 0.0, "t": 0.0, "r": 0.0, "b": 0.0}
+    if win.x <= 0.0 or win.y <= 0.0 or safe_size.x <= 0.0 or safe_size.y <= 0.0:
+        return zero
+    var sx: float = view.x / win.x
+    var sy: float = view.y / win.y
+    return {
+        "l": maxf(0.0, safe_pos.x) * sx,
+        "t": maxf(0.0, safe_pos.y) * sy,
+        "r": maxf(0.0, win.x - (safe_pos.x + safe_size.x)) * sx,
+        "b": maxf(0.0, win.y - (safe_pos.y + safe_size.y)) * sy,
+    }
+
+## Paleta do cenário: muda a cada 10 fases (4 paletas em ciclo).
+static func stage_palette_index(stage: int) -> int:
+    return floori(float(maxi(1, stage) - 1) / 10.0) % 4
+
 static func gems_per_hour(session_gems: int, elapsed_seconds: float) -> float:
     if elapsed_seconds < 60.0:
         return 0.0

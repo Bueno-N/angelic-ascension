@@ -11,10 +11,13 @@ var _aura_timer := 0.0
 var _flash := 0.0
 var _flash_target := Vector2.ZERO
 var _hp_emit := 0.0
+var _sparks: CPUParticles2D
+var _sparks_tier := -1
 
 func _ready() -> void:
     add_to_group("player")
     Events.state_changed.connect(_on_state_changed)
+    _setup_sparks()
     refresh_stats(true)
 
 ## Atributo final = (base + ouro) * (1 + asas% + equip%) * multiplicador dos buffs ativos.
@@ -32,6 +35,37 @@ func refresh_stats(full_heal: bool) -> void:
 
 func _on_state_changed() -> void:
     refresh_stats(false)
+    _update_sparks()
+
+## Partículas celestiais ao redor do anjo: surgem ao comprar o brilho das asas e aumentam com o tier.
+func _setup_sparks() -> void:
+    _sparks = CPUParticles2D.new()
+    _sparks.lifetime = 1.4
+    _sparks.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+    _sparks.emission_sphere_radius = 34.0
+    _sparks.direction = Vector2(0, -1)
+    _sparks.spread = 40.0
+    _sparks.gravity = Vector2(0, -20)
+    _sparks.initial_velocity_min = 8.0
+    _sparks.initial_velocity_max = 30.0
+    _sparks.scale_amount_min = 1.5
+    _sparks.scale_amount_max = 3.0
+    var g := Gradient.new()
+    g.set_color(0, Color(1.0, 0.95, 0.6, 0.9))
+    g.set_color(1, Color(1.0, 0.9, 0.4, 0.0))
+    _sparks.color_ramp = g
+    _sparks.emitting = false
+    add_child(_sparks)
+    _update_sparks()
+
+func _update_sparks() -> void:
+    var tier: int = int(GameState.state["glow_tier"])
+    if tier == _sparks_tier:
+        return
+    _sparks_tier = tier
+    _sparks.emitting = tier > 0
+    if tier > 0:
+        _sparks.amount = 6 + 6 * tier
 
 func heal(amount: float) -> void:
     hp = minf(max_hp, hp + amount)
@@ -96,7 +130,7 @@ func _nearest_enemy(max_dist: float) -> Node2D:
 func _draw() -> void:
     draw_circle(Vector2.ZERO, Balance.AURA_RADIUS, Color(1.0, 0.92, 0.55, 0.07))
     draw_arc(Vector2.ZERO, Balance.AURA_RADIUS, 0.0, TAU, 48, Color(1.0, 0.92, 0.55, 0.25), 2.0)
-    AngelDraw.draw_angel(self, int(GameState.state["wings_level"]), int(GameState.state["glow_tier"]), 1.0)
+    AngelDraw.draw_angel(self, int(GameState.state["wings_level"]), int(GameState.state["glow_tier"]), 1.0, GameState.state["equipped"])
     if buffs.absorb() > 0.0:
         draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 40, Color(0.6, 0.85, 1.0, 0.85), 4.0)
     if buffs.multiplier("attack") > 1.4:

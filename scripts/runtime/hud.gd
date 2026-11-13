@@ -11,6 +11,9 @@ var _pace: Label
 var _hp_bar: ProgressBar
 var _boss_bar: ProgressBar
 var _menu: MenuPanel
+var _next_btn: Button
+var _speed_btn: Button
+var _repeat := false
 var _last_stage_secs := 0.0
 var _pace_timer := 0.0
 
@@ -21,12 +24,16 @@ func _ready() -> void:
     _root.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(_root)
     _build_top()
+    _build_stage_buttons()
     _build_menu()
+    _apply_safe_area()
+    get_viewport().size_changed.connect(_apply_safe_area)
     Events.state_changed.connect(_refresh)
     Events.player_hp_changed.connect(_on_hp)
     Events.stage_changed.connect(func(_s: int): _refresh())
     Events.stage_cleared.connect(func(_s: int, secs: float): _last_stage_secs = secs)
     Events.boss_hp_changed.connect(_on_boss_hp)
+    Events.repeat_mode_changed.connect(func(on: bool): _repeat = on; _refresh())
     _refresh()
 
 func add_control(c: Control) -> void:
@@ -70,8 +77,38 @@ func _build_top() -> void:
     _pace = _label(16)
     _pace.modulate = Color(1, 1, 1, 0.6)
     _pace.offset_left = 16.0
-    _pace.offset_top = 44.0
+    _pace.offset_top = 46.0
     _root.add_child(_pace)
+
+## Só em aparelhos móveis: afasta o HUD do notch/cantos arredondados (DisplayServer.get_display_safe_area).
+func _apply_safe_area() -> void:
+    if not OS.has_feature("mobile"):
+        return
+    var safe: Rect2i = DisplayServer.get_display_safe_area()
+    var m := UiLogic.safe_margins(Vector2(safe.position), Vector2(safe.size), Vector2(DisplayServer.window_get_size()),
+        get_viewport().get_visible_rect().size)
+    _root.offset_left = m["l"]
+    _root.offset_top = m["t"]
+    _root.offset_right = -m["r"]
+    _root.offset_bottom = -m["b"]
+
+func _build_stage_buttons() -> void:
+    _next_btn = Button.new()
+    _next_btn.add_theme_font_size_override("font_size", 22)
+    _next_btn.offset_left = 16.0
+    _next_btn.offset_top = 72.0
+    _next_btn.offset_right = 256.0
+    _next_btn.offset_bottom = 124.0
+    _next_btn.pressed.connect(func(): Events.request_next_stage.emit())
+    _root.add_child(_next_btn)
+    _speed_btn = Button.new()
+    _speed_btn.add_theme_font_size_override("font_size", 22)
+    _speed_btn.offset_left = 268.0
+    _speed_btn.offset_top = 72.0
+    _speed_btn.offset_right = 448.0
+    _speed_btn.offset_bottom = 124.0
+    _speed_btn.pressed.connect(func(): GameState.toggle_speed())
+    _root.add_child(_speed_btn)
 
 func _build_menu() -> void:
     _menu = MenuPanel.new()
@@ -103,7 +140,11 @@ func _refresh() -> void:
     _gold.text = "Ouro: " + UiLogic.fmt_int(int(s["gold"]))
     _gems.text = "Gemas: " + UiLogic.fmt_int(int(s["gems"]))
     _shards.text = "Fragm.: " + UiLogic.fmt_int(int(s["shards"]))
-    _stage.text = "Fase " + str(int(s["stage"]))
+    var stg: int = int(s["stage"])
+    _stage.text = "Fase %d%s" % [stg, " (repetindo)" if _repeat else ""]
+    _next_btn.text = "Próxima fase (%d)" % (stg + 1)
+    _next_btn.disabled = not StageLogic.can_skip_to_next(stg, int(s["max_stage"]))
+    _speed_btn.text = "Velocidade %dx" % int(UiLogic.time_scale(s["settings"]))
 
 func _on_hp(hp: float, max_hp: float) -> void:
     _hp_bar.max_value = max_hp

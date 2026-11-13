@@ -3,7 +3,7 @@ extends PanelContainer
 ## Menu com 4 abas: Atributos (ouro), Equipamentos (gemas), Asas/Brilho (fragmentos/gemas), Habilidades (gemas).
 ## As linhas são criadas UMA vez e só têm texto/estado atualizados (não perde a rolagem do toque).
 
-const TAB_NAMES := ["Atributos", "Equip.", "Asas", "Habilid.", "Auto"]
+const TAB_NAMES := ["Atributos", "Equip.", "Asas", "Habilid."]
 const TAB_SKILLS := 3
 var _tab_names: Array = []
 var _reset_armed := false
@@ -57,7 +57,6 @@ func _ready() -> void:
             1: _build_equip(box, upd)
             2: _build_wings(box, upd)
             3: _build_skills(box, upd)
-            4: _build_auto(box, upd)
             _: _build_debug(box, upd)
     var nav := HBoxContainer.new()
     root.add_child(nav)
@@ -147,6 +146,11 @@ func _upd_attr(b: Button, attr: String) -> void:
 
 # ---------- aba 1: equipamentos (gemas) ----------
 func _build_equip(box: VBoxContainer, upd: Array) -> void:
+    var prev := WingsPreview.new()
+    prev.custom_minimum_size = Vector2(0, 190)
+    prev.mouse_filter = Control.MOUSE_FILTER_PASS
+    box.add_child(prev)
+    upd.append(prev.queue_redraw)
     var summary := _label("", 18, Color(0.9, 0.85, 0.55))
     box.add_child(summary)
     upd.append(_upd_summary.bind(summary))
@@ -253,7 +257,7 @@ func _build_skills(box: VBoxContainer, upd: Array) -> void:
         var extra := ""
         if float(s["duration"]) > 0.0:
             extra = "  |  Duração: %ds" % int(s["duration"])
-        box.add_child(_label("%s\nDano: %d%% do ataque  |  Recarga: %ds%s" % [s["desc"], int(round(float(s["damage_pct"]) * 100.0)), int(s["cooldown"]), extra], 16, Color(0.75, 0.75, 0.8)))
+        box.add_child(_label("%s\nDano: %d%% do ataque  |  Recarga: %ds%s\nAutomático: %s (ligue/desligue no botão AUTO sobre o ícone)" % [s["desc"], int(round(float(s["damage_pct"]) * 100.0)), int(s["cooldown"]), extra, AutoCast.rule_text(id)], 16, Color(0.75, 0.75, 0.8)))
         upd.append(_upd_skill.bind(b, id))
 
 func _upd_skill_header(l: Label) -> void:
@@ -292,33 +296,6 @@ func _upd_skill(b: Button, id: String) -> void:
             else:
                 b.text = head + "EQUIPADA (tocar p/ remover)"
                 b.disabled = false
-
-# ---------- aba 4: habilidades automáticas por slot ----------
-func _build_auto(box: VBoxContainer, upd: Array) -> void:
-    box.add_child(_label("Escolha quais slots lançam sozinhos. AUTOMÁTICA: a habilidade é lançada quando a situação pede (regra abaixo). MANUAL: só ao tocar no botão (ou teclas 1, 2, 3).", 17, Color(0.75, 0.75, 0.8)))
-    for i in range(SkillsDB.MAX_EQUIPPED):
-        var b := _button(20, 84)
-        b.pressed.connect(GameState.toggle_slot_auto.bind(i))
-        box.add_child(b)
-        upd.append(_upd_auto_slot.bind(b, i))
-    var all_on := _button(20, 60)
-    all_on.text = "Todas automáticas"
-    all_on.pressed.connect(GameState.set_all_auto.bind(true))
-    box.add_child(all_on)
-    var all_off := _button(20, 60)
-    all_off.text = "Todas manuais"
-    all_off.pressed.connect(GameState.set_all_auto.bind(false))
-    box.add_child(all_off)
-
-func _upd_auto_slot(b: Button, i: int) -> void:
-    var eq: Array = GameState.state["skills_equipped"]
-    var nm := "vazio"
-    var rule := "Equipe uma habilidade na aba Habilid."
-    if i < eq.size():
-        nm = str(SkillsDB.get_skill(eq[i])["name"])
-        rule = AutoCast.rule_text(eq[i])
-    var on: bool = AutoCast.slot_auto(GameState.state["settings"], i)
-    b.text = "Slot %d: %s   -   %s\n%s" % [i + 1, nm, "AUTOMÁTICA" if on else "MANUAL", rule if on else "Toque para tornar automática"]
 
 # ---------- aba de teste (só aparece em builds de debug) ----------
 const DEBUG_BUTTONS := [

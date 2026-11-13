@@ -10,6 +10,7 @@ var boss_pending := false
 var _timer := 0.0
 var _advancing := false
 var _stage_time := 0.0
+var repeat_mode := false   # depois de morrer: repete a fase anterior até o jogador pedir "Próxima fase"
 var rng := RandomNumberGenerator.new()
 
 func setup(p: Player, c: Node2D) -> void:
@@ -31,6 +32,18 @@ func start_stage(s: int) -> void:
     Events.boss_hp_changed.emit(0.0, 0.0)
     Events.stage_changed.emit(stage)
 
+func set_repeat(on: bool) -> void:
+    if repeat_mode != on:
+        repeat_mode = on
+        Events.repeat_mode_changed.emit(on)
+
+## Botão "Próxima fase": vai para stage+1 imediatamente (só até uma fase já alcançada).
+func request_next() -> void:
+    if not StageLogic.can_skip_to_next(stage, int(GameState.state["max_stage"])):
+        return
+    set_repeat(false)
+    start_stage(stage + 1)
+
 func _on_enemy_died(_pos: Vector2, d: Dictionary, _boss: bool, _gold: int) -> void:
     if d.get("summon", false):
         return   # invocações não contam para a limpeza da fase
@@ -39,7 +52,7 @@ func _on_enemy_died(_pos: Vector2, d: Dictionary, _boss: bool, _gold: int) -> vo
 func _process(delta: float) -> void:
     if container == null:
         return
-    _stage_time += delta
+    _stage_time += delta / maxf(Engine.time_scale, 0.01)   # segundos REAIS (útil para calibrar)
     if boss_pending:
         boss_pending = false
         _spawn(true)
@@ -53,7 +66,7 @@ func _process(delta: float) -> void:
         _advancing = true
         Events.stage_cleared.emit(stage, _stage_time)
         player.heal(StatsCalc.stage_clear_heal(player.max_hp))
-        start_stage(stage + 1)
+        start_stage(stage if repeat_mode else stage + 1)
 
 ## Só para o smoke do CI: cria um tipo específico de inimigo.
 func debug_spawn_type(type_id: String) -> void:

@@ -12,6 +12,7 @@ func _ready() -> void:
     session_start_msec = Time.get_ticks_msec()
     state = SaveManager.load_state()
     stats = StatsCalc.compute(state)
+    apply_speed()
     Events.enemy_died.connect(_on_enemy_died)
     var t := Timer.new()
     t.wait_time = Balance.AUTOSAVE_SECONDS
@@ -71,8 +72,12 @@ func toggle_slot_auto(i: int) -> void:
         save()
         Events.state_changed.emit()
 
-func set_all_auto(on: bool) -> void:
-    Shop.set_all_auto(state, on)
+func apply_speed() -> void:
+    Engine.time_scale = UiLogic.time_scale(state["settings"])
+
+func toggle_speed() -> void:
+    state["settings"]["speed_2x"] = not bool(state["settings"].get("speed_2x", false))
+    apply_speed()
     save()
     Events.state_changed.emit()
 

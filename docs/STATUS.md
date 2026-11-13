@@ -42,18 +42,23 @@ Decisões de design que eu tomei (revise): Apocalipse Sagrado limita dano em che
 ## Rodada 3 e 4: evidência do CI
 Etapa 1 (habilidades em combate): testes 62 / 6.097 verificações / 0 falhas; smoke `casts=18`. O APK com as habilidades e o modo de teste **ainda não foi gerado/validado** (o job verify ficou vermelho por falso positivo de `--check-only`, filtro corrigido na rodada seguinte; aguardando run).
 
-## Rodada 5 (escrita, ainda NÃO executada no CI)
+## Rodada 5: CI verde (confirmado pelo usuário)
+Trava de troca, automático por slot, rolagem do menu e habilidades de chefes/especiais passaram no CI. **Validação em celular ainda pendente** (dificuldade dos chefes, rolagem real, multitoque).
+
+## Rodada 6 (escrita, ainda NÃO executada no CI)
 
 | Item | Estado | Observação |
 |---|---|---|
-| Trava: só remove/troca habilidade fora de recarga | ⬜ | `SkillSlots.can_unequip` + `GameState.unequip_skill`; botão mostra "EM RECARGA Xs". Limitação: recargas **não são salvas**: fechar e reabrir o app zera as recargas |
-| Automático por slot (1, 2, 3; qualquer combinação) + aba **Auto** + selo "A" nos botões | ⬜ | Migra o save antigo (`auto_skills`). Botão AUTO da barra liga/desliga todos |
-| Rolagem dos menus: botões `MOUSE_FILTER_PASS`, deadzone, barra larga, botões Topo/Subir/Descer | ⬜ | Hipótese: botões com filtro STOP bloqueavam o arrasto. **Só o celular confirma** |
-| Etapa 2: habilidades dos chefes (área, investida, invocação, projéteis) e especiais (bola de fogo, drenar vida) com aviso visual | ⬜ | Dados em `EnemiesDB.ABILITIES`; smoke exige as 6 habilidades inimigas executadas |
-| Smoke: chefes nas fases 10 e 20 + 2 especiais, anjo em `god_mode` | ⬜ | Cobre código, **não** a dificuldade/justiça dos golpes |
-| Testes novos: `test_auto_slots.gd`, `test_enemy_abilities.gd` | ⬜ | |
-
-Decisões minhas (revise): invocações não dão ouro/gemas nem contam para limpar a fase; limite de 8 invocações vivas; dano das habilidades inimigas = dano do inimigo × `dmg_mult` (reduzido por armadura/escudo); chefe e especiais usam `ABILITY_INITIAL_FRACTION = 0,5` (começam com 50% da recarga).
+| Morrer volta 1 fase e **repete** ela até tocar em "Próxima fase" (modo repetir) | ⬜ | Botão no HUD (canto superior esquerdo). Só pula até uma fase **já alcançada** (`stage < max_stage`), para não furar chefes |
+| Automático ON/OFF **por slot, em cima do ícone**; aba Auto e "todas de uma vez" removidas do menu | ⬜ | Regra do automático aparece na descrição de cada habilidade (aba Habilid.) |
+| Botão "Velocidade 1x/2x" (salvo no progresso) | ⬜ | **Interpretação minha:** `Engine.time_scale = 2` (tudo: anjo, mobs, recargas). Não é só os mobs |
+| Etapa 3 — cenário sombrio (gradiente, lava, vinheta, brasas) com paleta a cada 10 fases | ⬜ | Chefe = tom avermelhado |
+| Etapa 3 — anjo evolui com equipamentos (espada, armadura, botas, luvas por tier) + prévia na aba Equip. | ⬜ | Cores/tamanhos por tier em `AngelDraw` |
+| Etapa 3 — partículas: morte dos inimigos, faíscas do brilho das asas | ⬜ | Limite de 60 efeitos simultâneos |
+| Etapa 3 — demônios por tipo (escudo, cauda sombria, espinhos, coroa do chefe) | ⬜ | Arte provisória feita em código |
+| Etapa 3 — área segura (notch) no HUD | ⬜ | Só em aparelho móvel; **nunca testado em aparelho com notch** |
+| Smoke estendido: morte→repetir, próxima fase, toggle 2x, todos os visuais com `unlock_all` | ⬜ | `repeat=1 next=1 speed=1` exigidos |
+| Testes: `test_progress_controls.gd` | ⬜ | |
 
 ## Rodada 4 — Modo de teste (escrito)
 
@@ -76,7 +81,7 @@ Decisões minhas (revise): invocações não dão ouro/gemas nem contam para lim
 | 7 Equipamentos | lógica testada + menu ⬜ | Preços placeholders |
 | 8 Asas e brilho | lógica testada + menu ⬜ | Prévia das asas no menu |
 | 9 As 10 habilidades | menu executado no CI; efeitos em combate ⬜ (rodada 3) | Efeitos desenhados por código (anéis, raios, espadas, aliados) |
-| 10 Polimento | não iniciado | |
+| 10 Polimento | rodada 6 ⬜ (visuais por código; **sem arte final**) | |
 
 ## Validação manual obrigatória (nenhum CI substitui)
 

@@ -34,6 +34,9 @@ const ALIVE_PER_STAGE := 0.5
 const ALIVE_MAX := 30
 const SPECIAL_SPAWN_CHANCE := 0.1
 
+# --- Modo acelerado (botão de velocidade no HUD) ---
+const FAST_MODE_SCALE := 2.0
+
 # --- Regeneração do anjo ---
 const HP_REGEN_PCT_PER_SEC := 0.015   # % da vida máxima por segundo
 const STAGE_CLEAR_HEAL_PCT := 0.30    # cura ao limpar uma fase

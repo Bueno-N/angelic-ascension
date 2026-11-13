@@ -19,7 +19,7 @@ static func default_state() -> Dictionary:
         "upgrades": ups, "owned_equipment": owned, "equipped": equipped,
         "wings_level": 0, "glow_tier": 0,
         "skills_owned": [], "skills_equipped": [],
-        "settings": {"auto_slots": [true, true, true]},
+        "settings": {"auto_slots": [true, true, true], "speed_2x": false},
     }
 
 static func to_json(state: Dictionary) -> String:
@@ -85,6 +85,7 @@ static func sanitize(raw: Dictionary) -> Dictionary:
 
     if raw.get("settings") is Dictionary:
         var rs: Dictionary = raw["settings"]
+        s["settings"]["speed_2x"] = bool(rs.get("speed_2x", false))
         if rs.get("auto_slots") is Array:
             var arr: Array = []
             for k in range(SkillsDB.MAX_EQUIPPED):

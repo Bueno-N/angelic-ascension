@@ -11,5 +11,7 @@ signal stage_cleared(stage: int, seconds: float)
 signal debug_goto_stage(stage: int)
 signal debug_heal
 signal debug_reset_cooldowns
+signal request_next_stage
+signal repeat_mode_changed(on: bool)
 signal ability_cast(id: String)
 signal boss_defeated(stage: int, gems: int, shards: int)
