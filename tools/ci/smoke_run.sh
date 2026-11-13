@@ -10,4 +10,6 @@ gold=$(grep -o "gold=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${gold:-0}" -le 0 ]; then echo "Nenhum inimigo morreu em 30s (ouro=0): combate/spawn não funcionou"; exit 1; fi
 stage=$(grep -o "stage=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${stage:-1}" -lt 2 ]; then echo "Fase não avançou no smoke (limpeza de fase/spawn com problema)"; exit 1; fi
+casts=$(grep -o "casts=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
+if [ "${casts:-0}" -lt 10 ]; then echo "Habilidades não foram executadas (casts=${casts:-0}, esperado >= 10)"; exit 1; fi
 exit $rc

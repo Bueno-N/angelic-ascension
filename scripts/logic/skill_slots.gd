@@ -11,6 +11,16 @@ func load_from_state(state: Dictionary) -> void:
     for id in equipped:
         cooldowns[id] = 0.0
 
+## Atualiza os slots mantendo as recargas das que continuam equipadas.
+## Habilidade recém-equipada começa com SkillsDB.EQUIP_DELAY de recarga.
+func sync(state: Dictionary) -> void:
+    var new_eq: Array = state["skills_equipped"].duplicate()
+    var new_cd := {}
+    for id in new_eq:
+        new_cd[id] = float(cooldowns[id]) if cooldowns.has(id) else SkillsDB.EQUIP_DELAY
+    equipped = new_eq
+    cooldowns = new_cd
+
 func tick(delta: float) -> void:
     for id in cooldowns.keys():
         cooldowns[id] = maxf(0.0, float(cooldowns[id]) - delta)

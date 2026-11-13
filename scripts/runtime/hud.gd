@@ -54,6 +54,7 @@ func _build_top() -> void:
     _hp_bar = ProgressBar.new()
     _hp_bar.custom_minimum_size = Vector2(260, 26)
     _hp_bar.show_percentage = false
+    _hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
     for n in [_stage, _gold, _gems, _shards, _hp_bar]:
         top.add_child(n)
     _boss_bar = ProgressBar.new()
@@ -63,6 +64,7 @@ func _build_top() -> void:
     _boss_bar.offset_bottom = 76.0
     _boss_bar.show_percentage = false
     _boss_bar.visible = false
+    _boss_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _root.add_child(_boss_bar)
     # Indicador de calibração (para o teste no celular): tempo da última fase e gemas/h da sessão.
     _pace = _label(16)

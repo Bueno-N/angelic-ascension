@@ -20,17 +20,22 @@ Legenda: ✅ executado e passou · ❌ executado e falhou · ⬜ escrito, **nunc
 | `economy_report.gd` | ✅ | Run 1: saída idêntica ao port em Python (modelo compila e calcula igual). Continua sendo projeção, **não mede jogo real** |
 | Smoke run (cena principal, 30 s) | ⬜ | `smoke_run.sh`, novo |
 
-## Alterações da rodada 2 (escritas, ainda NÃO executadas no CI)
+## Rodada 2 (regen, ritmo, menus): CI verde (confirmado pelo usuário)
+
+Testes: 43 testes / 5.774 verificações / 0 falhas (run anterior). Smoke run sem erro de script. Ritmo e menus ainda **não validados em celular**.
+
+## Rodada 3 — Etapa 1: habilidades em combate (escrita, ainda NÃO executada no CI)
 
 | Item | Estado | Observação |
 |---|---|---|
-| Regeneração de vida (1,5%/s da vida máx.) + cura de 30% ao limpar fase | ⬜ | `Balance.HP_REGEN_PCT_PER_SEC`, `STAGE_CLEAR_HEAL_PCT`; testes em `test_stats.gd` |
-| Novo ritmo: ~100 inimigos/fase em fluxo (1/s), simultâneos 4→30 | ⬜ | Fase 1 ≥ ~100 s (limite de spawn). **Nunca medido em jogo real** |
-| BOSS_GEM_GROWTH 1.12 → 1.10; MODEL_STAGES_PER_HOUR 30 → 32 | ⬜ | Projeção (Python): 1ª habilidade ~1,5 h, suprema ~103 dias a 3 h/dia. Gemas/h inicial no modelo: **~75** (≈35% vem dos drops de mobs). Acima da referência de 15–25: foi o pedido de "um pouco mais elevado", mas é ~3x, não ~2x |
-| Menus: Atributos, Equipamentos, Asas+Brilho, Habilidades | ⬜ | Compra/equipar/remover funcionam via lógica já testada; layout/rolagem por toque **não validados** |
-| `UiLogic` (estados, metas, bônus totais, formatação) + 8 testes | ⬜ | `tests/test_ui_logic.gd` |
-| HUD de calibração: "Última fase: X s \| Gemas/h (sessão)" | ⬜ | Serve para medir o ritmo real no celular |
-| Smoke run: agora exige avançar de fase (fase 1 com 3 inimigos só no modo --smoke) | ⬜ | Exercita limpeza de fase + cura |
+| 10 habilidades com efeito em combate (`skill_caster.gd`) | ⬜ | Parâmetros (raios, contagens, durações) em `data/skills_db.gd` |
+| Buffs temporários (`BuffState`), brilho escala cura/escudo/buffs | ⬜ | Testes em `test_skill_runtime.gd` |
+| Auto-cast com regras por habilidade (`AutoCast`) + botão AUTO | ⬜ | Regras simples; precisam de teste de sensação no celular |
+| 3 botões com recarga visual (`SkillBar`) | ⬜ | Layout/tamanho do toque não validados |
+| Joystick multitoque (ScreenTouch/Drag) | ⬜ | `emulate_touch_from_mouse=true` para teste no desktop. **Risco: comportamento real de 2 dedos só no celular** |
+| Smoke run: executa as 10 habilidades (`debug_cast_all`) + auto-cast, exige casts >= 10 | ⬜ | Cobre o código, não a sensação nem os visuais |
+
+Decisões de design que eu tomei (revise): Apocalipse Sagrado limita dano em chefes a 25% da vida máx. por uso (garante "sem execução"); Morte do Inferno dobra ataque/armadura/velocidades/aura, mas **não** a vida máxima; Exército dos Arcanjos: 2000% por golpe, cada guerreiro golpeia a cada 2 s (ambiguidade do design); Escudo limitado a 90% de absorção mesmo com brilho alto; habilidade recém-equipada começa com 2 s de recarga.
 
 ## Implementado (código escrito) × planejado
 
@@ -45,7 +50,7 @@ Legenda: ✅ executado e passou · ❌ executado e falhou · ⬜ escrito, **nunc
 | 6 Gemas e drops | lógica testada no CI | |
 | 7 Equipamentos | lógica testada + menu ⬜ | Preços placeholders |
 | 8 Asas e brilho | lógica testada + menu ⬜ | Prévia das asas no menu |
-| 9 As 10 habilidades | dados + lógica de slots + menu de compra/equipar ⬜ | **Sem efeitos, animações, botões nem auto-cast em combate** |
+| 9 As 10 habilidades | menu executado no CI; efeitos em combate ⬜ (rodada 3) | Efeitos desenhados por código (anéis, raios, espadas, aliados) |
 | 10 Polimento | não iniciado | |
 
 ## Validação manual obrigatória (nenhum CI substitui)

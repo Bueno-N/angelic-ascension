@@ -1,11 +1,12 @@
 class_name VirtualJoystick
 extends Control
-## Joystick flutuante: aparece onde o dedo toca (metade esquerda da tela).
-## Limitação conhecida: 1 toque por vez (multitoque para habilidades virá na etapa 9).
+## Joystick flutuante (metade esquerda da tela). Usa InputEventScreenTouch/Drag com índice do dedo,
+## então funciona junto com os botões de habilidade (multitoque). No desktop, o mouse vira toque
+## (project.godot: emulate_touch_from_mouse).
 
 const RADIUS := 90.0
 var output := Vector2.ZERO
-var _active := false
+var _index := -1
 var _center := Vector2.ZERO
 
 func _ready() -> void:
@@ -20,17 +21,23 @@ func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _gui_input(event: InputEvent) -> void:
-    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-        _active = event.pressed
-        _center = event.position
-        output = Vector2.ZERO
-        queue_redraw()
-    elif event is InputEventMouseMotion and _active:
+    if event is InputEventScreenTouch:
+        if event.pressed and _index == -1:
+            _index = event.index
+            _center = event.position
+            output = Vector2.ZERO
+            queue_redraw()
+            accept_event()
+        elif not event.pressed and event.index == _index:
+            _index = -1
+            output = Vector2.ZERO
+            queue_redraw()
+    elif event is InputEventScreenDrag and event.index == _index:
         output = ((event.position - _center) / RADIUS).limit_length(1.0)
         queue_redraw()
 
 func _draw() -> void:
-    if not _active:
+    if _index == -1:
         return
     draw_circle(_center, RADIUS, Color(1, 1, 1, 0.08))
     draw_arc(_center, RADIUS, 0.0, TAU, 32, Color(1, 1, 1, 0.35), 2.0)

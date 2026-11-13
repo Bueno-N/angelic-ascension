@@ -64,6 +64,11 @@ func unequip_skill(id: String) -> bool:
 func session_gems_per_hour() -> float:
     return UiLogic.gems_per_hour(session_gems, float(Time.get_ticks_msec() - session_start_msec) / 1000.0)
 
+func toggle_auto_skills() -> void:
+    state["settings"]["auto_skills"] = not bool(state["settings"].get("auto_skills", true))
+    save()
+    Events.state_changed.emit()
+
 func set_stage(stage: int) -> void:
     state["stage"] = stage
     state["max_stage"] = maxi(int(state["max_stage"]), stage)

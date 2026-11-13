@@ -10,6 +10,7 @@ const SUITES := [
     "res://tests/test_save.gd",
     "res://tests/test_drops.gd",
     "res://tests/test_ui_logic.gd",
+    "res://tests/test_skill_runtime.gd",
 ]
 
 func _initialize() -> void:
