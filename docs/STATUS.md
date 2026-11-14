@@ -50,6 +50,15 @@ Log do usuário: smoke `stage=12 cleared=2 repeat=1 next=1 speed=1` (morrer→re
 Testes: 89 testes / 8.136 verificações, mas com **2 SCRIPT ERROR** (`bool("x")` no `sanitize` do save). Corrigido com conversores seguros (`SaveData.as_int/as_bool`) + teste com lixo em todos os campos. Aguardando novo run.
 Obs.: "0 falhas" no resumo **não** inclui erros de script; o CI os detecta lendo o log.
 
+## Rodada 8 (escrita, ainda NÃO executada no CI)
+
+| Item | Estado | Observação |
+|---|---|---|
+| Etapa 5: menos redesenhos (inimigos, anjo, barra de habilidades a 20 fps), auto-cast 5x/s, teto de efeitos, FPS máx. 60 | ⬜ | **Sem medição de FPS/bateria**: são otimizações por inspeção do código. O ganho real só o celular mostra |
+| Botão "Efeitos: Alto/Baixo" (sem brasas, faíscas e explosões; só chefes explodem) | ⬜ | Salvo no progresso; smoke exige `fx=1` |
+| Etapa 6 (preparação): preset "Android Release", `release.yml`, `build_release.sh`, `docs/RELEASE.md` | ⬜ **nunca executado** | Precisa da sua chave (secrets). Valida assinatura com `apksigner`; desliga `DEBUG_TOOLS`; roda testes e smoke antes |
+| Testes: `test_performance.gd` | ⬜ | |
+
 ## Rodada 6 (escrita)
 
 | Item | Estado | Observação |

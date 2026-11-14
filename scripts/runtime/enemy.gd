@@ -25,6 +25,7 @@ var _cast_t := 0.0
 var _cast_dir := Vector2.ZERO
 var _dash_t := 0.0
 var _dash_hit := false
+var _pulse_t := 0.0
 
 func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = false) -> void:
     player = target
@@ -67,6 +68,7 @@ func take_damage(amount: float) -> void:
         return
     hp -= amount
     _hit = 0.08
+    queue_redraw()
     if is_boss:
         Events.boss_hp_changed.emit(maxf(hp, 0.0), max_hp)
     if hp <= 0.0:
@@ -76,6 +78,19 @@ func take_damage(amount: float) -> void:
 func _process(delta: float) -> void:
     if player == null or not is_instance_valid(player):
         return
+    var was_hit: bool = _hit > 0.0
+    _think(delta)
+    # Mover o nó não exige redesenhar. Só redesenha: piscada, aviso de habilidade, pulso de chefe/especial.
+    var animated: bool = _cast_id != "" or _dash_t > 0.0
+    _pulse_t -= delta
+    if is_boss or str(def.get("kind", "")) == "special":
+        if _pulse_t <= 0.0:
+            _pulse_t = 0.066
+            animated = true
+    if animated or (was_hit and _hit <= 0.0):
+        queue_redraw()
+
+func _think(delta: float) -> void:
     _hit = maxf(0.0, _hit - delta)
     abilities.tick(delta)
     var to := player.global_position - global_position
@@ -83,19 +98,16 @@ func _process(delta: float) -> void:
 
     if _dash_t > 0.0:
         _process_dash(delta)
-        queue_redraw()
         return
     if _cast_id != "":
         _cast_t -= delta
         if _cast_t <= 0.0:
             _execute_ability()
-        queue_redraw()
         return
     if not abilities.is_empty():
         var nid := abilities.next_ready(EnemiesDB.ABILITIES, dist)
         if nid != "" and _can_start(nid):
             _start_cast(nid, to)
-            queue_redraw()
             return
 
     var hold: float = radius + 18.0
@@ -108,7 +120,6 @@ func _process(delta: float) -> void:
         if _atk_cd <= 0.0:
             player.take_damage(dmg)
             _atk_cd = 1.0
-    queue_redraw()
 
 func _can_start(id: String) -> bool:
     if id == "summon_demons":
@@ -145,6 +156,7 @@ func _execute_ability() -> void:
             if player.global_position.distance_to(global_position) <= float(cfg["max_range"]) + 40.0:
                 player.take_damage(amount)
                 hp = minf(max_hp, hp + amount * float(cfg["heal_pct"]))
+                queue_redraw()
                 var beam := Fx.make("beam", global_position, 0.3, 0.0, Color(0.3, 1.0, 0.7))
                 beam.to = player.global_position - global_position
                 get_parent().add_child(beam)

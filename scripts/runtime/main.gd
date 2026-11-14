@@ -18,6 +18,7 @@ var _ability_kinds := {}
 var _repeat_ok := false
 var _next_ok := false
 var _speed_ok := false
+var _fx_ok := false
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -46,6 +47,7 @@ func _ready() -> void:
     add_child(stage_mgr)
     stage_mgr.setup(player, enemies)
     Events.player_died.connect(_on_player_died)
+    Events.state_changed.connect(_apply_fx)
     Events.stage_changed.connect(backdrop.set_stage)
     Events.enemy_died.connect(_on_enemy_died_fx)
     Events.request_next_stage.connect(func(): stage_mgr.request_next())
@@ -53,10 +55,14 @@ func _ready() -> void:
     Events.debug_heal.connect(func(): player.heal(player.max_hp))
     Events.debug_reset_cooldowns.connect(func(): caster.slots.reset_cooldowns())
     stage_mgr.start_stage(int(GameState.state["stage"]))
+    _apply_fx()
     if _smoke:
         Events.stage_cleared.connect(func(_s: int, _t: float): _cleared += 1)
         Events.ability_cast.connect(_on_ability_cast)
         _prepare_smoke()
+
+func _apply_fx() -> void:
+    backdrop.set_fx(UiLogic.fx_enabled(GameState.state["settings"]))
 
 ## Derrota: volta UMA fase e fica repetindo ela (modo repetir) até o jogador tocar em "Próxima fase".
 func _on_player_died() -> void:
@@ -68,8 +74,11 @@ func _on_player_died() -> void:
 
 ## Explosão de partículas ao derrotar um inimigo (limitada para poupar aparelhos intermediários).
 func _on_enemy_died_fx(pos: Vector2, def: Dictionary, is_boss: bool, _gold: int) -> void:
-    if fx_layer.get_child_count() > 60:
+    var settings: Dictionary = GameState.state["settings"]
+    if fx_layer.get_child_count() > UiLogic.fx_cap(settings):
         return
+    if not UiLogic.fx_enabled(settings) and not is_boss:
+        return   # "Efeitos: Baixo" só mantém a explosão dos chefes
     var p := CPUParticles2D.new()
     p.position = pos
     p.one_shot = true
@@ -133,11 +142,17 @@ func _process(_delta: float) -> void:
         2880:
             GameState.toggle_speed()
             _speed_ok = _speed_ok and is_equal_approx(Engine.time_scale, 1.0)
-    if _frames >= 2900:
+        2890:
+            GameState.toggle_low_fx()
+            _fx_ok = not UiLogic.fx_enabled(GameState.state["settings"])
+        2910:
+            GameState.toggle_low_fx()
+            _fx_ok = _fx_ok and UiLogic.fx_enabled(GameState.state["settings"])
+    if _frames >= 2940:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
-            _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok)])
+            _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok)])
         get_tree().quit(0)

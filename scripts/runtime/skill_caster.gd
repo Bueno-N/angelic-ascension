@@ -6,6 +6,7 @@ var player: Player
 var fx_layer: Node2D
 var slots := SkillSlots.new()
 var casts := 0
+var _auto_t := 0.0
 
 func setup(p: Player, layer: Node2D) -> void:
     player = p
@@ -26,6 +27,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
     slots.tick(delta)
+    _auto_t -= delta
+    if _auto_t > 0.0:
+        return
+    _auto_t = Balance.AUTO_CHECK_INTERVAL
     if AutoCast.auto_count(GameState.state["settings"]) == 0:
         return
     var ctx := _context()
@@ -103,6 +108,9 @@ func _heal(id: String, glow: float) -> void:
 
 # ---------------- efeitos visuais ----------------
 func _fx(f: Fx) -> void:
+    if fx_layer.get_child_count() > UiLogic.fx_cap(GameState.state["settings"]):
+        f.free()   # teto de efeitos (poupa aparelhos intermediários)
+        return
     fx_layer.add_child(f)
 
 func _ring(pos: Vector2, r: float, col: Color) -> void:

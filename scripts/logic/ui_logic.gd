@@ -81,6 +81,13 @@ static func total_bonus_text(state: Dictionary) -> String:
         return "Nenhum bônus percentual ativo"
     return ", ".join(parts)
 
+## "Efeitos: Alto/Baixo" (Baixo: sem brasas, faíscas nem explosões de partículas; teto de efeitos menor).
+static func fx_enabled(settings: Dictionary) -> bool:
+    return not SaveData.as_bool(settings.get("low_fx", false), false)
+
+static func fx_cap(settings: Dictionary) -> int:
+    return Balance.FX_CAP_NORMAL if fx_enabled(settings) else Balance.FX_CAP_LOW
+
 static func time_scale(settings: Dictionary) -> float:
     return Balance.FAST_MODE_SCALE if SaveData.as_bool(settings.get("speed_2x", false), false) else 1.0
 

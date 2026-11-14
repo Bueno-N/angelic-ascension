@@ -13,6 +13,7 @@ var _boss_bar: ProgressBar
 var _menu: MenuPanel
 var _next_btn: Button
 var _speed_btn: Button
+var _fx_btn: Button
 var _repeat := false
 var _last_stage_secs := 0.0
 var _pace_timer := 0.0
@@ -96,19 +97,27 @@ func _build_stage_buttons() -> void:
     _next_btn = Button.new()
     _next_btn.add_theme_font_size_override("font_size", 22)
     _next_btn.offset_left = 16.0
-    _next_btn.offset_top = 72.0
+    _next_btn.offset_top = 80.0
     _next_btn.offset_right = 256.0
-    _next_btn.offset_bottom = 124.0
+    _next_btn.offset_bottom = 132.0
     _next_btn.pressed.connect(func(): Events.request_next_stage.emit())
     _root.add_child(_next_btn)
     _speed_btn = Button.new()
     _speed_btn.add_theme_font_size_override("font_size", 22)
     _speed_btn.offset_left = 268.0
-    _speed_btn.offset_top = 72.0
+    _speed_btn.offset_top = 80.0
     _speed_btn.offset_right = 448.0
-    _speed_btn.offset_bottom = 124.0
+    _speed_btn.offset_bottom = 132.0
     _speed_btn.pressed.connect(func(): GameState.toggle_speed())
     _root.add_child(_speed_btn)
+    _fx_btn = Button.new()
+    _fx_btn.add_theme_font_size_override("font_size", 22)
+    _fx_btn.offset_left = 460.0
+    _fx_btn.offset_top = 80.0
+    _fx_btn.offset_right = 650.0
+    _fx_btn.offset_bottom = 132.0
+    _fx_btn.pressed.connect(func(): GameState.toggle_low_fx())
+    _root.add_child(_fx_btn)
 
 func _build_menu() -> void:
     _menu = MenuPanel.new()
@@ -145,6 +154,7 @@ func _refresh() -> void:
     _next_btn.text = "Próxima fase (%d)" % (stg + 1)
     _next_btn.disabled = not StageLogic.can_skip_to_next(stg, int(s["max_stage"]))
     _speed_btn.text = "Velocidade %dx" % int(UiLogic.time_scale(s["settings"]))
+    _fx_btn.text = "Efeitos: Alto" if UiLogic.fx_enabled(s["settings"]) else "Efeitos: Baixo"
 
 func _on_hp(hp: float, max_hp: float) -> void:
     _hp_bar.max_value = max_hp

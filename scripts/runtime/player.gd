@@ -13,6 +13,7 @@ var _flash_target := Vector2.ZERO
 var _hp_emit := 0.0
 var _sparks: CPUParticles2D
 var _sparks_tier := -1
+var _last_vis := -1
 
 func _ready() -> void:
     add_to_group("player")
@@ -36,6 +37,7 @@ func refresh_stats(full_heal: bool) -> void:
 func _on_state_changed() -> void:
     refresh_stats(false)
     _update_sparks()
+    queue_redraw()
 
 ## Partículas celestiais ao redor do anjo: surgem ao comprar o brilho das asas e aumentam com o tier.
 func _setup_sparks() -> void:
@@ -60,10 +62,12 @@ func _setup_sparks() -> void:
 
 func _update_sparks() -> void:
     var tier: int = int(GameState.state["glow_tier"])
-    if tier == _sparks_tier:
+    var fx: bool = UiLogic.fx_enabled(GameState.state["settings"])
+    var key: int = tier * 2 + (1 if fx else 0)
+    if key == _sparks_tier:
         return
-    _sparks_tier = tier
-    _sparks.emitting = tier > 0
+    _sparks_tier = key
+    _sparks.emitting = tier > 0 and fx
     if tier > 0:
         _sparks.amount = 6 + 6 * tier
 
@@ -115,7 +119,11 @@ func _process(delta: float) -> void:
                 e.take_damage(tick)
 
     _flash = maxf(0.0, _flash - delta)
-    queue_redraw()
+    # Só redesenha quando há algo animado (disparo, escudo, fúria) ou quando isso acabou de terminar.
+    var vis: int = (1 if _flash > 0.0 else 0) | (2 if buffs.absorb() > 0.0 else 0) | (4 if buffs.multiplier("attack") > 1.4 else 0)
+    if vis != 0 or vis != _last_vis:
+        queue_redraw()
+    _last_vis = vis
 
 func _nearest_enemy(max_dist: float) -> Node2D:
     var best: Node2D = null

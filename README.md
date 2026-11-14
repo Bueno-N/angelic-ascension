@@ -42,3 +42,6 @@ Depois abra a aba **Actions** do repositório.
 O menu ganha a aba **Teste** (dar ouro/gemas/fragmentos, pular de fase, curar, zerar recargas, desbloquear tudo, resetar progresso)
 e o HUD mostra `[TESTE]`. Isso existe só quando `Balance.DEBUG_TOOLS = true` **e** o build é de debug (`OS.is_debug_build()`).
 **Antes do APK final:** coloque `DEBUG_TOOLS := false` em `data/balance.gd` (e exporte em release). Há um teste que verifica a coerência da flag.
+
+## Versão final (release)
+Veja `docs/RELEASE.md`: chave de assinatura própria em secrets + workflow manual "Gerar APK de release".

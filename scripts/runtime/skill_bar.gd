@@ -14,6 +14,7 @@ const RARITY_COLORS := {
     "Divina": Color(1.0, 0.9, 0.4), "Suprema": Color(1.0, 0.75, 0.9),
 }
 var caster: SkillCaster
+var _t := 0.0
 
 func _ready() -> void:
     anchor_left = 1.0
@@ -26,8 +27,11 @@ func _ready() -> void:
     offset_top = -16.0 - (TOGGLE_H + TOGGLE_GAP + BTN)
     mouse_filter = Control.MOUSE_FILTER_STOP
 
-func _process(_delta: float) -> void:
-    queue_redraw()
+func _process(delta: float) -> void:
+    _t -= delta
+    if _t <= 0.0:
+        _t = Balance.UI_REDRAW_INTERVAL
+        queue_redraw()
 
 func _slot_x(i: int) -> float:
     return GAP + float(i) * (BTN + GAP)

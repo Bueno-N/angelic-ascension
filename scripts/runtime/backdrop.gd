@@ -47,6 +47,11 @@ func _ready() -> void:
     add_child(_embers)
     queue_redraw()
 
+func set_fx(on: bool) -> void:
+    if _embers != null:
+        _embers.emitting = on
+        _embers.visible = on
+
 func set_stage(s: int) -> void:
     if s != _stage:
         _stage = s

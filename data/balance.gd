@@ -34,6 +34,13 @@ const ALIVE_PER_STAGE := 0.5
 const ALIVE_MAX := 30
 const SPECIAL_SPAWN_CHANCE := 0.1
 
+# --- Desempenho e bateria ---
+const MAX_FPS := 60                  # evita gastar bateria em telas de 90/120 Hz
+const AUTO_CHECK_INTERVAL := 0.2     # auto-cast avaliado 5x por segundo (não a cada frame)
+const FX_CAP_NORMAL := 80            # máx. de efeitos/partículas simultâneos
+const FX_CAP_LOW := 20               # idem no modo "Efeitos: Baixo"
+const UI_REDRAW_INTERVAL := 0.05     # a barra de habilidades redesenha a 20 fps
+
 # --- Modo acelerado (botão de velocidade no HUD) ---
 const FAST_MODE_SCALE := 2.0
 

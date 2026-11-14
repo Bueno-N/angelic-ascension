@@ -13,6 +13,8 @@ func _ready() -> void:
     state = SaveManager.load_state()
     stats = StatsCalc.compute(state)
     apply_speed()
+    if not OS.get_cmdline_user_args().has("--smoke"):
+        Engine.max_fps = Balance.MAX_FPS
     Events.enemy_died.connect(_on_enemy_died)
     var t := Timer.new()
     t.wait_time = Balance.AUTOSAVE_SECONDS
@@ -71,6 +73,11 @@ func toggle_slot_auto(i: int) -> void:
     if Shop.toggle_slot_auto(state, i):
         save()
         Events.state_changed.emit()
+
+func toggle_low_fx() -> void:
+    state["settings"]["low_fx"] = not bool(state["settings"].get("low_fx", false))
+    save()
+    Events.state_changed.emit()
 
 func apply_speed() -> void:
     Engine.time_scale = UiLogic.time_scale(state["settings"])
