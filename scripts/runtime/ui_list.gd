@@ -29,6 +29,12 @@ func scroll_to_top() -> void:
     _scroll = 0.0
     queue_redraw()
 
+## Rola até a linha `i` (ex.: fase atual na aba Fases), deixando um pouco de contexto acima.
+func scroll_to_row(i: int) -> void:
+    if i >= 0 and i < _layout.size():
+        _scroll = clampf(float(_layout[i]["y"]) - 90.0, 0.0, _max_scroll())
+        queue_redraw()
+
 func _max_scroll() -> float:
     return maxf(0.0, _content_h - size.y)
 

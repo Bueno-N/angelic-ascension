@@ -26,7 +26,7 @@ func setup(p: Player, c: Node2D) -> void:
     Events.enemy_died.connect(_on_enemy_died)
 
 func start_stage(s: int) -> void:
-    stage = maxi(1, s)
+    stage = StageLogic.clamp_stage(s)
     GameState.set_stage(stage)
     for e in container.get_children():
         e.queue_free()
@@ -61,6 +61,14 @@ func request_next() -> void:
     set_repeat(false)
     start_stage(stage + 1)
 
+## Escolhida no menu "Fases": vai para um andar JÁ alcançado e FICA nele (repete). No recorde, segue a progressão normal.
+func goto_stage(target: int) -> void:
+    var mx: int = int(GameState.state["max_stage"])
+    if not StageLogic.can_enter(stage, mx, target):
+        return
+    set_repeat(target < mx)
+    start_stage(target)
+
 func _on_enemy_died(_pos: Vector2, d: Dictionary, _boss: bool, _gold: int) -> void:
     if d.get("summon", false):
         return   # invocações não contam para a limpeza da fase
@@ -90,7 +98,7 @@ func _process(delta: float) -> void:
         _advancing = true
         Events.stage_cleared.emit(stage, _stage_time)
         player.heal(StatsCalc.stage_clear_heal(player.max_hp))
-        start_stage(stage if repeat_mode else stage + 1)
+        start_stage(stage if repeat_mode else StageLogic.stage_after_clear(stage))
 
 func _spawn_mini() -> void:
     var md := EnemiesDB.mini_for(stage)

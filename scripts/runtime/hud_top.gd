@@ -17,6 +17,8 @@ var last_stage_secs := 0.0
 var banner_t := 0.0
 var banner_title := ""
 var banner_sub := ""
+var banner_tone := "boss"      # "boss" (vermelho) | "stage" (dourado)
+var _banner_len := 3.0
 var _pace_t := 0.0
 
 func _ready() -> void:
@@ -24,10 +26,12 @@ func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-func show_banner(title: String, sub: String) -> void:
+func show_banner(title: String, sub: String, tone: String = "boss") -> void:
     banner_title = title
     banner_sub = sub
-    banner_t = 3.0
+    banner_tone = tone
+    _banner_len = 3.0 if tone == "boss" else 2.2
+    banner_t = _banner_len
     queue_redraw()
 
 func _process(delta: float) -> void:
@@ -107,14 +111,16 @@ func _draw() -> void:
         var br: float = clampf(boss_hp / boss_max, 0.0, 1.0)
         draw_rect(Rect2(bx0, 80.0, bw2 * br, 22.0), Color(0.55, 0.08, 0.1))
         draw_rect(Rect2(bx0, 80.0, bw2 * br, 11.0), Color(0.9, 0.2, 0.18))
-    # ---- banner de AVISO DE CHEFE ----
+    # ---- banner de AVISO (chefe = vermelho; nova fase = dourado) ----
     if banner_t > 0.0:
         var a: float = clampf(banner_t / 0.6, 0.0, 1.0)
         var pulse: float = 0.5 + 0.5 * sin(banner_t * 14.0)
         var y: float = size.y * 0.22
+        var is_boss_banner: bool = banner_tone == "boss"
+        var bar_col: Color = Color(1.0, 0.25, 0.15, a) if is_boss_banner else Color(UiTheme.GOLD, a)
         draw_rect(Rect2(0.0, y - 24.0, w, 132.0), Color(0, 0, 0, 0.5 * a))
-        draw_rect(Rect2(0.0, y - 24.0, w, 4.0), Color(1.0, 0.25, 0.15, a))
-        draw_rect(Rect2(0.0, y + 104.0, w, 4.0), Color(1.0, 0.25, 0.15, a))
-        var col := Color(1.0, 0.22 + 0.3 * pulse, 0.15, a)
+        draw_rect(Rect2(0.0, y - 24.0, w, 4.0), bar_col)
+        draw_rect(Rect2(0.0, y + 104.0, w, 4.0), bar_col)
+        var col: Color = Color(1.0, 0.22 + 0.3 * pulse, 0.15, a) if is_boss_banner else Color(1.0, 0.92, 0.6, a)
         PixelFont.draw(self, Vector2((w - float(PixelFont.width(banner_title, 5))) / 2.0, y), banner_title, 5, col)
         PixelFont.draw(self, Vector2((w - float(PixelFont.width(banner_sub, 3))) / 2.0, y + 58.0), banner_sub, 3, Color(1.0, 0.9, 0.7, a))

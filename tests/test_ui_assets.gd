@@ -9,7 +9,9 @@ const FIXED_TEXTS := ["PRÓX. FASE 12", "VELOC. 2X", "EFEITOS: ALTO", "EFEITOS: 
     "Máximo de 2 jogos salvos por conta", "Escolha um espaço", "ESPAÇO 1", "Vazio", "APAGAR", "CONFIRMAR", "SOBRESCREVER", "ESCOLHER", "CONTINUAR",
     "COMEÇAR", "NOME DO SEU ANJO", "Seu nome", "Escolha um nome (até 14 letras). Dá para mudar depois no perfil.", "Espaço 1",
     "Toque em CONFIRMAR para substituir este jogo ao começar um novo", "Toque em CONFIRMAR para apagar este jogo salvo",
-    "Nenhum jogo salvo", "Fase 12  (recorde 15)", "Asas Nv 3  |  Habilidades 2", "Menu inicial", "Chuva de meteoros", "Sopro flamejante", "Passo sombrio", "Orbes de almas"]
+    "Nenhum jogo salvo", "Fase 12  (recorde 15)", "Asas Nv 3  |  Habilidades 2", "Menu inicial", "Chuva de meteoros", "Sopro flamejante", "Passo sombrio", "Orbes de almas",
+    "VOCÊ CAIU", "Toque na tela para voltar à fase 11", "FASE 12", "Dificuldade: Fácil", "Dificuldade: Pesadelo", "Dificuldade: Abismal", "Fases",
+    "Fase 12  (Chefe)", "Ouro 1,23K  |  Gemas 0,25", "ATUAL", "IR", "BLOQUEADO"]
 const FIXED_ICONS := ["coin", "gem", "shard", "menu", "close", "back", "speed", "fx", "next", "user", "skills", "wings", "armor", "gear", "speaker"]
 
 func _font_image() -> Image:

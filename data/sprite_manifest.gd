@@ -560,11 +560,11 @@ const DATA := {
  "ui_icons": {
   "fw": 24,
   "fh": 24,
-  "frames": 23,
+  "frames": 24,
   "anims": {
    "idle": {
     "start": 0,
-    "count": 23,
+    "count": 24,
     "fps": 1,
     "loop": true
    }
@@ -585,7 +585,7 @@ const DATA := {
  }
 }
 
-const ICON_NAMES := ["sword", "heart", "shield", "boot", "bolt", "aura", "coin", "gem", "shard", "skills", "wings", "armor", "glove", "menu", "user", "glow", "close", "back", "speed", "fx", "next", "gear", "speaker"]
+const ICON_NAMES := ["sword", "heart", "shield", "boot", "bolt", "aura", "coin", "gem", "shard", "skills", "wings", "armor", "glove", "menu", "user", "glow", "close", "back", "speed", "fx", "next", "gear", "speaker", "stages"]
 const AVATAR_COUNT := 8
 const FONT_CHARS := " !\"#%&'()*+,-./0123456789:;<=>?[]_|ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\u00e1\u00e0\u00e2\u00e3\u00e4\u00e9\u00e8\u00ea\u00eb\u00ed\u00ec\u00ee\u00ef\u00f3\u00f2\u00f4\u00f5\u00f6\u00fa\u00f9\u00fb\u00fc\u00c1\u00c0\u00c2\u00c3\u00c4\u00c9\u00c8\u00ca\u00cb\u00cd\u00cc\u00ce\u00cf\u00d3\u00d2\u00d4\u00d5\u00d6\u00da\u00d9\u00db\u00dc\u00e7\u00c7\u00f1\u00d1"
 const FONT_ADV := [4, 4, 5, 6, 6, 6, 4, 5, 5, 6, 6, 4, 6, 4, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 4, 4, 6, 6, 5, 6, 5, 5, 6, 4, 6, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]

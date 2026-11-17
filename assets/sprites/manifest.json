@@ -556,11 +556,11 @@
  "ui_icons": {
   "fw": 24,
   "fh": 24,
-  "frames": 23,
+  "frames": 24,
   "anims": {
    "idle": {
     "start": 0,
-    "count": 23,
+    "count": 24,
     "fps": 1,
     "loop": true
    }

@@ -11,6 +11,7 @@ signal stage_cleared(stage: int, seconds: float)
 signal debug_goto_stage(stage: int)
 signal debug_heal
 signal debug_reset_cooldowns
+signal goto_stage_requested(stage: int)   # menu "Fases": ir para um andar já alcançado
 signal request_next_stage
 signal repeat_mode_changed(on: bool)
 signal stage_progress(killed: int, total: int, label: String)

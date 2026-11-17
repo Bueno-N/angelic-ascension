@@ -1,6 +1,6 @@
 class_name MenuPanel
 extends Control
-## Menu em duas etapas: 1) grade de ícones (Atributos, Habilidades, Asas, Equipamentos [+ Teste]);
+## Menu em duas etapas: 1) grade de ícones (Atributos, Habilidades, Asas, Equipamentos, Fases, Opções [+ Teste]);
 ## 2) ao tocar num ícone, abre a lista daquela aba para comprar/evoluir. Tudo por toque próprio (multitoque):
 ## dá para andar com o anjo (joystick) e fazer upgrades ao mesmo tempo.
 
@@ -86,6 +86,8 @@ func _open_tab(id: String) -> void:
     _list.scroll_to_top()
     _rebuild()
     _apply_layout()
+    if id == "stages":
+        _list.scroll_to_row(MenuModel.stage_row_index(int(GameState.state["stage"])))   # abre já na fase atual
 
 func _apply_layout() -> void:
     if _list == null:
@@ -98,13 +100,14 @@ func _apply_layout() -> void:
     _back.visible = not grid
     _back.position = Vector2(12.0, 12.0)
     _back.size = Vector2(170.0, 50.0)
-    var rows: int = ceili(float(_tiles.size()) / 2.0)
+    var cols := 3
+    var rows: int = ceili(float(_tiles.size()) / float(cols))
     var gap := 14.0
-    var tw: float = (w - 28.0 - gap) / 2.0
+    var tw: float = (w - 28.0 - gap * float(cols - 1)) / float(cols)
     var th: float = minf(150.0, (h - HEAD - 20.0 - gap * float(rows - 1)) / float(rows))
     for i in range(_tiles.size()):
         _tiles[i].visible = grid
-        _tiles[i].position = Vector2(14.0 + float(i % 2) * (tw + gap), HEAD + 10.0 + float(floori(float(i) / 2.0)) * (th + gap))
+        _tiles[i].position = Vector2(14.0 + float(i % cols) * (tw + gap), HEAD + 10.0 + float(floori(float(i) / float(cols))) * (th + gap))
         _tiles[i].size = Vector2(tw, th)
     var preview: bool = (not grid) and MenuModel.tab_has_preview(_mode)
     var top: float = HEAD + (PREVIEW_H if preview else 0.0)
@@ -136,6 +139,9 @@ func _on_action(id: String) -> void:
         return
     _reset_armed = false
     GameState.menu_action(id)
+    if id.begins_with("stage_go|"):
+        close()   # escolheu a fase: fecha o menu para jogar
+        return
     _last_rows = []
     _rebuild()
     queue_redraw()

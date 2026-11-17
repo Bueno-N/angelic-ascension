@@ -16,6 +16,30 @@ static func fmt_int(n: int) -> String:
             out = "." + out
     return ("-" if n < 0 else "") + out
 
+## Número curto para projeções: 0,37 | 12,5 | 340 | 1,23K | 4,5M ... (só caracteres da fonte pixel).
+static func fmt_short(v: float) -> String:
+    var a: float = absf(v)
+    var units := ["", "K", "M", "B", "T", "Q"]
+    var idx := 0
+    while a >= 1000.0 and idx < units.size() - 1:
+        a /= 1000.0
+        idx += 1
+    var s: String
+    if a < 10.0:
+        s = "%.2f" % a
+    elif a < 100.0:
+        s = "%.1f" % a
+    else:
+        s = "%.0f" % a
+    if s.contains("."):
+        s = s.rstrip("0").rstrip(".")
+    return ("-" if v < 0.0 else "") + s.replace(".", ",") + str(units[idx])
+
+## Multiplicador com vírgula: 1,5
+static func fmt_mult(x: float) -> String:
+    var s: String = ("%.2f" % x).rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
 static func pct(x: float) -> String:
     return "%d%%" % int(round(x * 100.0))
 

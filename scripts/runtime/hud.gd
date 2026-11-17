@@ -12,6 +12,8 @@ var _speed_btn: UiButton
 var _menu_btn: UiButton
 var _menu: MenuPanel
 var _profile: ProfilePanel
+var _death: DeathOverlay
+signal death_dismissed
 var _smoke := false
 var pause_checks := 0      # smoke: quantas vezes o jogo entrou em pausa ao abrir o perfil
 var pause_errors := 0      # smoke: divergências entre "perfil aberto" e "jogo pausado"
@@ -51,11 +53,14 @@ func _ready() -> void:
     _root.add_child(_menu_btn)
     _profile = ProfilePanel.new()
     _root.add_child(_profile)
+    _death = DeathOverlay.new()      # por cima de tudo
+    _root.add_child(_death)
+    _death.dismissed.connect(_on_death_dismissed)
     _profile.visibility_changed.connect(_update_pause)
     _apply_safe_area()
     get_viewport().size_changed.connect(_apply_safe_area)
     Events.state_changed.connect(_refresh)
-    Events.stage_changed.connect(func(_s: int): _refresh())
+    Events.stage_changed.connect(_on_stage_changed)
     Events.player_hp_changed.connect(func(h: float, m: float): _top.hp = h; _top.max_hp = m; _top.queue_redraw())
     Events.boss_hp_changed.connect(func(h: float, m: float): _top.boss_hp = h; _top.boss_max = m; _top.queue_redraw())
     Events.stage_progress.connect(func(k: int, t: int, l: String): _top.killed = k; _top.total = t; _top.label = l; _top.queue_redraw())
@@ -98,12 +103,12 @@ func _make_button(t: String, ic: String, r: Rect2, cb: Callable) -> UiButton:
 func _process(_delta: float) -> void:
     if _smoke:
         return
-    if get_tree().paused != OptionsLogic.should_pause(_profile.visible):
+    if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active()):
         _update_pause()
 
 ## Pausa o jogo enquanto o perfil estiver aberto (o menu não pausa); solta o joystick para não "grudar" a direção.
 func _update_pause() -> void:
-    var want: bool = OptionsLogic.should_pause(_profile.visible)
+    var want: bool = OptionsLogic.should_pause(_profile.visible, _death.is_active())
     get_tree().paused = want
     if want:
         pause_checks += 1
@@ -125,10 +130,34 @@ func _open_profile() -> void:
     _menu.close()
     _profile.open()
 
+## Aviso ao entrar numa fase (também ao voltar por morte ou escolher no menu "Fases").
+func _on_stage_changed(stg: int) -> void:
+    _refresh()
+    _top.show_banner("FASE %d" % stg, "Dificuldade: %s" % StageLogic.tier_name(stg), "stage")
+
+## Morte: congela o jogo e mostra a animação; o jogador toca na tela para voltar (ver Main).
+func show_death(world_pos: Vector2, to_stage: int) -> void:
+    _menu.close()
+    if _profile.visible:
+        _profile.close()
+    _death.start(world_pos, to_stage)
+    _update_pause()
+
+func _on_death_dismissed() -> void:
+    _update_pause()
+    death_dismissed.emit()
+
+func death_active() -> bool:
+    return _death.is_active()
+
+## Só para o smoke do CI.
+func debug_tap_death() -> bool:
+    return _death.debug_tap()
+
 func _on_boss_warning(boss_name: String, is_mini: bool) -> void:
     _top.boss_name = boss_name
     _top.boss_is_mini = is_mini
-    _top.show_banner("MINI-CHEFE!" if is_mini else "AVISO: CHEFE!", boss_name)
+    _top.show_banner("MINI-CHEFE!" if is_mini else "AVISO: CHEFE!", boss_name, "boss")
 
 ## Só em aparelhos móveis: afasta o HUD do notch/cantos arredondados (DisplayServer.get_display_safe_area).
 func _apply_safe_area() -> void:
@@ -147,7 +176,7 @@ func _refresh() -> void:
     var stg: int = int(s["stage"])
     _avatar_btn.avatar = int(s["profile"]["avatar"])
     _avatar_btn.queue_redraw()
-    _next_btn.set_text("PRÓX. FASE %d" % (stg + 1))
+    _next_btn.set_text("PRÓX. FASE %d" % mini(stg + 1, Balance.MAX_STAGE))
     _next_btn.set_enabled(StageLogic.can_skip_to_next(stg, int(s["max_stage"])))
     _speed_btn.set_text("VEL. %dX" % int(UiLogic.time_scale(s["settings"])))
     _top.queue_redraw()

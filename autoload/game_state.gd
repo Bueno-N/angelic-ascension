@@ -158,6 +158,11 @@ func menu_action(action: String) -> bool:
         go_to_title()
         return true
     var p := action.split("|")
+    if p[0] == "stage_go":   # escolher andar no menu "Fases": quem muda a fase é o StageManager (via evento)
+        if p.size() > 1 and MenuModel.perform(state, action):
+            Events.goto_stage_requested.emit(int(p[1]))
+            return true
+        return false
     if p[0] == "debug" and p.size() > 2:
         debug_apply(p[1], int(p[2]))
         return true
@@ -225,8 +230,8 @@ func debug_apply(action: String, arg: int) -> void:
     save()
 
 func set_stage(stage: int) -> void:
-    state["stage"] = stage
-    state["max_stage"] = maxi(int(state["max_stage"]), stage)
+    state["stage"] = StageLogic.clamp_stage(stage)
+    state["max_stage"] = maxi(int(state["max_stage"]), int(state["stage"]))
 
 func _on_enemy_died(_pos: Vector2, def: Dictionary, is_boss: bool, gold: int) -> void:
     if def.get("summon", false):

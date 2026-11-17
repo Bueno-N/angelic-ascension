@@ -63,10 +63,10 @@ static func sanitize(raw: Dictionary) -> Dictionary:
         if raw.has(key) and (raw[key] is int or raw[key] is float):
             s[key] = maxi(0, as_int(raw[key]))
     if raw.has("stage") and (raw["stage"] is int or raw["stage"] is float):
-        s["stage"] = maxi(1, as_int(raw["stage"], 1))
+        s["stage"] = clampi(as_int(raw["stage"], 1), 1, Balance.MAX_STAGE)
     s["max_stage"] = maxi(int(s["stage"]), 1)
     if raw.has("max_stage") and (raw["max_stage"] is int or raw["max_stage"] is float):
-        s["max_stage"] = maxi(int(s["stage"]), as_int(raw["max_stage"], 1))
+        s["max_stage"] = clampi(maxi(int(s["stage"]), as_int(raw["max_stage"], 1)), 1, Balance.MAX_STAGE)
 
     if raw.get("upgrades") is Dictionary:
         for a in Balance.ATTRIBUTE_ORDER:

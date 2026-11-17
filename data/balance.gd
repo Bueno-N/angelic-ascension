@@ -16,6 +16,15 @@ const BOSS_GEM_GROWTH := 1.10         # multiplicador por índice de chefe (PAR�
 const BOSS_SHARDS_BASE := 1           # fragmentos de asa por chefe
 const BOSS_SHARDS_BONUS_EVERY := 10   # +1 fragmento a cada N chefes
 
+# --- Andares (fases) e dificuldade: 300 andares; a cada 50 muda a dificuldade ---
+# (vida/dano dos inimigos e ganhos multiplicados por degrau; valores são PRIMEIRO PALPITE, sem playtest)
+const MAX_STAGE := 300
+const TIER_SIZE := 50
+const TIER_NAMES := ["Fácil", "Normal", "Difícil", "Pesadelo", "Infernal", "Abismal"]
+const TIER_HP_MULT := [1.0, 1.5, 2.5, 4.0, 6.5, 10.0]
+const TIER_DMG_MULT := [1.0, 1.25, 1.6, 2.1, 2.8, 3.8]
+const TIER_REWARD_MULT := [1.0, 1.25, 1.6, 2.0, 2.5, 3.2]   # ouro dos inimigos e gemas de chefe
+
 # --- Escala de inimigos por fase ---
 const ENEMY_HP_GROWTH := 1.12
 const ENEMY_DMG_GROWTH := 1.09

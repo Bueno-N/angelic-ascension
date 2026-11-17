@@ -23,6 +23,10 @@ var _warn_count := 0
 var _mini_count := 0
 var _profile_ok := false
 var _opt_ok := false
+var _dead := false
+var _before_death := 1
+var _death_ok := false
+var _goto_ok := false
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -52,6 +56,8 @@ func _ready() -> void:
     add_child(stage_mgr)
     stage_mgr.setup(player, enemies)
     Events.player_died.connect(_on_player_died)
+    hud.death_dismissed.connect(_revive)
+    Events.goto_stage_requested.connect(func(s: int): stage_mgr.goto_stage(s))
     Events.state_changed.connect(_apply_fx)
     Events.stage_changed.connect(backdrop.set_stage)
     Events.enemy_died.connect(_on_enemy_died_fx)
@@ -70,8 +76,19 @@ func _ready() -> void:
 func _apply_fx() -> void:
     backdrop.set_fx(UiLogic.fx_enabled(GameState.state["settings"]))
 
-## Derrota: volta UMA fase e fica repetindo ela (modo repetir) até o jogador tocar em "Próxima fase".
+## Derrota: o jogo congela e roda a animação de morte (HUD). Só quando o jogador TOCA NA TELA é que
+## ele volta UMA fase e fica repetindo ela (modo repetir) até tocar em "Próxima fase".
 func _on_player_died() -> void:
+    if _dead:
+        return   # vários golpes no mesmo frame
+    _dead = true
+    _before_death = stage_mgr.stage
+    player.visible = false          # quem cai é o anjo desenhado pela tela de morte
+    hud.show_death(player.global_position, maxi(1, stage_mgr.stage - 1))
+
+func _revive() -> void:
+    _dead = false
+    player.visible = true
     player.buffs.clear()
     player.refresh_stats(true)
     var back: int = maxi(1, stage_mgr.stage - 1)
@@ -145,13 +162,23 @@ func _process(_delta: float) -> void:
                 if not t["special"]:
                     stage_mgr.debug_spawn_type(str(t["id"]), player.position + Vector2(-300.0, float(randi() % 200) - 100.0), false)
         2700:
-            var before: int = stage_mgr.stage      # morte: volta 1 fase e entra em modo repetir
-            Events.player_died.emit()
+            Events.player_died.emit()               # morte: congela, mostra a animação e espera o toque
+            _death_ok = hud.death_active() and not player.visible and not hud.debug_tap_death()   # travado nos primeiros 1,2 s
+        2790:
+            var before: int = _before_death         # toque na tela: volta 1 fase e entra em modo repetir
+            _death_ok = _death_ok and hud.debug_tap_death() and not hud.death_active() and player.visible
             _repeat_ok = stage_mgr.stage == maxi(1, before - 1) and stage_mgr.repeat_mode
         2800:
             var b2: int = stage_mgr.stage          # "Próxima fase": avança 1 e sai do modo repetir
             stage_mgr.request_next()
             _next_ok = stage_mgr.stage == b2 + 1 and not stage_mgr.repeat_mode
+        2820:
+            var mx: int = int(GameState.state["max_stage"])      # menu "Fases": ir a andar já alcançado / ignorar o não alcançado
+            Events.goto_stage_requested.emit(1)
+            _goto_ok = stage_mgr.stage == 1 and stage_mgr.repeat_mode == (mx > 1)
+            Events.goto_stage_requested.emit(mx + 5)
+            _goto_ok = _goto_ok and stage_mgr.stage == 1
+            stage_mgr.set_repeat(false)
         2850:
             GameState.toggle_speed()
             _speed_ok = is_equal_approx(Engine.time_scale, Balance.FAST_MODE_SCALE)
@@ -197,8 +224,8 @@ func _process(_delta: float) -> void:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
             _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
-            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok)])
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok)])
         get_tree().quit(0)

@@ -193,3 +193,18 @@ Pontos de atenção para o celular: teclado virtual cobrindo o botão COMEÇAR (
 | Teste de que nenhuma habilidade se repete entre chefes; smoke exige as 4 novas | ⬜ | O smoke ficou mais longo (~4940 frames): 600 frames por chefe |
 
 Números das habilidades novas (dano, raios, recargas) são **primeiro palpite**, sem playtest: ajuste em `EnemiesDB.ABILITIES`.
+
+
+## Rodada 15 — animação de morte, aviso de fase, menu "Fases" (300 andares, dificuldade a cada 50) e projeção de ganhos (⬜ escrita, **nunca executada no CI**)
+
+| Item | Estado | Observação |
+|---|---|---|
+| Morte: jogo congela, anjo cai com penas, "VOCÊ CAIU"; **toque na tela** volta à fase anterior | ⬜ | `death_overlay.gd`; toques ficam travados 1,2 s; anima em tempo real (ignora o 2x) |
+| Aviso "FASE N" + dificuldade ao entrar numa fase (também ao voltar/escolher) | ⬜ | Dourado; em fase de chefe o aviso de chefe (vermelho) aparece em seguida |
+| Aba **Fases** no menu: 300 andares em 6 dificuldades de 50 (Fácil, Normal, Difícil, Pesadelo, Infernal, Abismal) | ⬜ | Abre rolando até a fase atual; **IR** só em fases já alcançadas; escolher uma abaixo do recorde fica **repetindo** nela |
+| Dificuldade muda a cada 50: vida, dano e ganhos dos inimigos multiplicados por degrau | ⬜ | **Valores são palpite** (`Balance.TIER_*`): vida x1/1,5/2,5/4/6,5/10, dano x1/1,25/1,6/2,1/2,8/3,8, ganhos x1/1,25/1,6/2/2,5/3,2. Muda o equilíbrio: precisa de playtest |
+| Projeção por fase: mobs, ouro e gemas médios por vitória (+ fragmentos nos chefes) | ⬜ | `StageLogic.projection`: média teórica com as chances de drop atuais, **não é medição** |
+| Limite de 300 andares (progressão, saves e debug) | ⬜ | No 300 (chefe) só repete; save com fase maior é limitado a 300 |
+| Grade do menu agora com 3 colunas (cabem 6-7 abas) | ⬜ | |
+| Ícone novo `stages` | ✅ visto (PNG) | |
+| Testes `test_stages.gd`; smoke com `death=` e `goto=` | ⬜ | |

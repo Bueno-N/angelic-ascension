@@ -22,6 +22,7 @@ static func tabs(debug: bool) -> Array:
         {"id": "wings", "name": "Asas", "icon": "wings"},
         {"id": "equip", "name": "Equipamentos", "icon": "armor"},
     ]
+    t.append({"id": "stages", "name": "Fases", "icon": "stages"})
     t.append({"id": "options", "name": "Opções", "icon": "gear"})
     if debug:
         t.append({"id": "debug", "name": "Teste", "icon": "fx"})
@@ -41,6 +42,8 @@ static func rows(tab: String, state: Dictionary, stats: Dictionary, ctx: Diction
             return _wings(state)
         "equip":
             return _equip(state)
+        "stages":
+            return _stages(state)
         "options":
             return _options(state["settings"], bool(ctx.get("in_game", true)))
         "debug":
@@ -162,6 +165,51 @@ static func _equip(state: Dictionary) -> Array:
             out.append(row)
     return out
 
+# ---------------------------------------------------------------- fases (andares) e projeção de ganhos
+const STAGE_ROWS_PER_TIER := 2 + Balance.TIER_SIZE   # cabeçalho + info + 50 andares
+
+## Índice (na lista de linhas) do andar `stage`: 1 linha de resumo no topo + por degrau (cabeçalho, info, andares).
+static func stage_row_index(stage: int) -> int:
+    var st: int = StageLogic.clamp_stage(stage)
+    var tier: int = StageLogic.tier_index(st)
+    return 1 + tier * STAGE_ROWS_PER_TIER + 2 + (st - StageLogic.tier_first_stage(tier))
+
+static func _stages(state: Dictionary) -> Array:
+    var cur: int = int(state["stage"])
+    var mx: int = int(state["max_stage"])
+    var out: Array = [_info("Fase atual %d  |  Recorde %d  |  %d fases no total\nGanhos = média por vitória (projeção, não é garantido). Só dá para ir a fases já alcançadas." % [cur, mx, Balance.MAX_STAGE])]
+    for tier in range(Balance.TIER_NAMES.size()):
+        var first: int = StageLogic.tier_first_stage(tier)
+        var last: int = StageLogic.tier_last_stage(tier)
+        out.append(_header("%s  (fases %d a %d)" % [str(Balance.TIER_NAMES[tier]).to_upper(), first, last]))
+        out.append(_info("Inimigos: vida x%s, dano x%s  |  Ganhos x%s" % [UiLogic.fmt_mult(float(Balance.TIER_HP_MULT[tier])),
+            UiLogic.fmt_mult(float(Balance.TIER_DMG_MULT[tier])), UiLogic.fmt_mult(float(Balance.TIER_REWARD_MULT[tier]))]))
+        for n in range(first, last + 1):
+            out.append(_stage_row(n, cur, mx))
+    return out
+
+static func _stage_row(n: int, cur: int, mx: int) -> Dictionary:
+    var p := StageLogic.projection(n)
+    var gains := "Ouro %s  |  Gemas %s" % [UiLogic.fmt_short(float(p["gold"])), UiLogic.fmt_short(float(p["gems"]))]
+    var title := "Fase %d" % n
+    var detail: String
+    if bool(p["boss"]):
+        title += "  (Chefe)"
+        detail = "%s\n%s  |  Frag. %d" % [str(EnemiesDB.boss_for(n)["name"]), gains, int(p["shards"])]
+    elif bool(p["mini"]):
+        title += "  (Mini-chefe)"
+        detail = "%d mobs + mini-chefe\n%s" % [int(p["mobs"]) - 1, gains]
+    else:
+        detail = "%d mobs\n%s" % [int(p["mobs"]), gains]
+    var row: Dictionary
+    if n == cur:
+        row = _item("stages", title, detail, "ATUAL", 0, "", "", "active", false)
+    elif n <= mx:
+        row = _item("stages", title, detail, "IR", 0, "", "stage_go|%d" % n, "ok", true)
+    else:
+        row = _item("stages", title, detail, "BLOQUEADO", 0, "", "", "locked", false)
+    return row
+
 # ---------------------------------------------------------------- opções
 static func _options(settings: Dictionary, in_game: bool = true) -> Array:
     var vol: int = OptionsLogic.volume(settings)
@@ -215,4 +263,6 @@ static func perform(state: Dictionary, action: String) -> bool:
             return p.size() > 2 and Shop.equip_equipment(state, p[1], int(p[2]))
         "opt":
             return OptionsLogic.apply(state["settings"], p)
+        "stage_go":   # só VALIDA (não muda o estado): quem troca de fase é o StageManager, via GameState.menu_action
+            return p.size() > 1 and StageLogic.can_enter(int(state["stage"]), int(state["max_stage"]), int(p[1]))
     return false
