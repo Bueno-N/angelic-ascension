@@ -19,6 +19,7 @@ var stage := 1
 var player: Player
 var abilities := AbilityCooldowns.new()
 var _spr: AnimatedSprite2D
+var _sprite_name := "imp"
 var _base_mod := Color.WHITE
 var _atk_cd := 0.0
 var _hit := 0.0
@@ -75,6 +76,7 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
         gold = 0
         add_to_group("summons")
         _base_mod = Color(0.8, 0.6, 1.0, 0.9)   # invocações ficam arroxeadas
+    _sprite_name = sprite_name
     _spr = SpriteLib.make(sprite_name, "walk", Balance.MINI_SCALE if is_mini else EnemiesDB.SPRITE_SCALE)
     _spr.modulate = _base_mod
     _spr.speed_scale = clampf(speed / 70.0, 0.6, 1.5)
@@ -145,6 +147,16 @@ func _think(delta: float) -> void:
         if _atk_cd <= 0.0:
             player.take_damage(dmg)
             _atk_cd = 1.0
+            _play_melee_sound()
+
+## Golpe corpo a corpo: cada tipo de mob tem o seu som; chefe e mini-chefe usam o grunhido pesado, mais grave.
+func _play_melee_sound() -> void:
+    if is_boss:
+        AudioHub.play("mob_warrior_atk", 0.55, 0.04)
+    elif is_mini:
+        AudioHub.play(AudioLogic.mob_atk_sfx(_sprite_name), 0.8, 0.04)
+    else:
+        AudioHub.play(AudioLogic.mob_atk_sfx(_sprite_name), 1.0, 0.1)
 
 func _can_start(id: String) -> bool:
     if id == "summon_demons":
@@ -157,6 +169,8 @@ func _start_cast(id: String, to: Vector2) -> void:
     _cast_dir = to.normalized()
     _cast_pts = _plan_targets(id)
     abilities.start(id, EnemiesDB.ABILITIES)
+    if is_boss or is_mini:
+        AudioHub.play("warn", 1.0, 0.0)   # alerta sonoro junto com o aviso visual
     _play("cast")   # pose de conjuração durante o aviso
 
 ## Alvos escolhidos NO INÍCIO do aviso (o jogador vê onde vai cair e pode sair do lugar).

@@ -8,6 +8,7 @@ const TOP := 72.0
 const BOTTOM := 124.0
 const STRIP := 24.0
 const TAP_SLOP := 16.0
+static var _craters: Texture2D
 const GOLD_NODE := Color(0.93, 0.72, 0.25)
 const LOCKED_NODE := Color(0.32, 0.32, 0.4)
 
@@ -201,6 +202,7 @@ func _draw() -> void:
         var pos: float = (x + STRIP / 2.0 + _scroll - MapLogic.X0) / MapLogic.SPACING + 1.0
         draw_rect(Rect2(x, TOP, STRIP + 1.0, mh), MapLogic.bg_color(pos))
         x += STRIP
+    _draw_craters(w, mh)
     draw_rect(Rect2(0.0, TOP, w, 36.0), Color(0, 0, 0, 0.22))
     draw_rect(Rect2(0.0, TOP + mh - 36.0, w, 36.0), Color(0, 0, 0, 0.22))
     # divisas de dificuldade
@@ -231,6 +233,15 @@ func _draw() -> void:
     PixelFont.draw(self, Vector2(28.0, h - BOTTOM + 50.0), str(inf["tag"]), 2, MapLogic.tier_accent(StageLogic.tier_index(int(inf["stage"]))))
     PixelFont.draw(self, Vector2(28.0, h - BOTTOM + 72.0), str(inf["line1"]), 2, UiTheme.TEXT)
     PixelFont.draw(self, Vector2(28.0, h - BOTTOM + 94.0), str(inf["line2"]), 2, UiTheme.TEXT_DIM)
+
+## Crateras no fundo (tile sem emendas, com paralaxe). Se a textura não carregar, o mapa continua só com as cores.
+func _draw_craters(w: float, mh: float) -> void:
+    if _craters == null:
+        _craters = load(MapLogic.CRATER_PATH)
+    if _craters == null:
+        return
+    for sl in MapLogic.crater_slices(w, _scroll, TOP, mh):
+        draw_texture_rect_region(_craters, sl["dst"], sl["src"], Color(1.0, 0.96, 0.96, 0.95))
 
 func _draw_node(st: int, cur: int, mx: int, mh: float) -> void:
     var p: Vector2 = MapLogic.node_pos(st, TOP, mh) - Vector2(_scroll, 0.0)

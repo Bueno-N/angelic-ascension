@@ -11,5 +11,6 @@ func _initialize() -> void:
             print("%-26s %9d gemas -> fora do alcance do modelo" % [s["name"], int(s["price"])])
         else:
             var h: float = float(r["hours"])
-            print("%-26s %9d gemas -> fase %5d | %9.1f h | %8.1f dias" % [s["name"], int(s["price"]), int(r["stage"]), h, h / Balance.MODEL_HOURS_PER_DAY])
+            var farm: String = "  (repetindo a fase %d)" % int(r["stage"]) if bool(r.get("farming", false)) else ""
+            print("%-26s %9d gemas -> fase %5d | %9.1f h | %8.1f dias%s" % [s["name"], int(s["price"]), int(r["stage"]), h, h / Balance.MODEL_HOURS_PER_DAY, farm])
     quit(0)

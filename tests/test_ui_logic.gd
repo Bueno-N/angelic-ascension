@@ -37,7 +37,7 @@ func test_next_skill_goal() -> void:
     var st := SaveData.default_state()
     st["gems"] = 30
     var g := UiLogic.next_skill_goal(st)
-    check(g["id"] == "celestial_lance" and int(g["missing"]) == 70, "faltam 70 gemas para a 1ª")
+    check(g["id"] == "celestial_lance" and int(g["missing"]) == int(SkillsDB.SKILLS[0]["price"]) - 30, "faltam (preço - 30) gemas para a 1ª")
     st["gems"] = 5000
     Shop.buy_skill(st, "celestial_lance")
     g = UiLogic.next_skill_goal(st)

@@ -14,41 +14,47 @@ const ABBR := {
     "celestial_fury": "FC", "holy_apocalypse": "AS", "death_of_hell": "MI",
 }
 
+## Ícone de cada habilidade (nome no atlas ui_icons.png).
+static func icon(id: String) -> String:
+    return "sk_" + id
+
+# PREÇOS em gemas (rodada 17): ~1/3 mais baratos que antes. Calculados pelo modelo de economia (EconomyModel) com o limite
+# de 300 fases: a 1ª sai em ~1 h de jogo, a suprema em ~430 h (~145 dias a 3 h/dia). É MODELO, não medição: ajuste no playtest.
 # damage_pct: multiplicador do ataque atual (1.5 = 150%).
 const SKILLS := [
-    {"id": "celestial_lance", "name": "Lança Celestial", "rarity": "Comum", "price": 100,
+    {"id": "celestial_lance", "name": "Lança Celestial", "rarity": "Comum", "price": 70,
      "damage_pct": 1.5, "duration": 0.0, "cooldown": 8.0, "effects": {},
      "desc": "Lança de luz contra o inimigo mais próximo."},
-    {"id": "holy_shield", "name": "Escudo Sagrado", "rarity": "Incomum", "price": 500,
+    {"id": "holy_shield", "name": "Escudo Sagrado", "rarity": "Incomum", "price": 350,
      "damage_pct": 2.5, "duration": 3.0, "cooldown": 8.0, "effects": {"damage_absorb": 0.40, "radius": 170.0},
      "desc": "Explosão ao ativar; absorve 40% do dano por 3s."},
-    {"id": "rain_of_light", "name": "Chuva de Luz", "rarity": "Rara", "price": 2000,
+    {"id": "rain_of_light", "name": "Chuva de Luz", "rarity": "Rara", "price": 1300,
      "damage_pct": 4.0, "duration": 0.0, "cooldown": 8.0,
      "effects": {"area": true, "projectiles": 8, "radius": 80.0, "spread_time": 0.8},
      "desc": "Projéteis celestiais caem sobre uma área (400% por projétil)."},
-    {"id": "swords_of_paradise", "name": "Espadas do Paraíso", "rarity": "Épica", "price": 7500,
+    {"id": "swords_of_paradise", "name": "Espadas do Paraíso", "rarity": "Épica", "price": 5000,
      "damage_pct": 6.0, "duration": 4.0, "cooldown": 8.0,
      "effects": {"orbiting": true, "swords": 3, "orbit_radius": 90.0, "hit_radius": 40.0, "tick": 0.5},
      "desc": "Espadas giram ao redor do anjo por 4s (600% por acerto)."},
-    {"id": "divine_judgment", "name": "Julgamento Divino", "rarity": "Épica", "price": 20000,
+    {"id": "divine_judgment", "name": "Julgamento Divino", "rarity": "Épica", "price": 13500,
      "damage_pct": 10.0, "duration": 0.0, "cooldown": 8.0, "effects": {"boss_bonus": 0.5},
      "desc": "Raio sobre o inimigo mais forte; +50% de dano em chefes (valor sugerido, ajustável)."},
-    {"id": "wings_of_redemption", "name": "Asas da Redenção", "rarity": "Lendária", "price": 50000,
+    {"id": "wings_of_redemption", "name": "Asas da Redenção", "rarity": "Lendária", "price": 34000,
      "damage_pct": 15.0, "duration": 0.0, "cooldown": 8.0,
      "effects": {"heal_pct": 0.15, "area": true, "radius": 280.0},
      "desc": "Onda de energia em volta; cura 15% da vida máxima."},
-    {"id": "army_of_archangels", "name": "Exército dos Arcanjos", "rarity": "Lendária", "price": 120000,
+    {"id": "army_of_archangels", "name": "Exército dos Arcanjos", "rarity": "Lendária", "price": 82000,
      "damage_pct": 20.0, "duration": 5.0, "cooldown": 8.0, "effects": {"summons": 3, "ally_tick": 2.0},
      "desc": "3 guerreiros celestiais lutam por 5s (2000% por golpe de cada um)."},
-    {"id": "celestial_fury", "name": "Fúria Celestial", "rarity": "Mítica", "price": 300000,
+    {"id": "celestial_fury", "name": "Fúria Celestial", "rarity": "Mítica", "price": 200000,
      "damage_pct": 30.0, "duration": 5.0, "cooldown": 8.0,
      "effects": {"damage_mult": 1.0, "attack_speed_mult": 0.5, "speed_mult": 0.3, "radius": 240.0},
      "desc": "Explosão inicial; +100% dano, +50% vel. ataque, +30% vel. mov. por 5s."},
-    {"id": "holy_apocalypse", "name": "Apocalipse Sagrado", "rarity": "Divina", "price": 750000,
+    {"id": "holy_apocalypse", "name": "Apocalipse Sagrado", "rarity": "Divina", "price": 500000,
      "damage_pct": 50.0, "duration": 0.0, "cooldown": 8.0,
      "effects": {"area": true, "no_execute": true, "boss_max_hp_pct_cap": 0.25},
      "desc": "Explosão em todo o campo; chefes sofrem no máx. 25% da vida por uso (sem execução)."},
-    {"id": "death_of_hell", "name": "A MORTE DO INFERNO", "rarity": "Suprema", "price": 2000000,
+    {"id": "death_of_hell", "name": "A MORTE DO INFERNO", "rarity": "Suprema", "price": 1300000,
      "damage_pct": 150.0, "duration": 10.0, "cooldown": 60.0,
      "effects": {"area": true, "heal_pct": 0.50, "all_stats_mult": 1.0},
      "desc": "Forma celestial definitiva: dano massivo, cura 50%, +100% em atributos de combate por 10s."},

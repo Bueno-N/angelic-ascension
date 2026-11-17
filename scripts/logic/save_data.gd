@@ -36,7 +36,8 @@ static func default_state() -> Dictionary:
         "upgrades": ups, "owned_equipment": owned, "equipped": equipped,
         "wings_level": 0, "glow_tier": 0,
         "skills_owned": [], "skills_equipped": [],
-        "settings": {"auto_slots": [true, true, true], "speed_2x": false, "low_fx": false, "volume": OptionsLogic.DEFAULT_VOLUME},
+        "settings": {"auto_slots": [true, true, true], "speed_2x": false, "low_fx": false, "volume": OptionsLogic.DEFAULT_VOLUME,
+        "music_on": true, "music_vol": OptionsLogic.DEFAULT_MUSIC_VOL, "sfx_vol": OptionsLogic.DEFAULT_SFX_VOL},
         "profile": {"name": ProfileLogic.DEFAULT_NAME, "avatar": 0},
     }
 
@@ -111,6 +112,9 @@ static func sanitize(raw: Dictionary) -> Dictionary:
         s["settings"]["speed_2x"] = as_bool(rs.get("speed_2x", false), false)
         s["settings"]["low_fx"] = as_bool(rs.get("low_fx", false), false)
         s["settings"]["volume"] = clampi(as_int(rs.get("volume", OptionsLogic.DEFAULT_VOLUME), OptionsLogic.DEFAULT_VOLUME), 0, 100)
+        s["settings"]["music_on"] = as_bool(rs.get("music_on", true), true)
+        s["settings"]["music_vol"] = clampi(as_int(rs.get("music_vol", OptionsLogic.DEFAULT_MUSIC_VOL), OptionsLogic.DEFAULT_MUSIC_VOL), 0, 100)
+        s["settings"]["sfx_vol"] = clampi(as_int(rs.get("sfx_vol", OptionsLogic.DEFAULT_SFX_VOL), OptionsLogic.DEFAULT_SFX_VOL), 0, 100)
         if rs.get("auto_slots") is Array:
             var src: Array = rs["auto_slots"]
             var arr2: Array = []

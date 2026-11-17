@@ -22,7 +22,7 @@ func test_add_resources() -> void:
 func test_gems_allow_buying_supreme() -> void:
     var st := SaveData.default_state()
     DebugTools.add(st, "gems", 2000000)
-    check(Shop.buy_skill(st, "death_of_hell"), "2.000.000 gemas compram a suprema")
+    check(Shop.buy_skill(st, "death_of_hell"), "2.000.000 gemas compram a suprema (custa 1.300.000)")
 
 func test_unlock_all() -> void:
     var st := SaveData.default_state()

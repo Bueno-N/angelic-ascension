@@ -8,12 +8,13 @@ func test_exactly_ten_unique_skills() -> void:
         seen[s["id"]] = true
 
 func test_prices_match_design_and_increase() -> void:
-    var expected := [100, 500, 2000, 7500, 20000, 50000, 120000, 300000, 750000, 2000000]
+    var expected := [70, 350, 1300, 5000, 13500, 34000, 82000, 200000, 500000, 1300000]
     var prev := 0
     for i in range(10):
         var p: int = int(SkillsDB.SKILLS[i]["price"])
         check(p == expected[i], "preço da habilidade %d" % (i + 1))
         check(p > prev, "preço crescente na habilidade %d" % (i + 1))
+        check(prev == 0 or p >= prev * 2, "cada habilidade custa pelo menos o dobro da anterior (%d)" % (i + 1))
         prev = p
 
 func test_cooldowns_8s_except_ultimate_60s() -> void:

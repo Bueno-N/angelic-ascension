@@ -143,6 +143,7 @@ func execute(id: String) -> void:
     var e: Dictionary = sk["effects"]
     casts += 1
     player.cast_anim()
+    AudioHub.play(AudioLogic.skill_sfx(id), 1.0, 0.0)
     match id:
         "celestial_lance":
             var t := _nearest()
@@ -226,5 +227,6 @@ func _rain(id: String, atk: float, glow: float, e: Dictionary) -> void:
         get_tree().create_timer(spread * float(i) / float(n)).timeout.connect(_rain_hit.bind(pos, r, id, atk, glow))
 
 func _rain_hit(pos: Vector2, r: float, id: String, atk: float, glow: float) -> void:
+    AudioHub.play("sk_rain_hit", 1.0, 0.12)
     _strike(pos, GOLD, 2.0)
     _damage_radius(pos, r, id, atk, glow)

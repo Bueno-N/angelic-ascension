@@ -3,7 +3,7 @@ Uso: python3 tools/art/generate.py   (arte original; CC0)"""
 import json, os, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from pixel import *
-import angel, enemies, fx, ui
+import angel, enemies, fx, ui, scenery
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = os.path.join(ROOT, 'assets', 'sprites')
@@ -37,6 +37,7 @@ avatar_frames = [f() for f in ui.AVATARS]
 emit("avatars", avatar_frames, dict(idle=dict(start=0, count=len(avatar_frames), fps=1, loop=True)))
 font_c, font_adv = ui.font_canvas()
 save_png(font_c, os.path.join(OUT, 'font.png'))
+save_png(scenery.craters(), os.path.join(OUT, 'map_craters.png'))   # cenário do mapa (tile 320x160)
 json.dump(manifest, open(os.path.join(OUT, 'manifest.json'), 'w'), indent=1)
 # O jogo lê o manifesto de um .gd (arquivos .json NÃO entram no APK exportado; scripts entram).
 gd = ("class_name SpriteManifest\nextends RefCounted\n## GERADO por tools/art/generate.py. Não edite à mão.\n\nconst DATA := " + json.dumps(manifest, indent=1) + "\n"

@@ -48,6 +48,7 @@ func _gui_input(event: InputEvent) -> void:
             queue_redraw()
             accept_event()
             if inside and enabled:
+                AudioHub.play("ui_click", 1.0, 0.0)
                 pressed.emit()
     elif event is InputEventScreenDrag and event.index == _idx:
         if not Rect2(Vector2.ZERO, size).grow(24.0).has_point(event.position):

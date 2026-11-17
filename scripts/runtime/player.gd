@@ -74,6 +74,7 @@ func take_damage(raw: float) -> void:
     var after_shield: float = raw * (1.0 - buffs.absorb())
     hp -= StatsCalc.damage_after_armor(after_shield, get_stat("armor"))
     _hurt = 0.12
+    AudioHub.play("hurt", 1.0, 0.06)
     visual.modulate = Color(1.7, 0.7, 0.7)   # piscada vermelha ao ser atingido
     if god_mode:
         hp = maxf(hp, 1.0)
@@ -183,6 +184,8 @@ func _attack(target: Node2D) -> void:
     var to_t: Vector2 = target.global_position - global_position
     visual.face(to_t.x)
     visual.attack()
+    AudioHub.play("atk", 1.0, 0.07)
+    AudioHub.play("mob_hit", 1.0, 0.12)
     target.take_damage(get_stat("attack"))
     _flash = 0.1
     _flash_target = target.global_position

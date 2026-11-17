@@ -13,11 +13,20 @@ static func expected_gems_in_stage(stage: int) -> float:
         mobs += (float(r[0]) + float(r[1])) / 2.0
     return mobs
 
-## Devolve {"stage": int, "hours": float} ou {} se não atingir dentro do limite.
-static func time_to_accumulate(total_gems: float, max_stage: int = 20000) -> Dictionary:
+## Fases por hora no ritmo do modelo ao chegar na fase `stage` (derivada de fase(h) = PACE * h^EXP).
+static func stages_per_hour_at(stage: int) -> float:
+    var h: float = maxf(hours_at_stage(stage), 0.001)
+    return Balance.MODEL_STAGES_PER_HOUR * Balance.MODEL_PACE_EXPONENT * pow(h, Balance.MODEL_PACE_EXPONENT - 1.0)
+
+## Devolve {"stage": int, "hours": float}. Como o jogo para em MAX_STAGE (300), depois dela o jogador fica repetindo
+## a última fase no mesmo ritmo: nesse caso o resultado tem "farming": true. Devolve {} só se a fase não rende gemas.
+static func time_to_accumulate(total_gems: float, max_stage: int = Balance.MAX_STAGE) -> Dictionary:
     var acc := 0.0
     for s in range(1, max_stage + 1):
         acc += expected_gems_in_stage(s)
         if acc >= total_gems:
             return {"stage": s, "hours": hours_at_stage(s)}
-    return {}
+    var rate: float = expected_gems_in_stage(max_stage) * stages_per_hour_at(max_stage)
+    if rate <= 0.0:
+        return {}
+    return {"stage": max_stage, "hours": hours_at_stage(max_stage) + (total_gems - acc) / rate, "farming": true}

@@ -13,6 +13,7 @@ config/icon="res://icon.svg"
 Events="*res://autoload/events.gd"
 SaveManager="*res://autoload/save_manager.gd"
 GameState="*res://autoload/game_state.gd"
+AudioHub="*res://autoload/audio_hub.gd"
 
 [display]
 

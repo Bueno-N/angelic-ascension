@@ -161,3 +161,26 @@ func test_save_clamps_stage_range() -> void:
     check(int(s["stage"]) == 300 and int(s["max_stage"]) == 300, "save com fase absurda é limitado a 300")
     var back := SaveData.from_json(SaveData.to_json(s))
     check(int(back["stage"]) == 300, "volta igual")
+
+func test_map_craters_texture_and_slices() -> void:
+    var tex = load(MapLogic.CRATER_PATH)
+    check(tex is Texture2D, "textura de crateras carrega")
+    if tex is Texture2D:
+        check(Vector2(tex.get_width(), tex.get_height()) == MapLogic.CRATER_TILE, "tile %s" % str(MapLogic.CRATER_TILE))
+    var tw: float = MapLogic.CRATER_TILE.x * MapLogic.CRATER_SCALE
+    for scroll in [0.0, 137.0, 5000.0, MapLogic.total_width()]:
+        var off: float = MapLogic.crater_offset(scroll)
+        check(off >= 0.0 and off < tw, "deslocamento dentro do tile (rolagem %s)" % str(scroll))
+        var slices := MapLogic.crater_slices(1280.0, scroll, 72.0, 524.0)
+        var covered := Rect2()
+        var first := true
+        for sl in slices:
+            var d: Rect2 = sl["dst"]
+            check(d.position.y >= 72.0 - 0.01 and d.end.y <= 72.0 + 524.0 + 0.01, "fatia não passa da área do mapa")
+            check(sl["src"].size.y * MapLogic.CRATER_SCALE == d.size.y or absf(sl["src"].size.y * MapLogic.CRATER_SCALE - d.size.y) < 0.01, "fatia sem esticar")
+            covered = d if first else covered.merge(d)
+            first = false
+        check(covered.position.x <= 0.0 and covered.end.x >= 1280.0, "fatias cobrem a largura da tela (rolagem %s)" % str(scroll))
+        check(absf(covered.position.y - 72.0) < 0.01 and absf(covered.end.y - (72.0 + 524.0)) < 0.01, "fatias cobrem a altura do mapa")
+    check(MapLogic.crater_offset(100.0) != MapLogic.crater_offset(0.0), "as crateras rolam junto com o mapa")
+    check(MapLogic.CRATER_PARALLAX < 1.0, "paralaxe: crateras mais lentas que o caminho")

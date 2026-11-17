@@ -67,8 +67,7 @@ func _begin(st: Dictionary, n: int) -> void:
     state = st
     slot = n
     if _global_known:
-        state["settings"]["volume"] = int(global_settings["volume"])
-        state["settings"]["low_fx"] = bool(global_settings["low_fx"])
+        OptionsLogic.copy_globals(global_settings, state["settings"])
     else:
         global_settings = OptionsLogic.sanitize_global(state["settings"])
     session_gems = 0
@@ -85,6 +84,7 @@ func set_global_option(parts: PackedStringArray) -> bool:
         _global_known = true
         SaveManager.save_global(global_settings)
         apply_audio()
+        AudioHub.play("ui_click")   # dá para ouvir o efeito ao mexer nos volumes
     return changed
 
 func go_to_title() -> void:
@@ -100,7 +100,7 @@ func _drop_scene_connections() -> void:
     for sig in Events.get_signal_list():
         for c in Events.get_signal_connection_list(sig["name"]):
             var cb: Callable = c["callable"]
-            if cb.get_object() != self:
+            if cb.get_object() != self and cb.get_object() != AudioHub:
                 Events.disconnect(sig["name"], cb)
 
 func recalc() -> void:
@@ -164,6 +164,8 @@ func menu_action(action: String) -> bool:
     if p[0] == "skill_unequip" and p.size() > 1 and skill_remaining(p[1]) > 0.0:
         return false   # trava: não dá para trocar habilidade em recarga
     var ok := _commit(MenuModel.perform(state, action))
+    if ok:
+        AudioHub.play("ui_buy" if ["attr", "skill_buy", "wings_evolve", "glow", "equip_buy"].has(p[0]) else "ui_click")
     if ok and p[0] == "opt":
         global_settings = OptionsLogic.sanitize_global(state["settings"])   # opções valem para todos os jogos
         _global_known = true
@@ -177,11 +179,10 @@ func set_profile(pname: String, avatar: int) -> void:
     save()
     Events.state_changed.emit()
 
-## Volume geral do jogo (barramento Master). Ainda não há áudio no jogo; a opção já fica salva e aplicada.
+## Aplica as opções de som: volume geral (Master), música (liga/desliga + volume) e efeitos (volume).
 func apply_audio() -> void:
-    var db: float = OptionsLogic.volume_db(global_settings)
-    AudioServer.set_bus_volume_db(0, db)
-    AudioServer.set_bus_mute(0, db <= -80.0)
+    AudioLogic.apply_buses(global_settings)
+    Events.audio_changed.emit()
 
 func apply_speed() -> void:
     Engine.time_scale = UiLogic.time_scale(state["settings"])

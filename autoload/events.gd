@@ -19,3 +19,4 @@ signal boss_warning(boss_name: String, is_mini: bool)
 signal ability_cast(id: String)
 signal pause_started                    # menu/perfil abriu: o jogo entrou em pausa
 signal boss_defeated(stage: int, gems: int, shards: int)
+signal audio_changed                    # opções de som mudaram (música liga/desliga, volumes)

@@ -86,7 +86,7 @@ func _draw() -> void:
         var ratio: float = rem / maxf(float(sk["cooldown"]), 0.01)
         draw_circle(c, 44.0, Color(0.08, 0.08, 0.12, 0.85))
         draw_arc(c, 44.0, 0.0, TAU, 40, col if rem <= 0.0 else Color(col, 0.4), 4.0)
-        draw_string(font, Vector2(x0, c.y + 10.0), SkillsDB.abbr(id), HORIZONTAL_ALIGNMENT_CENTER, BTN, 30, col)
+        UiIcons.draw(self, SkillsDB.icon(id), Rect2(c.x - 36.0, c.y - 36.0, 72.0, 72.0), Color.WHITE if rem <= 0.0 else Color(1, 1, 1, 0.55))
         if rem > 0.0:
             _draw_pie(c, 42.0, ratio, Color(0, 0, 0, 0.6))
             draw_string(font, Vector2(x0, c.y + 8.0), "%d" % int(ceil(rem)), HORIZONTAL_ALIGNMENT_CENTER, BTN, 34, Color.WHITE)

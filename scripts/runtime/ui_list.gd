@@ -154,8 +154,11 @@ func _draw_row(r: Dictionary, L: Dictionary, i: int) -> void:
     if r.has("abbr"):
         var rc: Color = SkillBar.RARITY_COLORS.get(str(r.get("rarity", "Comum")), Color.WHITE)
         UiTheme.panel(self, Rect2(ix, iy, ICON, ICON), Color(0.05, 0.04, 0.1, 1.0), rc)
-        var ab: String = str(r["abbr"])
-        PixelFont.draw(self, Vector2(ix + (ICON - float(PixelFont.width(ab, 3))) / 2.0, iy + (ICON - 21.0) / 2.0), ab, 3, rc)
+        if str(r.get("icon", "")) != "":
+            UiIcons.draw(self, str(r["icon"]), Rect2(ix, iy, ICON, ICON))
+        else:
+            var ab: String = str(r["abbr"])
+            PixelFont.draw(self, Vector2(ix + (ICON - float(PixelFont.width(ab, 3))) / 2.0, iy + (ICON - 21.0) / 2.0), ab, 3, rc)
     elif str(r.get("icon", "")) != "":
         UiIcons.draw(self, str(r["icon"]), Rect2(ix, iy, ICON, ICON), r.get("tint", Color.WHITE))
     var tx: float = ix + ICON + 14.0

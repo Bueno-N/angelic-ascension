@@ -105,6 +105,7 @@ static func _skills(state: Dictionary, cooldowns: Dictionary) -> Array:
                 else:
                     row = _item("", s["name"], sub, "REMOVER", 0, "", "skill_unequip|" + id, "active", true)
         row["abbr"] = SkillsDB.abbr(id)
+        row["icon"] = SkillsDB.icon(id)
         row["rarity"] = s["rarity"]
         out.append(row)
     return out
@@ -165,22 +166,34 @@ static func _equip(state: Dictionary) -> Array:
 # ---------------------------------------------------------------- opções
 static func _options(settings: Dictionary, in_game: bool = true) -> Array:
     var vol: int = OptionsLogic.volume(settings)
-    var vtxt := "Volume do jogo  %d%%" % vol if vol > 0 else "Volume do jogo  MUDO"
+    var mvol: int = OptionsLogic.music_vol(settings)
+    var svol: int = OptionsLogic.sfx_vol(settings)
+    var step: int = OptionsLogic.VOLUME_STEP
     var out: Array = [
         _header("Gráficos"),
         _item("fx", OptionsLogic.gfx_label(settings), "Baixo reduz partículas e efeitos: economiza bateria e ajuda em aparelhos fracos.",
             "ALTERAR", 0, "", "opt|fx|0", "ok", true),
         _header("Som"),
-        _item("speaker", vtxt, "Controla o volume geral do jogo (em passos de %d%%)." % OptionsLogic.VOLUME_STEP,
-            "AUMENTAR" if vol < 100 else "MÁXIMO", 0, "", "opt|vol|%d" % OptionsLogic.VOLUME_STEP, "ok" if vol < 100 else "locked", vol < 100),
-        _item("speaker", vtxt, "", "DIMINUIR" if vol > 0 else "MÍNIMO", 0, "", "opt|vol|-%d" % OptionsLogic.VOLUME_STEP,
-            "ok" if vol > 0 else "locked", vol > 0),
-        _info("Mais opções virão em breve."),
     ]
+    out.append_array(_volume_rows("Volume do jogo", "Controla o volume geral (música e efeitos).", vol, "vol", step))
+    var mon: bool = OptionsLogic.music_on(settings)
+    out.append(_item("speaker", "Música: Ligada" if mon else "Música: Desligada", "Liga ou desliga só a trilha sonora (os efeitos continuam).",
+        "DESLIGAR" if mon else "LIGAR", 0, "", "opt|music|0", "ok", true))
+    out.append_array(_volume_rows("Volume da música", "Volume da trilha sonora.", mvol, "mvol", step))
+    out.append_array(_volume_rows("Efeitos sonoros", "Ataques, habilidades, dano, mobs e chefes. No mudo, o jogo fica só com a música.", svol, "svol", step))
+    out.append(_info("Mais opções virão em breve."))
     if in_game:
         out.append(_header("Jogo"))
         out.append(_item("back", "Menu inicial", "Salva o jogo e volta ao menu inicial (para trocar de jogo salvo).", "SAIR", 0, "", "opt|title|0", "ok", true))
     return out
+
+## Duas linhas (AUMENTAR / DIMINUIR) para um volume em passos.
+static func _volume_rows(label: String, sub: String, value: int, key: String, step: int) -> Array:
+    var txt := "%s  %d%%" % [label, value] if value > 0 else "%s  MUDO" % label
+    return [
+        _item("speaker", txt, sub, "AUMENTAR" if value < 100 else "MÁXIMO", 0, "", "opt|%s|%d" % [key, step], "ok" if value < 100 else "locked", value < 100),
+        _item("speaker", txt, "", "DIMINUIR" if value > 0 else "MÍNIMO", 0, "", "opt|%s|-%d" % [key, step], "ok" if value > 0 else "locked", value > 0),
+    ]
 
 # ---------------------------------------------------------------- modo de teste
 static func _debug(reset_armed: bool) -> Array:

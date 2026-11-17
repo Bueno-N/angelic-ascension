@@ -223,3 +223,21 @@ Substitui a lista de fases dentro do menu (rodada 15): a aba "Fases" saiu do men
 | Tocar numa fase mostra dificuldade e projeção de ganhos; **IR PARA A FASE** só em fases já alcançadas | ⬜ | Escolher uma abaixo do recorde fica repetindo nela |
 | O mapa **pausa** o jogo enquanto aberto (tela cheia) | ⬜ | Decisão minha; o menu continua sem pausar |
 | Testes de mapa em `test_stages.gd`; smoke com `map=` | ⬜ | |
+
+
+## Rodada 17 — crateras no mapa, ícones de habilidades, preços, trilha sonora e efeitos sonoros (⬜ escrita, **nunca executada no CI**)
+
+| Item | Estado | Observação |
+|---|---|---|
+| Fundo do mapa com **crateras** (tile 320x160 sem emendas, 2x, com paralaxe), por cima das cores de dificuldade | ✅ visto (PNG) / ⬜ no jogo | `tools/art/scenery.py` → `assets/sprites/map_craters.png`; desenho em `map_panel.gd` |
+| **Ícones** das 10 habilidades (lança, escudo, chuva, espadas, raio, asas, exército, fúria, apocalipse, morte do inferno) na barra de habilidades e no menu | ✅ visto (PNG) / ⬜ no jogo | `ui.py`; nomes `sk_<id>` no atlas `ui_icons.png`; a sigla (LC, ES...) deixou de ser desenhada |
+| **Preços das habilidades ~1/3 menores**: 70 / 350 / 1.300 / 5.000 / 13.500 / 34.000 / 82.000 / 200.000 / 500.000 / 1.300.000 gemas | ⬜ | Calculados com o modelo `EconomyModel` AGORA com o teto de 300 fases (depois da 300 o ganho é só repetir a última). Modelo: 1ª em ~1 h, suprema em ~435 h (~145 dias a 3 h/dia). **É modelo, não medição** |
+| Modelo de economia respeita as 300 fases (`farming`) | ⬜ | Antes ele supunha fases infinitas e subestimava o tempo das habilidades caras |
+| **4 trilhas** (`music_1/2/3` por par de dificuldades + `music_boss` nas fases de chefe), laço de 16 compassos | ⬜ gerada, **nunca ouvida por mim** | `tools/audio/music.py`; 25-42 s cada, OGG mono 32 kHz, ~1,1 MB no total |
+| **46 efeitos**: ataque, dano no anjo, morte, 10 habilidades, mobs (ataque e morte por tipo), tiro e drenar, 8 habilidades de chefe/mini-chefe, rugido, alerta, fim de chefe, UI | ⬜ gerados, **nunca ouvidos por mim** | `tools/audio/sfx.py`; WAV mono 22 kHz, ~2 MB. Timbre e volume relativo são palpite: ajuste `AudioLogic.GAIN_DB` ouvindo no celular |
+| Opções de som: **Música liga/desliga**, **volume da música**, **volume dos efeitos sonoros** (0 = só música), além do volume geral | ⬜ | Valem para o aparelho (`settings.json`), também no menu inicial |
+| Limitador de efeitos (intervalo mínimo por som, 16 vozes com prioridade) | ⬜ | Evita 50 mobs virarem ruído: habilidades e chefes nunca são cortados |
+| `AudioHub` (autoload) com troca suave de trilha e música também no menu inicial | ⬜ | `autoload/audio_hub.gd` |
+| Testes `test_audio.gd` (arquivos x manifesto, trilha por fase, limitador, opções, barramentos); smoke com `aud=` | ⬜ | Smoke toca TODOS os efeitos e músicas e confere que carregam |
+
+Pendências que só o aparelho resolve: soar bem? volume relativo música x efeitos? o 2x de velocidade não muda o tom (conferir); consumo de bateria com música.

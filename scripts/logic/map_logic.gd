@@ -5,6 +5,11 @@ extends RefCounted
 
 const SPACING := 120.0          # distância horizontal entre nós
 const X0 := 90.0                # x do nó da fase 1
+# Textura de crateras do fundo (assets/sprites/map_craters.png, tile 320x160 desenhado a 2x), com paralaxe.
+const CRATER_PATH := "res://assets/sprites/map_craters.png"
+const CRATER_TILE := Vector2(320.0, 160.0)
+const CRATER_SCALE := 2.0
+const CRATER_PARALLAX := 0.55   # as crateras rolam mais devagar que o caminho (dá profundidade)
 const RADIUS_NORMAL := 22.0
 const RADIUS_MINI := 28.0
 const RADIUS_BOSS := 34.0
@@ -13,6 +18,25 @@ const TIER_BG := [
     Color(0.05, 0.10, 0.22), Color(0.14, 0.09, 0.20), Color(0.24, 0.08, 0.16),
     Color(0.36, 0.07, 0.10), Color(0.50, 0.06, 0.06), Color(0.66, 0.05, 0.04),
 ]
+
+## Deslocamento horizontal (0..largura do tile) das crateras para uma rolagem do mapa.
+static func crater_offset(scroll: float) -> float:
+    return fposmod(-scroll * CRATER_PARALLAX, CRATER_TILE.x * CRATER_SCALE)
+
+## Fatias do tile a desenhar para cobrir a área do mapa: [{"dst": Rect2, "src": Rect2}], sem passar de map_top + map_h.
+static func crater_slices(view_w: float, scroll: float, map_top: float, map_h: float) -> Array:
+    var out: Array = []
+    var tw: float = CRATER_TILE.x * CRATER_SCALE
+    var th: float = CRATER_TILE.y * CRATER_SCALE
+    var x: float = crater_offset(scroll) - tw
+    while x < view_w:
+        var y: float = map_top
+        while y < map_top + map_h:
+            var vis_h: float = minf(th, map_top + map_h - y)
+            out.append({"dst": Rect2(x, y, tw, vis_h), "src": Rect2(0.0, 0.0, CRATER_TILE.x, vis_h / CRATER_SCALE)})
+            y += th
+        x += tw
+    return out
 
 static func total_width() -> float:
     return X0 * 2.0 + float(Balance.MAX_STAGE - 1) * SPACING

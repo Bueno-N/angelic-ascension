@@ -2,3 +2,7 @@ Toda a arte em assets/sprites/ foi criada do zero para este projeto, por código
 sem usar, copiar ou derivar de nenhum asset, personagem, jogo ou obra de terceiros.
 Licença: CC0 1.0 (domínio público) - use, modifique e distribua livremente, inclusive comercialmente.
 Para regenerar: python3 tools/art/generate.py
+
+Todo o áudio em assets/audio/ (efeitos .wav e músicas .ogg) também foi criado do zero, por síntese em código
+(tools/audio/*.py: osciladores, ruído e filtros), sem samples, trechos ou composições de terceiros.
+Licença: CC0 1.0 (domínio público). Para regenerar: python3 tools/audio/generate_audio.py (precisa de numpy, scipy e ffmpeg)

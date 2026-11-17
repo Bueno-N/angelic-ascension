@@ -36,6 +36,7 @@ func _ready() -> void:
     _backdrop = Backdrop.new()
     add_child(_backdrop)
     _backdrop.set_fx(UiLogic.fx_enabled(GameState.global_settings))
+    AudioHub.play_music(AudioLogic.TITLE_TRACK)
     _angel = AngelSprite.new()
     _angel.scale = Vector2(2.6, 2.6)
     _angel.set_look(7, 4, {"boots": 3, "armor": 3, "gloves": 3, "sword": 3})

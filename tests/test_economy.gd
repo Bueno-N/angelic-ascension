@@ -107,9 +107,28 @@ func test_calibration_targets_are_warnings_only() -> void:
             continue
         warn_if_not(float(r["hours"]) >= prev_h, "tempo crescente em " + str(s["name"]))
         prev_h = float(r["hours"])
-    var first := EconomyModel.time_to_accumulate(100.0)
+    var first := EconomyModel.time_to_accumulate(float(SkillsDB.SKILLS[0]["price"]))
     warn_if_not(not first.is_empty() and float(first["hours"]) <= 12.0, "1ª habilidade deveria sair em poucas horas")
-    var last := EconomyModel.time_to_accumulate(2000000.0)
+    var last := EconomyModel.time_to_accumulate(float(SkillsDB.SKILLS[9]["price"]))
     var days: float = float(last.get("hours", 1e9)) / Balance.MODEL_HOURS_PER_DAY
     warn_if_not(days >= 60.0, "habilidade suprema deveria levar meses (modelo: %.0f dias)" % days)
     check(true, "calibração executada")
+
+func test_model_respects_the_300_stage_cap() -> void:
+    var r := EconomyModel.time_to_accumulate(1.0e9)
+    check(not r.is_empty() and int(r["stage"]) == Balance.MAX_STAGE and bool(r.get("farming", false)), "além da fase 300 só repete a última")
+    var small := EconomyModel.time_to_accumulate(20.0)
+    check(not small.has("farming") and int(small["stage"]) < Balance.MAX_STAGE, "meta pequena sai antes do fim")
+    check(EconomyModel.stages_per_hour_at(300) > 0.0, "ritmo positivo")
+    var last := EconomyModel.time_to_accumulate(float(SkillsDB.SKILLS[9]["price"]))
+    check(float(last["hours"]) > EconomyModel.hours_at_stage(300), "a suprema só vem depois de chegar à fase 300")
+
+func test_skill_times_are_increasing_and_in_design_range() -> void:
+    var prev := 0.0
+    for s in SkillsDB.SKILLS:
+        var r := EconomyModel.time_to_accumulate(float(s["price"]))
+        check(float(r["hours"]) >= prev, "tempo crescente: " + str(s["id"]))
+        prev = float(r["hours"])
+    var first := EconomyModel.time_to_accumulate(float(SkillsDB.SKILLS[0]["price"]))
+    check(float(first["hours"]) <= 3.0, "1ª habilidade em poucas horas (modelo)")
+    check(prev >= 150.0 and prev <= 900.0, "suprema entre 150 h e 900 h de jogo (modelo: %.0f h)" % prev)

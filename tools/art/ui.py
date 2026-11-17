@@ -191,10 +191,103 @@ def speaker():
     c.line(17, 8, 17, 16, GOLD, 2); c.line(20, 5, 20, 19, GOLD, 2)
     return c.finish(OUT, 0.05, 0.1)
 
+# ------------------------------------------------------------------ ícones das 10 habilidades (24x24)
+ORANGE, ORANGE_L = hexc('#ff8a1f'), hexc('#ffd23f')
+def sk_lance():
+    c = Canvas(24, 24)
+    c.line(3, 21, 16, 8, BROWN, 2)
+    c.line(4, 20, 15, 9, GOLD_L)
+    c.poly([(22, 2), (19, 12), (12, 5)], WHITE)
+    c.line(21, 3, 14, 7, CYAN_L)
+    c.px(5, 4, GOLD_L); c.px(4, 5, GOLD_L); c.px(5, 5, WHITE); c.px(19, 19, GOLD_L); c.px(18, 20, GOLD_L)
+    return c.finish(OUT)
+def sk_shield():
+    c = Canvas(24, 24)
+    c.poly([(3, 3), (21, 3), (21, 12), (12, 22), (3, 12)], GOLD_D)
+    c.poly([(5, 5), (19, 5), (19, 11), (12, 19), (5, 11)], BLUE_L)
+    c.rect(11, 6, 12, 17, WHITE); c.rect(7, 9, 16, 10, WHITE)
+    c.line(5, 5, 11, 5, CYAN_L)
+    return c.finish(OUT)
+def sk_rain():
+    c = Canvas(24, 24)
+    c.ell(7, 6, 5, 3.5, LAV_L); c.ell(13, 5, 6, 4.5, WHITE); c.ell(18, 7, 4.5, 3.5, LAV_L)
+    for x, y in ((5, 12), (10, 14), (15, 12), (19, 15), (8, 19)):
+        c.line(x, y, x - 2, y + 5, GOLD_L, 2)
+        c.px(x - 2, y + 5, WHITE)
+    return c.finish(OUT)
+def sk_swords():
+    c = Canvas(24, 24)
+    c.ell(12, 12, 11, 11, CYAN); c.ell(12, 12, 9, 9, None)          # órbita das espadas
+    c.line(5, 19, 19, 5, STEEL, 3); c.line(5, 5, 19, 19, STEEL, 3)
+    c.line(6, 18, 18, 6, WHITE); c.line(6, 6, 18, 18, WHITE)
+    c.line(3, 15, 9, 21, GOLD, 2); c.line(15, 21, 21, 15, GOLD, 2)
+    c.ell(12, 12, 2, 2, GOLD_L)
+    return c.finish(OUT)
+def sk_judgment():
+    c = Canvas(24, 24)
+    c.poly([(15, 1), (6, 12), (11, 12), (8, 18), (18, 8), (13, 8), (17, 1)], ORANGE_L)
+    c.line(14, 3, 9, 11, WHITE)
+    c.ell(12, 21, 9, 2.2, WHITE)
+    c.ell(12, 21, 6, 1.2, GOLD_L)
+    c.px(3, 6, WHITE); c.px(20, 14, WHITE)
+    return c.finish(OUT)
+def sk_wings():
+    c = Canvas(24, 24)
+    w = Canvas(24, 24)
+    for tip in ((2, 4), (1, 10), (3, 16)):
+        w.line(10, 13, tip[0], tip[1], WHITE, 4)
+        w.line(10, 13, tip[0] + 1, tip[1] + 1, LAV_L, 1)
+    w.ell(9, 13, 3, 3, WHITE)
+    c.blit(w); c.blit(w.flip())
+    c.ell(10.6, 12, 2.0, 2.0, RED); c.ell(13.4, 12, 2.0, 2.0, RED)
+    c.poly([(8.8, 13), (15.2, 13), (12, 17.5)], RED)
+    return c.finish(OUT)
+def sk_army():
+    c = Canvas(24, 24)
+    def angel(cx, cy, k, body):
+        c.poly([(cx - 3 * k, cy), (cx - 9 * k, cy - 5 * k), (cx - 7 * k, cy + 4 * k), (cx - 3 * k, cy + 3 * k)], LAV_L)
+        c.poly([(cx + 3 * k, cy), (cx + 9 * k, cy - 5 * k), (cx + 7 * k, cy + 4 * k), (cx + 3 * k, cy + 3 * k)], LAV_L)
+        c.poly([(cx - 3 * k, cy), (cx + 3 * k, cy), (cx + 4 * k, cy + 10 * k), (cx - 4 * k, cy + 10 * k)], body)
+        c.ell(cx, cy - 2 * k, 2.6 * k, 2.6 * k, SKIN)
+        c.ell(cx, cy - 6 * k, 3 * k, 1.0 * k, GOLD_L)
+    angel(5, 12, 0.7, BLUE_L); angel(19, 12, 0.7, BLUE_L); angel(12, 10, 1.0, WHITE)
+    return c.finish(OUT)
+def sk_fury():
+    c = Canvas(24, 24)
+    c.poly([(12, 1), (17, 8), (21, 13), (19, 20), (12, 23), (5, 20), (3, 13), (7, 9), (9, 11), (10, 6)], hexc('#e8431a'))
+    c.poly([(12, 8), (16, 13), (17, 19), (12, 22), (7, 19), (8, 13), (10, 14)], ORANGE)
+    c.poly([(12, 14), (14, 18), (12, 21), (10, 18)], ORANGE_L)
+    c.px(12, 19, WHITE)
+    return c.finish(OUT)
+def sk_apocalypse():
+    c = Canvas(24, 24)
+    for k in range(12):
+        a = k * math.tau / 12
+        r = 11 if k % 2 == 0 else 8
+        c.line(12 + math.cos(a) * 4, 12 + math.sin(a) * 4, 12 + math.cos(a) * r, 12 + math.sin(a) * r, ORANGE_L, 2)
+    c.ell(12, 12, 6.5, 6.5, GOLD_L)
+    c.ell(12, 12, 4, 4, WHITE)
+    return c.finish(OUT, 0.05, 0.1)
+def sk_hell():
+    c = Canvas(24, 24)
+    c.poly([(4, 3), (9, 9), (7, 12)], hexc('#e0373b'))
+    c.poly([(20, 3), (15, 9), (17, 12)], hexc('#e0373b'))
+    c.ell(12, 13, 8, 7.5, RED)
+    c.rect(8, 17, 16, 21, RED_D)
+    c.poly([(7, 11), (11, 13), (7, 15)], ORANGE_L); c.poly([(17, 11), (13, 13), (17, 15)], ORANGE_L)
+    c.line(12, 1, 12, 22, WHITE, 2)
+    c.line(8, 8, 16, 8, GOLD, 2)
+    c.ell(12, 3, 4.5, 1.4, GOLD_L)
+    return c.finish(OUT)
+SKILL_ICON_NAMES = ["sk_celestial_lance", "sk_holy_shield", "sk_rain_of_light", "sk_swords_of_paradise", "sk_divine_judgment",
+                    "sk_wings_of_redemption", "sk_army_of_archangels", "sk_celestial_fury", "sk_holy_apocalypse", "sk_death_of_hell"]
+SKILL_ICON_FNS = [sk_lance, sk_shield, sk_rain, sk_swords, sk_judgment, sk_wings, sk_army, sk_fury, sk_apocalypse, sk_hell]
+
+
 ICONS = [("sword", sword), ("heart", heart), ("shield", shield), ("boot", boot), ("bolt", bolt), ("aura", aura),
          ("coin", coin), ("gem", gem), ("shard", shard), ("skills", skills), ("wings", wings), ("armor", armor),
          ("glove", glove), ("menu", menu), ("user", user), ("glow", glow), ("close", close), ("back", back),
-         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages), ("skull", skull)]
+         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages), ("skull", skull)] + list(zip(SKILL_ICON_NAMES, SKILL_ICON_FNS))
 
 # ------------------------------------------------------------------ avatares 32x32
 def av_hood(hood, trim, eye, halo):

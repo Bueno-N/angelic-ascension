@@ -28,6 +28,7 @@ var _before_death := 1
 var _death_ok := false
 var _goto_ok := false
 var _map_ok := true
+var _aud_ok := true
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -84,6 +85,7 @@ func _on_player_died() -> void:
         return   # vários golpes no mesmo frame
     _dead = true
     _before_death = stage_mgr.stage
+    AudioHub.play("die", 1.0, 0.0)
     player.visible = false          # quem cai é o anjo desenhado pela tela de morte
     hud.show_death(player.global_position, maxi(1, stage_mgr.stage - 1))
 
@@ -133,6 +135,25 @@ func _prepare_smoke() -> void:
     Enemy.smoke_fast = true     # habilidades inimigas sem recarga inicial
     GameState.recalc()
 
+## Opções de som (mesmo caminho do menu): música liga/desliga e volume dos efeitos até o mudo; volta ao normal no fim.
+func _smoke_audio_options() -> bool:
+    var cfg: Dictionary = GameState.state["settings"]
+    var mbus: int = AudioServer.get_bus_index(AudioLogic.BUS_MUSIC)
+    var sbus: int = AudioServer.get_bus_index(AudioLogic.BUS_SFX)
+    var ok: bool = mbus >= 0 and sbus >= 0
+    var was_on: bool = OptionsLogic.music_on(cfg)
+    GameState.menu_action("opt|music|0")
+    ok = ok and OptionsLogic.music_on(cfg) != was_on and AudioServer.is_bus_mute(mbus) == was_on
+    GameState.menu_action("opt|music|0")
+    ok = ok and OptionsLogic.music_on(cfg) == was_on and AudioServer.is_bus_mute(mbus) == (not was_on)
+    for i in range(10):
+        GameState.menu_action("opt|svol|-10")
+    ok = ok and OptionsLogic.sfx_vol(cfg) == 0 and AudioServer.is_bus_mute(sbus)
+    for i in range(10):
+        GameState.menu_action("opt|svol|10")
+    ok = ok and OptionsLogic.sfx_vol(cfg) == 100 and not AudioServer.is_bus_mute(sbus)
+    return ok
+
 func _on_warning(_n: String, is_mini: bool) -> void:
     _warn_count += 1
     if is_mini:
@@ -151,6 +172,8 @@ func _process(_delta: float) -> void:
             caster.debug_cast_all()
         900:
             stage_mgr.start_stage(10)    # chefe 1: pancada em área + investida
+        905:
+            _aud_ok = _aud_ok and AudioHub.music_track == AudioLogic.music_for(10) and AudioLogic.music_for(10) == AudioLogic.BOSS_TRACK
         1500:
             stage_mgr.start_stage(20)    # chefe 2: invocação + projéteis infernais
         2100:
@@ -162,6 +185,10 @@ func _process(_delta: float) -> void:
             for t in EnemiesDB.TYPES:
                 if not t["special"]:
                     stage_mgr.debug_spawn_type(str(t["id"]), player.position + Vector2(-300.0, float(randi() % 200) - 100.0), false)
+        300:
+            AudioHub.debug_play_all()                # toca TODOS os efeitos e as 4 músicas (falha de carregamento vai para AudioHub.missing)
+        360:
+            _aud_ok = _aud_ok and AudioHub.played >= 20 and AudioHub.missing.is_empty()
         400:
             _map_ok = _map_ok and hud.debug_map_step(0)      # mapa das fases: abre, rola para outra dificuldade, escolhe, fecha
         430:
@@ -209,6 +236,8 @@ func _process(_delta: float) -> void:
             GameState.menu_action("opt|fx|0")
             GameState.menu_action("opt|vol|10")
             _opt_ok = _opt_ok and UiLogic.fx_enabled(GameState.state["settings"]) and OptionsLogic.volume(GameState.state["settings"]) >= 10
+        2945:
+            _aud_ok = _aud_ok and _smoke_audio_options()
         2960:
             stage_mgr.start_stage(30)    # chefe 3 (Ignarr): chuva de meteoros + sopro flamejante
         3560:
@@ -216,6 +245,8 @@ func _process(_delta: float) -> void:
         4160:
             stage_mgr.start_stage(5)     # mini-chefe 1 (Capitão Infernal) no fim da horda
             stage_mgr.to_spawn = 2
+        4165:
+            _aud_ok = _aud_ok and AudioHub.music_track == AudioLogic.music_for(5) and AudioHub.missing.is_empty()
         4540:
             stage_mgr.start_stage(15)    # mini-chefe 2 (Cérbero das Cinzas)
             stage_mgr.to_spawn = 2
@@ -228,11 +259,12 @@ func _process(_delta: float) -> void:
             GameState.set_profile("Teste", 3)
             _profile_ok = str(GameState.state["profile"]["name"]) == "Teste" and int(GameState.state["profile"]["avatar"]) == 3
     if _frames >= 4940:
+        _aud_ok = _aud_ok and AudioHub.played >= 50 and AudioHub.missing.is_empty()
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d aud=%d sfx=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
             _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
-            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok)])
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok), int(_aud_ok), AudioHub.played])
         get_tree().quit(0)

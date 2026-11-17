@@ -35,6 +35,7 @@ func _process(delta: float) -> void:
         elif _cd <= 0.0:
             _cd = tick
             SkillCaster.deal_damage(best, id, atk, glow)
+            AudioHub.play("ally_strike", 1.0, 0.1)
             var parent := get_parent()
             if parent != null:
                 SpriteFx.spawn(parent, "fx_hit", best.global_position, 2.0, Color(1.0, 0.9, 0.5))
