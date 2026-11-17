@@ -25,7 +25,7 @@ func _ready() -> void:
     anchor_bottom = 1.0
     offset_left = -624.0
     offset_right = -16.0
-    offset_top = 176.0     # abaixo dos botões MENU e FASES
+    offset_top = 252.0     # abaixo dos botões MENU, FASES e BOSS SEMANAL
     offset_bottom = -168.0
     visible = false
     mouse_filter = Control.MOUSE_FILTER_STOP

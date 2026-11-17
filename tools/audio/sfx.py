@@ -354,6 +354,57 @@ def ally_strike():
     r = R(64)
     return mixsum(burst(0.1, 3500, r, 30, 'bp') * 0.7, bell(M(84), 0.25, 12) * 0.3)
 
+# ---------------------------------------------------------------- Lucifer (chefe semanal)
+def ab_hell_nova():
+    r = R(70)
+    out = np.zeros(N(1.6))
+    place(out, thump(70, 22, 1.2, 3.5) * 1.6, 0.0, SR)
+    place(out, explosion(1.2, r, 40, 3500) * 0.7, 0.05, SR)
+    place(out, whoosh(0.9, 200, 2500, r, 0.6, 0.5) * 0.5, 0.1, SR)
+    return reverb(out, SR, 1.0, 0.3, r)
+
+def ab_abyss_beam():
+    r = R(71)
+    n = N(1.3)
+    u = np.linspace(0, 1, n)
+    saw = osc('saw', 55, n, SR, vib=0.01) + 0.6 * osc('saw', 110.5, n, SR, vib=0.01)
+    saw = lp(saw, 1800, SR)
+    env = np.minimum(1, u * 10) * (1 - u ** 4)
+    hiss = bp(noise(n, r), 1500, 6000, SR) * 0.35
+    return (saw * 0.35 + hiss) * env
+
+def ab_inferno_storm():
+    r = R(72)
+    out = np.zeros(N(2.2))
+    for i in range(9):
+        t0 = 0.03 + i * 0.17
+        n = N(0.45)
+        w = np.sin(2 * np.pi * np.cumsum(sweep(2400 - i * 120, 260, n, 1.6)) / SR) * exp_env(n, SR, 2.0, 0.05) * 0.2
+        place(out, w, t0, SR)
+        place(out, explosion(0.6, r, 45 + i, 4200) * 0.45, t0 + 0.42, SR)
+    return out
+
+def ab_soul_harvest():
+    r = R(73)
+    out = np.zeros(N(1.8))
+    for i in range(8):
+        n = N(0.8)
+        f = sweep(300 + i * 40, 900 + i * 60, n, 0.7) * (1 + 0.03 * np.sin(2 * np.pi * 7 * tarr(n, SR)))
+        x = np.sin(2 * np.pi * np.cumsum(f) / SR) * adsr(n, SR, 0.08, 0.1, 0.7, 0.4)
+        place(out, x * 0.4, i * 0.09, SR)
+    place(out, voice(160, 70, 1.0, VOW_O, r, 0.3, 0.05, 2.5) * 0.7, 0.0, SR)
+    return reverb(out, SR, 1.4, 0.4, r)
+
+def ab_summon_boss():
+    r = R(74)
+    out = np.zeros(N(2.0))
+    place(out, chord([M(28), M(35), M(40), M(43)], 1.9, 'saw', 500, 0.6, 0.7, 0.012, 0.02), 0.0, SR)
+    place(out, thump(60, 24, 0.9, 4) * 1.3, 0.0, SR)
+    place(out, bell(M(52), 1.4, 2.5) * 0.5, 0.5, SR)
+    place(out, voice(110, 55, 1.0, VOW_O, r, 0.25, 0.06, 2.5) * 0.9, 0.4, SR)
+    place(out, explosion(0.8, r, 40, 2500) * 0.6, 1.0, SR)
+    return reverb(out, SR, 1.5, 0.35, r)
+
 SFX = {
     "atk": atk, "hurt": hurt, "die": die, "stage_up": stage_up, "ui_click": ui_click, "ui_buy": ui_buy, "mob_hit": mob_hit,
     "sk_celestial_lance": sk_celestial_lance, "sk_holy_shield": sk_holy_shield, "sk_rain_of_light": sk_rain_of_light,
@@ -366,6 +417,7 @@ SFX = {
     "mob_shoot": mob_shoot, "mob_drain": mob_drain, "warn": warn,
     "ab_area_slam": ab_area_slam, "ab_charge": ab_charge, "ab_summon_demons": ab_summon_demons,
     "ab_hellfire_projectiles": ab_hellfire_projectiles, "ab_meteor_rain": ab_meteor_rain, "ab_flame_breath": ab_flame_breath,
-    "ab_shadow_step": ab_shadow_step, "ab_soul_orbs": ab_soul_orbs, "boss_roar": boss_roar, "mini_roar": mini_roar,
+    "ab_shadow_step": ab_shadow_step, "ab_soul_orbs": ab_soul_orbs, "ab_hell_nova": ab_hell_nova, "ab_abyss_beam": ab_abyss_beam, "ab_inferno_storm": ab_inferno_storm,
+    "ab_soul_harvest": ab_soul_harvest, "ab_summon_boss": ab_summon_boss, "boss_roar": boss_roar, "mini_roar": mini_roar,
     "boss_die": boss_die, "mini_die": mini_die, "ally_strike": ally_strike,
 }

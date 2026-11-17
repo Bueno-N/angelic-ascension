@@ -241,3 +241,19 @@ Substitui a lista de fases dentro do menu (rodada 15): a aba "Fases" saiu do men
 | Testes `test_audio.gd` (arquivos x manifesto, trilha por fase, limitador, opções, barramentos); smoke com `aud=` | ⬜ | Smoke toca TODOS os efeitos e músicas e confere que carregam |
 
 Pendências que só o aparelho resolve: soar bem? volume relativo música x efeitos? o 2x de velocidade não muda o tom (conferir); consumo de bateria com música.
+
+## Rodada 18 — Boss Semanal (Lucifer) e ranking mundial (⬜ escrita, **nunca executada no CI**; online **nunca testado contra servidor**)
+
+| Item | Estado | Observação |
+|---|---|---|
+| Botão **BOSS SEMANAL** (ícone do Lucifer) logo abaixo de FASES; **travado até concluir a fase 50** (recorde > 50); o painel do menu desceu para não cobri-lo | ⬜ | `hud.gd`; `UiButton` aceita texto em 2 linhas |
+| **Lucifer** (chefe único, fora da lista de 4 chefes de fase): sprite 64x64 original (`tools/art/enemies.py`), 4 habilidades exclusivas — Nova infernal (rosca: segura colado nele ou longe), Raio do abismo, Tempestade infernal (9 meteoros), Colheita de almas (12 orbes teleguiados) — + **invoca 1 chefe a cada 20 s** (até 4 vivos; aparência Baal/Mordath/Ignarr/Azazel, vida 3% do chefe da fase 300) | ⬜ | `enemies_db.gd`, `enemy.gd`; 5 sons novos (`tools/audio/sfx.py`) |
+| Potência: vida **8x** e dano **1,6x** do chefe da fase 300 (`Balance.WEEKLY_*`) | ⬜ **palpite** | "Mais difícil que a última fase": só o playtest diz se a escala está certa |
+| Luta de **2 min**; fim: "O SEU TEMPO ACABOU" (ou "LUCIFER DERROTADO!" / "VOCE CAIU") e volta à partida normal (anjo curado); a fase fica congelada e mapa/próxima fase travados durante a luta | ⬜ | `stage_manager.gd` (modo semanal), `main.gd` |
+| **4 entradas por semana** (semana = segunda 00:00 UTC), gastas ao entrar | ⬜ | `weekly_boss.gd`, salvas em `state["weekly"]`; online o servidor conta as entradas |
+| **Pontuação** = dano ao Lucifer (+ até 25% se matar, pelo tempo que sobrar); vale o melhor da semana | ⬜ | |
+| **Ranking mundial** + **prêmios por posição** (1º = 600 gemas + 25 fragmentos ... participação = 10 gemas), resgate na semana seguinte | ⬜ escrito / ❌ **não testado em servidor** | `online_client.gd`, `weekly_panel.gd`, `docs/weekly_ranking.sql`, `docs/ONLINE.md`. **Precisa de um projeto Supabase e de URL + chave em `data/online_config.gd`; sem isso roda OFFLINE** |
+| Testes `test_weekly.gd` (semana UTC, desbloqueio, 4 entradas, prêmios, pontuação, save, parse da resposta do servidor, habilidades, textos na fonte); smoke com `wk=` e as 5 habilidades novas | ⬜ | Rede (`OnlineClient`) **sem teste automatizado** |
+
+Limites conhecidos do online (detalhes em `docs/ONLINE.md`): pontuação enviada pelo aparelho (dá para trapacear), sem login (id anônimo por instalação), plano grátis do Supabase pode pausar por inatividade, política de privacidade necessária na Play Store (nome do perfil vai ao servidor).
+Pendências que só o aparelho resolve: o Lucifer é legível/justo na tela? 2 min é suficiente? prêmios equilibrados com a economia? sons novos soam bem?

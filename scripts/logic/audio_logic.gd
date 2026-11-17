@@ -28,7 +28,9 @@ const MOB_DIE_GAP := 0.06
 const ABILITY_SFX := {
     "area_slam": "ab_area_slam", "charge": "ab_charge", "summon_demons": "ab_summon_demons",
     "hellfire_projectiles": "ab_hellfire_projectiles", "meteor_rain": "ab_meteor_rain", "flame_breath": "ab_flame_breath",
-    "shadow_step": "ab_shadow_step", "soul_orbs": "ab_soul_orbs", "fire_bolt": "mob_shoot", "life_steal": "mob_drain",
+    "shadow_step": "ab_shadow_step", "soul_orbs": "ab_soul_orbs",
+    "hell_nova": "ab_hell_nova", "abyss_beam": "ab_abyss_beam", "inferno_storm": "ab_inferno_storm",
+    "soul_harvest": "ab_soul_harvest", "summon_boss": "ab_summon_boss", "fire_bolt": "mob_shoot", "life_steal": "mob_drain",
 }
 const SPRITES := ["imp", "warrior", "shadow", "hound", "caster", "leech"]
 

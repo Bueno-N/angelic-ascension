@@ -39,6 +39,7 @@ static func default_state() -> Dictionary:
         "settings": {"auto_slots": [true, true, true], "speed_2x": false, "low_fx": false, "volume": OptionsLogic.DEFAULT_VOLUME,
         "music_on": true, "music_vol": OptionsLogic.DEFAULT_MUSIC_VOL, "sfx_vol": OptionsLogic.DEFAULT_SFX_VOL},
         "profile": {"name": ProfileLogic.DEFAULT_NAME, "avatar": 0},
+        "weekly": WeeklyBoss.default_weekly(),
     }
 
 static func to_json(state: Dictionary) -> String:
@@ -101,6 +102,8 @@ static func sanitize(raw: Dictionary) -> Dictionary:
             if s["skills_owned"].has(id) and not s["skills_equipped"].has(id) \
                     and s["skills_equipped"].size() < SkillsDB.MAX_EQUIPPED:
                 s["skills_equipped"].append(id)
+
+    s["weekly"] = WeeklyBoss.sanitize(raw.get("weekly"))
 
     if raw.get("profile") is Dictionary:
         var rp: Dictionary = raw["profile"]

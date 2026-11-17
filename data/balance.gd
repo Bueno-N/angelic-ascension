@@ -69,6 +69,21 @@ const MINI_SCALE := 3.0               # escala do sprite (pixel art: inteiro)
 const MINI_GEM_MIN := 1               # gemas garantidas do mini-chefe (sem fragmentos de asa)
 const MINI_GEM_MAX := 2
 
+# --- Boss semanal (LUCIFER) ---
+# Liberado ao CONCLUIR a fase 50. Luta de tempo limitado; vida/dano partem do chefe da ÚLTIMA fase (valores são PALPITE, sem playtest).
+const WEEKLY_UNLOCK_STAGE := 50       # precisa ter concluído esta fase (max_stage > 50)
+const WEEKLY_MAX_ENTRIES := 4         # tentativas por semana (semana começa na segunda 00:00 UTC)
+const WEEKLY_TIME_LIMIT := 120.0      # segundos
+const WEEKLY_HP_MULT := 8.0           # x a vida do chefe da fase 300 (muito mais difícil que a última fase)
+const WEEKLY_DMG_MULT := 1.6          # x o dano do chefe da fase 300
+const WEEKLY_SUMMON_EVERY := 20.0     # Lucifer invoca 1 chefe a cada 20 s
+const WEEKLY_SUMMON_HP_FRAC := 0.03   # vida do chefe invocado = 3% da vida do chefe da fase 300
+const WEEKLY_SUMMON_DMG_FRAC := 0.6
+const WEEKLY_MAX_SUMMONS := 4         # chefes invocados vivos ao mesmo tempo
+const WEEKLY_SPEED := 62.0
+const WEEKLY_RADIUS := 56.0
+const WEEKLY_SCALE := 3.0
+
 # --- Modo acelerado (botão de velocidade no HUD) ---
 const FAST_MODE_SCALE := 2.0
 

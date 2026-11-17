@@ -11,14 +11,14 @@ if [ "${gold:-0}" -le 0 ]; then echo "Nenhum inimigo morreu em 30s (ouro=0): com
 cleared=$(grep -o "cleared=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${cleared:-0}" -lt 1 ]; then echo "Nenhuma fase foi limpa no smoke (limpeza de fase/spawn com problema)"; exit 1; fi
 kinds=$(grep -o "kinds=[a-z_,]*" build/smoke.log | head -1 | cut -d= -f2)
-for k in area_slam charge summon_demons hellfire_projectiles meteor_rain flame_breath shadow_step soul_orbs fire_bolt life_steal; do
+for k in area_slam charge summon_demons hellfire_projectiles meteor_rain flame_breath shadow_step soul_orbs fire_bolt life_steal hell_nova abyss_beam inferno_storm soul_harvest summon_boss; do
   case ",$kinds," in *",$k,"*) ;; *) echo "Habilidade inimiga NÃO executada no smoke: $k (executadas: ${kinds:-nenhuma})"; exit 1;; esac
 done
 casts=$(grep -o "casts=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${casts:-0}" -lt 10 ]; then echo "Habilidades não foram executadas (casts=${casts:-0}, esperado >= 10)"; exit 1; fi
-for k in repeat next speed fx profile pause opt title death goto map aud; do
+for k in repeat next speed fx profile pause opt title death goto map aud wk; do
   v=$(grep -o " $k=[0-9]" build/smoke.log | head -1 | cut -d= -f2)
-  if [ "${v:-0}" != "1" ]; then echo "Verificação '$k' falhou no smoke (valor=${v:-ausente}): modo repetir / próxima fase / velocidade 2x / perfil / pausa com o perfil aberto / opções / telas do menu inicial / animação de morte / ir para fase escolhida / mapa das fases / áudio (arquivos de som e música carregam, trilha por fase, música e efeitos nas opções)"; exit 1; fi
+  if [ "${v:-0}" != "1" ]; then echo "Verificação '$k' falhou no smoke (valor=${v:-ausente}): modo repetir / próxima fase / velocidade 2x / perfil / pausa com o perfil aberto / opções / telas do menu inicial / animação de morte / ir para fase escolhida / mapa das fases / áudio (arquivos de som e música carregam, trilha por fase, música e efeitos nas opções) / boss semanal (bloqueio antes da fase 50, luta, habilidades do Lucifer, tempo esgotado, queda do anjo, 4 entradas por semana)"; exit 1; fi
 done
 warn=$(grep -o " warn=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 mini=$(grep -o " mini=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)

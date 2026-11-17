@@ -77,5 +77,9 @@ func _draw() -> void:
     if icon != "":
         UiIcons.draw(self, icon, Rect2(10.0, (size.y - 24.0) / 2.0, 24.0, 24.0), Color.WHITE if enabled else Color(0.5, 0.5, 0.55))
         x = 42.0
-    var tw: float = float(PixelFont.width(text, font_scale))
-    PixelFont.draw(self, Vector2(x + (size.x - x - 10.0 - tw) / 2.0, (size.y - 7.0 * float(font_scale)) / 2.0), text, font_scale, tc)
+    var lines: PackedStringArray = text.split("\n")
+    var lh: float = 7.0 * float(font_scale)
+    var total_h: float = lh * float(lines.size()) + 6.0 * float(lines.size() - 1)
+    for k in range(lines.size()):
+        var tw: float = float(PixelFont.width(lines[k], font_scale))
+        PixelFont.draw(self, Vector2(x + (size.x - x - 10.0 - tw) / 2.0, (size.y - total_h) / 2.0 + float(k) * (lh + 6.0)), lines[k], font_scale, tc)

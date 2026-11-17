@@ -314,9 +314,71 @@ def boss_azazel():
         return c.finish(OUT)
     return ani([make(i, False) for i in range(4)], [make(i, True) for i in range(2)])
 
+# --------------------------------------------------------------- LUCIFER (chefe semanal) 64x64
+def boss_lucifer():
+    OUT = hexc('#0c0412'); BODY = hexc('#1d1030'); BODY_L = hexc('#3a2160'); WING = hexc('#2a1448'); GOLD = hexc('#f0c24a'); GOLD_D = hexc('#a87a1c')
+    FLAME = hexc('#ff4a1c'); FLAME_L = hexc('#ffb347'); EYE = hexc('#ff2a2a'); BONE = hexc('#e8dcc4'); SKIN = hexc('#c9b8d8')
+    def make(i, cast):
+        c = Canvas(64, 64)
+        bob = [0, -2, -3, -2][i % 4]
+        flap = [8, 0, -8, 0][i % 4]
+        # 2 pares de asas negras com a ponta em chamas
+        for sgn, ox in ((-1, 27), (1, 37)):
+            up = [(ox + sgn * 25, 2 + bob - flap), (ox + sgn * 30, 16 + bob - flap // 2), (ox + sgn * 24, 30 + bob), (ox + sgn * 10, 32 + bob)]
+            c.poly([(ox, 22 + bob)] + up, WING)
+            low = [(ox + sgn * 21, 40 + bob - flap // 3), (ox + sgn * 14, 50 + bob), (ox + sgn * 6, 46 + bob)]
+            c.poly([(ox, 30 + bob)] + low, WING)
+            for t in up[:3]:
+                c.line(ox, 22 + bob, t[0], t[1], GOLD_D)
+                c.px(t[0], t[1], FLAME_L); c.px(t[0] - sgn, t[1] + 1, FLAME)
+        # pernas e manto
+        c.line(28, 44 + bob, 26, 56 + bob, BODY, 5); c.line(36, 44 + bob, 38, 56 + bob, BODY, 5)
+        c.rect(23, 56 + bob, 29, 58 + bob, GOLD_D); c.rect(35, 56 + bob, 41, 58 + bob, GOLD_D)
+        c.poly([(24, 36 + bob), (40, 36 + bob), (44, 58 + bob), (20, 58 + bob)], BODY)
+        # peitoral dourado
+        c.ell(32, 31 + bob, 10, 13, BODY_L); c.poly([(25, 24 + bob), (39, 24 + bob), (36, 40 + bob), (28, 40 + bob)], GOLD)
+        c.line(32, 25 + bob, 32, 39 + bob, GOLD_D)
+        c.ell(32, 31 + bob, 2, 2, FLAME)
+        c.rect(25, 40 + bob, 39, 42 + bob, GOLD_D)
+        # ombreiras com espinhos
+        for sx in (22, 42):
+            c.ell(sx, 25 + bob, 5, 4, GOLD)
+            c.poly([(sx - 2, 22 + bob), (sx, 15 + bob), (sx + 2, 22 + bob)], GOLD_D)
+        # braços: em guarda ou erguidos com uma chama
+        if cast:
+            hl, hr = (17, 14 + bob), (47, 14 + bob)
+            c.line(24, 26 + bob, hl[0], hl[1], BODY, 4); c.line(40, 26 + bob, hr[0], hr[1], BODY, 4)
+            r = 6 + (i % 2) * 2
+            c.ell(32, 8 + bob, r, r, FLAME); c.ell(32, 8 + bob, r - 3, r - 3, FLAME_L)
+        else:
+            hl, hr = (18, 40 + bob), (46, 40 + bob)
+            c.line(24, 26 + bob, hl[0], hl[1], BODY, 4); c.line(40, 26 + bob, hr[0], hr[1], BODY, 4)
+            c.line(46, 44 + bob, 46, 22 + bob, BONE, 2)        # espada de osso em chamas
+            c.poly([(44, 22 + bob), (48, 22 + bob), (46, 14 + bob)], FLAME_L); c.px(46, 18 + bob, FLAME)
+        c.ell(hl[0], hl[1], 3, 3, GOLD); c.ell(hr[0], hr[1], 3, 3, GOLD)
+        # cabeça: rosto pálido, 4 chifres, olhos vermelhos e auréola partida
+        c.ell(32, 17 + bob, 7, 7, SKIN)
+        c.poly([(26, 13 + bob), (19, 8 + bob), (17, 0 + bob), (24, 6 + bob), (28, 11 + bob)], BONE)
+        c.poly([(38, 13 + bob), (45, 8 + bob), (47, 0 + bob), (40, 6 + bob), (36, 11 + bob)], BONE)
+        c.poly([(28, 11 + bob), (27, 3 + bob), (31, 9 + bob)], BONE); c.poly([(36, 11 + bob), (37, 3 + bob), (33, 9 + bob)], BONE)
+        c.rect(28, 17 + bob, 30, 18 + bob, EYE); c.rect(34, 17 + bob, 36, 18 + bob, EYE)
+        c.rect(29, 21 + bob, 35, 21 + bob, OUT)
+        for a0, a1 in ((200, 300), (320, 20)):
+            pts = []
+            a = a0
+            while True:
+                pts.append((32 + math.cos(math.radians(a)) * 11, 8 + bob + math.sin(math.radians(a)) * 3.5))
+                if a == a1: break
+                a = (a + 10) % 360
+            for p0, p1 in zip(pts, pts[1:]):
+                c.line(p0[0], p0[1], p1[0], p1[1], GOLD)
+        return c.finish(OUT)
+    return ani([make(i, False) for i in range(4)], [make(i, True) for i in range(2)])
+
 SHEETS = {
     "imp": (imp, 24, 24), "warrior": (warrior, 28, 28), "shadow": (shadow, 24, 24), "hound": (hound, 32, 24),
     "caster": (caster, 24, 28), "leech": (leech, 24, 24),
     "boss_baal": (boss_baal, 64, 64), "boss_mordath": (boss_mordath, 64, 64),
     "boss_ignarr": (boss_ignarr, 64, 64), "boss_azazel": (boss_azazel, 64, 64),
+    "boss_lucifer": (boss_lucifer, 64, 64),
 }

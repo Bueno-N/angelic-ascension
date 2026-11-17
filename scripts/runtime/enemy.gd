@@ -28,6 +28,7 @@ var _cast_t := 0.0
 var _cast_dir := Vector2.ZERO
 var _dash_t := 0.0
 var _dash_hit := false
+var _boss_summons := 0         # Lucifer: quantos chefes já invocou (define qual aparece)
 var _cast_pts: Array = []     # alvos (posições globais) avisados no telegraph: meteoros, destino do passo sombrio
 
 func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = false, mini: Dictionary = {}) -> void:
@@ -76,8 +77,12 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
         gold = 0
         add_to_group("summons")
         _base_mod = Color(0.8, 0.6, 1.0, 0.9)   # invocações ficam arroxeadas
+    _build(sprite_name, Balance.MINI_SCALE if is_mini else EnemiesDB.SPRITE_SCALE, ability_ids)
+
+## Sprite, habilidades e vida cheia (comum a todos os tipos de inimigo).
+func _build(sprite_name: String, sprite_scale: float, ability_ids: Array) -> void:
     _sprite_name = sprite_name
-    _spr = SpriteLib.make(sprite_name, "walk", Balance.MINI_SCALE if is_mini else EnemiesDB.SPRITE_SCALE)
+    _spr = SpriteLib.make(sprite_name, "walk", sprite_scale)
     _spr.modulate = _base_mod
     _spr.speed_scale = clampf(speed / 70.0, 0.6, 1.5)
     add_child(_spr)
@@ -85,6 +90,36 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
     hp = max_hp
     if is_boss or is_mini:
         Events.boss_hp_changed.emit(hp, max_hp)
+
+## LUCIFER (chefe semanal): único, com as 4 habilidades mais fortes + invocação de chefe. Não dá recompensa de fase.
+func setup_lucifer(target: Player) -> void:
+    player = target
+    is_boss = true
+    stage = Balance.MAX_STAGE
+    add_to_group("enemies")
+    def = {"id": "lucifer", "special": false, "weekly": true, "name": str(EnemiesDB.LUCIFER["name"])}
+    max_hp = WeeklyBoss.lucifer_hp()
+    dmg = WeeklyBoss.lucifer_dmg()
+    gold = 0
+    speed = Balance.WEEKLY_SPEED
+    radius = Balance.WEEKLY_RADIUS
+    _build(str(EnemiesDB.LUCIFER["sprite"]), Balance.WEEKLY_SCALE, EnemiesDB.LUCIFER["abilities"])
+
+## Chefe INVOCADO pelo Lucifer: aparência de um dos 4 chefes (o ciclo segue a contagem), vida/dano bem menores, 1 habilidade, sem recompensa.
+func setup_boss_summon(boss_def: Dictionary, target: Player) -> void:
+    player = target
+    is_summon = true
+    stage = Balance.MAX_STAGE
+    add_to_group("enemies")
+    add_to_group("summons")
+    def = {"id": str(boss_def["id"]), "special": false, "summon": true, "sprite": str(boss_def["sprite"])}
+    max_hp = WeeklyBoss.summon_hp()
+    dmg = WeeklyBoss.summon_dmg()
+    gold = 0
+    speed = float(EnemiesDB.BOSS_BASE["speed"])
+    radius = 34.0
+    _base_mod = Color(0.85, 0.6, 1.0, 0.95)
+    _build(str(boss_def["sprite"]), EnemiesDB.SPRITE_SCALE, [boss_def["abilities"][1]])
 
 func take_damage(amount: float) -> void:
     if hp <= 0.0:
@@ -161,6 +196,8 @@ func _play_melee_sound() -> void:
 func _can_start(id: String) -> bool:
     if id == "summon_demons":
         return get_tree().get_nodes_in_group("summons").size() < EnemiesDB.MAX_SUMMONS_ALIVE
+    if id == "summon_boss":
+        return get_tree().get_nodes_in_group("summons").size() < Balance.WEEKLY_MAX_SUMMONS
     return true
 
 func _start_cast(id: String, to: Vector2) -> void:
@@ -178,7 +215,7 @@ func _plan_targets(id: String) -> Array:
     var cfg: Dictionary = EnemiesDB.ABILITIES[id]
     var area := get_viewport().get_visible_rect().size
     var pts: Array = []
-    if id == "meteor_rain":
+    if id == "meteor_rain" or id == "inferno_storm":
         var rng := RandomNumberGenerator.new()
         rng.randomize()
         for i in range(int(cfg["count"])):
@@ -211,7 +248,24 @@ func _execute_ability() -> void:
             _summon(int(cfg["count"]))
         "hellfire_projectiles":
             _fan(cfg)
-        "meteor_rain":
+        "hell_nova":
+            _burst(float(cfg["radius"]), Color(1.0, 0.2, 0.1))
+            _burst(float(cfg["inner"]), Color(0.3, 0.0, 0.2))
+            var dn: float = player.global_position.distance_to(global_position)
+            if dn >= float(cfg["inner"]) and dn <= float(cfg["radius"]):   # a "rosca": seguro colado nele ou longe
+                player.take_damage(dmg * float(cfg["dmg_mult"]))
+        "abyss_beam":
+            var blen: float = float(cfg["length"])
+            for f in [0.15, 0.35, 0.55, 0.75, 0.95]:
+                _burst_at(global_position + _cast_dir * blen * f, float(cfg["width"]) * 1.2, Color(0.8, 0.1, 0.6))
+            var rel: Vector2 = player.global_position - global_position
+            var along: float = rel.dot(_cast_dir)
+            if along >= 0.0 and along <= blen and absf(rel.cross(_cast_dir)) <= float(cfg["width"]) * 0.5 + 12.0:
+                player.take_damage(dmg * float(cfg["dmg_mult"]))
+        "summon_boss":
+            _burst(110.0, Color(0.9, 0.2, 0.9))
+            _summon_boss()
+        "meteor_rain", "inferno_storm":
             var hit_by_meteor := false
             for pt in _cast_pts:
                 SpriteFx.spawn(get_parent(), "fx_fireball", pt, 3.0, Color(1.0, 0.5, 0.15))
@@ -235,15 +289,15 @@ func _execute_ability() -> void:
                 _burst(float(cfg["radius"]), Color(0.6, 0.25, 0.9))       # surge no destino avisado
                 if player.global_position.distance_to(global_position) <= float(cfg["radius"]):
                     player.take_damage(dmg * float(cfg["dmg_mult"]))
-        "soul_orbs":
-            _burst(70.0, Color(0.6, 0.3, 0.9))
+        "soul_orbs", "soul_harvest":
+            _burst(70.0, Color(0.6, 0.3, 0.9) if id == "soul_orbs" else Color(0.9, 0.2, 0.3))
             var n_orbs: int = int(cfg["count"])
             var base_ang: float = randf() * TAU
             for i in range(n_orbs):
                 var p := _shoot(Vector2.from_angle(base_ang + TAU * float(i) / float(n_orbs)), cfg, 1.0)
                 p.homing = float(cfg["homing"])
                 p.life = float(cfg["life"])
-                p.tint = Color(0.7, 0.4, 1.0)
+                p.tint = Color(0.7, 0.4, 1.0) if id == "soul_orbs" else Color(1.0, 0.3, 0.35)
         "fire_bolt":
             _shoot((player.global_position - global_position).normalized(), cfg, 1.0)
         "life_steal":
@@ -299,6 +353,15 @@ func _summon(n: int) -> void:
         get_parent().add_child(m)
         m.setup(EnemiesDB.pick_normal(stage, rng), stage, false, player, true)
 
+## Lucifer invoca 1 chefe (aparência cíclica: Baal, Mordath, Ignarr, Azazel).
+func _summon_boss() -> void:
+    _boss_summons += 1
+    var b: Dictionary = EnemiesDB.BOSSES[(_boss_summons - 1) % EnemiesDB.BOSSES.size()]
+    var m := Enemy.new()
+    m.position = position + Vector2.from_angle(randf() * TAU) * (radius + 70.0)
+    get_parent().add_child(m)
+    m.setup_boss_summon(b, player)
+
 func _draw() -> void:
     # sombra no chão (dá peso ao sprite)
     draw_set_transform(Vector2(0, radius + 6.0), 0.0, Vector2(1.0, 0.32))
@@ -329,7 +392,17 @@ func _draw_telegraph() -> void:
                 draw_line(Vector2.ZERO, _cast_dir.rotated(ang) * 420.0, warn, 4.0)
         "summon_demons":
             draw_arc(Vector2.ZERO, radius + 20.0, 0.0, TAU, 32, Color(0.7, 0.3, 1.0, 0.4 + 0.5 * t), 4.0)
-        "meteor_rain":
+        "hell_nova":
+            draw_circle(Vector2.ZERO, float(cfg["radius"]), Color(1.0, 0.1, 0.1, 0.12 + 0.3 * t))
+            draw_circle(Vector2.ZERO, float(cfg["inner"]), Color(0.1, 1.0, 0.3, 0.12 + 0.2 * t))   # verde = zona segura
+            draw_arc(Vector2.ZERO, float(cfg["radius"]), 0.0, TAU, 56, Color(1.0, 0.3, 0.3, 0.9), 3.0)
+            draw_arc(Vector2.ZERO, float(cfg["inner"]), 0.0, TAU, 40, Color(0.4, 1.0, 0.5, 0.9), 3.0)
+        "abyss_beam":
+            draw_line(Vector2.ZERO, _cast_dir * float(cfg["length"]), warn, float(cfg["width"]))
+            draw_line(Vector2.ZERO, _cast_dir * float(cfg["length"]), Color(1.0, 0.5, 0.8, 0.5 + 0.4 * t), 3.0)
+        "summon_boss":
+            draw_arc(Vector2.ZERO, radius + 24.0, 0.0, TAU, 40, Color(0.9, 0.2, 0.9, 0.4 + 0.5 * t), 5.0)
+        "meteor_rain", "inferno_storm":
             for pt in _cast_pts:
                 var lp: Vector2 = to_local(pt)
                 draw_circle(lp, float(cfg["radius"]), warn)
@@ -346,7 +419,7 @@ func _draw_telegraph() -> void:
                 draw_line(Vector2.ZERO, lp2, Color(0.6, 0.3, 0.9, 0.25), 3.0)
                 draw_circle(lp2, float(cfg["radius"]), Color(0.55, 0.2, 0.85, 0.2 + 0.4 * t))
                 draw_arc(lp2, float(cfg["radius"]), 0.0, TAU, 40, Color(0.75, 0.4, 1.0, 0.9), 3.0)
-        "soul_orbs":
+        "soul_orbs", "soul_harvest":
             draw_arc(Vector2.ZERO, radius + 20.0, 0.0, TAU, 32, Color(0.6, 0.3, 1.0, 0.4 + 0.5 * t), 4.0)
             for k in range(int(cfg["count"])):
                 draw_circle(Vector2.from_angle(TAU * float(k) / float(cfg["count"])) * (radius + 20.0), 6.0, Color(0.8, 0.5, 1.0, 0.9))

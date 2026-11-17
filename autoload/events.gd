@@ -20,3 +20,7 @@ signal ability_cast(id: String)
 signal pause_started                    # menu/perfil abriu: o jogo entrou em pausa
 signal boss_defeated(stage: int, gems: int, shards: int)
 signal audio_changed                    # opções de som mudaram (música liga/desliga, volumes)
+signal weekly_started                   # luta do boss semanal começou
+signal weekly_timer(seconds_left: float) # tempo restante da luta semanal
+signal weekly_finished(result: Dictionary) # {score, killed, reason: "killed"|"timeout"|"died"}
+signal weekly_requested                 # painel pediu para começar a luta

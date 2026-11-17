@@ -225,13 +225,59 @@ func debug_apply(action: String, arg: int) -> void:
     recalc()
     save()
 
+# ---------------------------------------------------------------- boss semanal (lógica em WeeklyBoss)
+func weekly() -> Dictionary:
+    return state["weekly"]
+
+## Semana atual segundo o relógio do aparelho (online, o servidor é quem manda: ver WeeklyPanel).
+func weekly_sync(week: int = -1) -> void:
+    var w: Dictionary = state["weekly"]
+    if week < 0:
+        week = WeeklyBoss.week_id(int(Time.get_unix_time_from_system()))
+    WeeklyBoss.sync(w, week)
+    if str(w["pid"]) == "":
+        var r := RandomNumberGenerator.new()
+        r.randomize()
+        w["pid"] = WeeklyBoss.make_pid(r)
+
+## Gasta 1 entrada (local). Devolve false se bloqueado ou sem entradas.
+func weekly_begin() -> bool:
+    weekly_sync()
+    if WeeklyBoss.block_reason(state["weekly"], int(state["max_stage"])) != "":
+        return false
+    var ok: bool = WeeklyBoss.consume_entry(state["weekly"])
+    if ok:
+        save()
+    return ok
+
+## Online: o servidor contou as tentativas; alinha o contador local (nunca diminui).
+func weekly_set_entries(n: int) -> void:
+    var w: Dictionary = state["weekly"]
+    w["entries"] = clampi(maxi(int(w["entries"]), n), 0, Balance.WEEKLY_MAX_ENTRIES)
+    save()
+
+func weekly_record(score: float) -> bool:
+    var is_best: bool = WeeklyBoss.record(state["weekly"], score)
+    save()
+    return is_best
+
+## Resgata a recompensa da semana passada (gemas e fragmentos). Devolve a recompensa ({} se não havia).
+func weekly_claim(rank: int, total: int) -> Dictionary:
+    var r: Dictionary = WeeklyBoss.claim(state["weekly"], rank, total)
+    if not r.is_empty():
+        state["gems"] = int(state["gems"]) + int(r["gems"])
+        state["shards"] = int(state["shards"]) + int(r["shards"])
+        save()
+        Events.state_changed.emit()
+    return r
+
 func set_stage(stage: int) -> void:
     state["stage"] = StageLogic.clamp_stage(stage)
     state["max_stage"] = maxi(int(state["max_stage"]), int(state["stage"]))
 
 func _on_enemy_died(_pos: Vector2, def: Dictionary, is_boss: bool, gold: int) -> void:
-    if def.get("summon", false):
-        return   # invocações de chefes não dão recompensa
+    if def.get("summon", false) or def.get("weekly", false):
+        return   # invocações de chefes e o Lucifer não dão recompensa de fase (a recompensa do semanal vem do ranking)
     var stage: int = int(state["stage"])
     state["gold"] = int(state["gold"]) + gold
     if is_boss:

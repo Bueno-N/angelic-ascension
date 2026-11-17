@@ -29,6 +29,10 @@ const BOSSES := [
     {"id": "azazel", "sprite": "boss_azazel", "name": "Azazel, Arauto do Abismo", "color": "#4a0f3a", "abilities": ["shadow_step", "soul_orbs"]},
 ]
 
+# LUCIFER: chefe único semanal, FORA da lista BOSSES (que tem 2 habilidades por chefe). Números em Balance.WEEKLY_*.
+const LUCIFER := {"id": "lucifer", "sprite": "boss_lucifer", "name": "Lucifer, o Caído", "color": "#0c0412",
+    "abilities": ["summon_boss", "hell_nova", "abyss_beam", "inferno_storm", "soul_harvest"]}   # summon_boss primeiro: tem prioridade e sai a cada ~20 s
+
 # Habilidades de chefes e inimigos especiais (todos os números aqui).
 # telegraph = segundos de AVISO VISUAL antes do golpe; dmg_mult multiplica o dano do inimigo (já escalado pela fase).
 # min_range/max_range = distância ao anjo em que a habilidade pode começar.
@@ -53,6 +57,17 @@ const ABILITIES := {
         "land_offset": 100.0, "radius": 130.0, "dmg_mult": 1.6},
     "soul_orbs": {"name": "Orbes de almas", "cooldown": 9.0, "telegraph": 0.9, "min_range": 0.0, "max_range": 900.0,
         "count": 4, "speed": 170.0, "homing": 1.4, "life": 5.0, "dmg_mult": 0.9, "hit_radius": 16.0},
+    # --- Lucifer (chefe semanal): as 4 mais fortes + invocação de chefe a cada 20 s ---
+    "hell_nova": {"name": "Nova infernal", "cooldown": 9.0, "telegraph": 1.3, "min_range": 0.0, "max_range": 360.0,
+        "inner": 110.0, "radius": 340.0, "dmg_mult": 2.0},
+    "abyss_beam": {"name": "Raio do abismo", "cooldown": 8.0, "telegraph": 1.1, "min_range": 0.0, "max_range": 900.0,
+        "length": 1100.0, "width": 70.0, "dmg_mult": 2.4},
+    "inferno_storm": {"name": "Tempestade infernal", "cooldown": 12.0, "telegraph": 1.5, "min_range": 0.0, "max_range": 99999.0,
+        "count": 9, "radius": 80.0, "scatter": 360.0, "dmg_mult": 2.0},
+    "soul_harvest": {"name": "Colheita de almas", "cooldown": 10.0, "telegraph": 1.0, "min_range": 0.0, "max_range": 99999.0,
+        "count": 12, "speed": 200.0, "homing": 1.8, "life": 6.0, "dmg_mult": 1.0, "hit_radius": 16.0},
+    "summon_boss": {"name": "Invocar chefe", "cooldown": 20.0, "telegraph": 1.0, "min_range": 0.0, "max_range": 99999.0,
+        "count": 1},
     "fire_bolt": {"name": "Bola de fogo", "cooldown": 3.5, "telegraph": 0.4, "min_range": 0.0, "max_range": 420.0,
         "speed": 300.0, "dmg_mult": 1.0, "hit_radius": 12.0},
     "life_steal": {"name": "Drenar vida", "cooldown": 4.0, "telegraph": 0.5, "min_range": 0.0, "max_range": 200.0,

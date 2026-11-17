@@ -77,6 +77,8 @@ func _draw() -> void:
     draw_rect(Rect2(mob_x, mob_y, mob_w * pr, mob_h), fill_col)
     draw_rect(Rect2(mob_x, mob_y, mob_w * pr, mob_h * 0.45), fill_col.lightened(0.25))
     var mt: String = "%s %d/%d" % [label, killed, total]
+    if label == "TEMPO":   # luta do boss semanal: a barra é o tempo que resta
+        mt = "TEMPO %s" % WeeklyBoss.fmt_clock(float(killed))
     PixelFont.draw(self, Vector2(mob_x + (mob_w - float(PixelFont.width(mt, 2))) / 2.0, mob_y + 10.0), mt, 2, Color.WHITE)
     # ---- recursos: ouro / gemas / fragmentos, logo EMBAIXO do cartão do anjo ----
     var items: Array = [["coin", int(s["gold"])], ["gem", int(s["gems"])], ["shard", int(s["shards"])]]

@@ -24,6 +24,7 @@ const SUITES := [
     "res://tests/test_slots.gd",
     "res://tests/test_stages.gd",
     "res://tests/test_audio.gd",
+    "res://tests/test_weekly.gd",
 ]
 
 func _initialize() -> void:

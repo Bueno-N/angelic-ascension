@@ -13,6 +13,9 @@ var _speed_btn: UiButton
 var _menu_btn: UiButton
 var _stages_btn: UiButton
 var _map: MapPanel
+var _weekly_btn: UiButton
+var _weekly: WeeklyPanel
+var _fight := false           # luta do boss semanal em andamento
 var _menu: MenuPanel
 var _profile: ProfilePanel
 var _death: DeathOverlay
@@ -65,6 +68,17 @@ func _ready() -> void:
     _stages_btn.offset_bottom = 160.0
     _stages_btn.pressed.connect(_toggle_map)
     _root.add_child(_stages_btn)
+    _weekly_btn = UiButton.new()          # logo ABAIXO de FASES: boss semanal (bloqueado até concluir a fase 50)
+    _weekly_btn.configure("BOSS\nSEMANAL", "lucifer", UiTheme.RED)
+    _weekly_btn.font_scale = 2
+    _weekly_btn.anchor_left = 1.0
+    _weekly_btn.anchor_right = 1.0
+    _weekly_btn.offset_left = -196.0
+    _weekly_btn.offset_right = -16.0
+    _weekly_btn.offset_top = 168.0
+    _weekly_btn.offset_bottom = 240.0
+    _weekly_btn.pressed.connect(_toggle_weekly)
+    _root.add_child(_weekly_btn)
     _profile = ProfilePanel.new()
     _root.add_child(_profile)
     _map = MapPanel.new()            # tela cheia, por cima do jogo e dos botões
@@ -74,6 +88,12 @@ func _ready() -> void:
     _root.add_child(_death)
     _death.dismissed.connect(_on_death_dismissed)
     _profile.visibility_changed.connect(_update_pause)
+    _weekly = WeeklyPanel.new()      # tela cheia, por cima de tudo menos da morte
+    _root.add_child(_weekly)
+    _root.move_child(_weekly, _root.get_child_count() - 2)
+    _weekly.visibility_changed.connect(_update_pause)
+    Events.weekly_started.connect(_on_weekly_started)
+    Events.weekly_finished.connect(_on_weekly_finished)
     _apply_safe_area()
     get_viewport().size_changed.connect(_apply_safe_area)
     Events.state_changed.connect(_refresh)
@@ -120,12 +140,12 @@ func _make_button(t: String, ic: String, r: Rect2, cb: Callable) -> UiButton:
 func _process(_delta: float) -> void:
     if _smoke:
         return
-    if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible):
+    if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible, _weekly.visible):
         _update_pause()
 
 ## Pausa o jogo enquanto o perfil estiver aberto (o menu não pausa); solta o joystick para não "grudar" a direção.
 func _update_pause() -> void:
-    var want: bool = OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible)
+    var want: bool = OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible, _weekly.visible)
     get_tree().paused = want
     if want:
         pause_checks += 1
@@ -145,10 +165,14 @@ func _on_next() -> void:
 
 func _toggle_menu() -> void:
     _map.close()
+    _weekly.close()
     _menu.toggle()
 
 func _toggle_map() -> void:
+    if _fight:
+        return    # durante a luta semanal o mapa fica fechado
     _menu.close()
+    _weekly.close()
     _map.toggle()
 
 ## Só para o smoke do CI: 0 abre o mapa; 1 pula para uma dificuldade e escolhe uma fase; 2 fecha.
@@ -164,7 +188,35 @@ func debug_map_step(step: int) -> bool:
             _map.close()
             return not _map.is_open()
 
+func _toggle_weekly() -> void:
+    if _fight:
+        return
+    _menu.close()
+    _map.close()
+    _weekly.toggle()
+
+func _on_weekly_started() -> void:
+    _fight = true
+    _menu.close()
+    _map.close()
+    _weekly.close()
+    _refresh()
+
+## Fim da luta: aviso grande na tela (tempo esgotado, derrota ou vitória) e volta à partida normal.
+func _on_weekly_finished(res: Dictionary) -> void:
+    _fight = false
+    var score_txt: String = "Pontos: %s" % WeeklyBoss.fmt_score(float(res.get("score", 0.0)))
+    match str(res.get("reason", "")):
+        "timeout":
+            _top.show_banner("O SEU TEMPO ACABOU", score_txt, "boss")
+        "killed":
+            _top.show_banner("LUCIFER DERROTADO!", score_txt, "stage")
+        _:
+            _top.show_banner("VOCE CAIU", score_txt, "boss")
+    _refresh()
+
 func _open_profile() -> void:
+    _weekly.close()
     _map.close()
     _menu.close()
     _profile.open()
@@ -177,6 +229,7 @@ func _on_stage_changed(stg: int) -> void:
 ## Morte: congela o jogo e mostra a animação; o jogador toca na tela para voltar (ver Main).
 func show_death(world_pos: Vector2, to_stage: int) -> void:
     _menu.close()
+    _weekly.close()
     _map.close()
     if _profile.visible:
         _profile.close()
@@ -186,6 +239,22 @@ func show_death(world_pos: Vector2, to_stage: int) -> void:
 func _on_death_dismissed() -> void:
     _update_pause()
     death_dismissed.emit()
+
+## Só para o smoke do CI: 0 = painel semanal fechado/aberto com a fase 50 ainda não concluída; 1 = abre e entra na luta.
+func debug_weekly_step(step: int) -> bool:
+    match step:
+        0:
+            _weekly.open()
+            var locked: bool = _weekly.is_open() and WeeklyBoss.block_reason(GameState.weekly(), int(GameState.state["max_stage"])) == "locked"
+            var refused: bool = not _weekly.debug_enter()
+            _weekly.close()
+            return locked and refused and not _weekly_btn.enabled
+        1:
+            _weekly.open()
+            var ok: bool = _weekly.is_open() and _weekly_btn.enabled and _weekly.debug_enter()
+            return ok and not _weekly.is_open()
+        _:
+            return not _weekly.is_open()
 
 func death_active() -> bool:
     return _death.is_active()
@@ -219,4 +288,5 @@ func _refresh() -> void:
     _next_btn.set_text("PRÓX. FASE %d" % mini(stg + 1, Balance.MAX_STAGE))
     _next_btn.set_enabled(StageLogic.can_skip_to_next(stg, int(s["max_stage"])))
     _speed_btn.set_text("VEL. %dX" % int(UiLogic.time_scale(s["settings"])))
+    _weekly_btn.set_enabled(WeeklyBoss.is_unlocked(int(s["max_stage"])) and not _fight)   # bloqueado até concluir a fase 50
     _top.queue_redraw()

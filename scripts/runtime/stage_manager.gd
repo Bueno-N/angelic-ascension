@@ -18,12 +18,21 @@ var _timer := 0.0
 var _advancing := false
 var _stage_time := 0.0
 var rng := RandomNumberGenerator.new()
+# Luta do boss semanal (Lucifer): a fase fica congelada e há um limite de tempo.
+var weekly_active := false
+var _w_left := 0.0
+var _w_dealt := 0.0
+var _w_max_hp := 1.0
+var _w_return_stage := 1
+var _w_clock := -1
 
 func setup(p: Player, c: Node2D) -> void:
     player = p
     container = c
     rng.randomize()
     Events.enemy_died.connect(_on_enemy_died)
+    Events.boss_hp_changed.connect(_on_boss_hp)
+    Events.weekly_requested.connect(start_weekly)
 
 func start_stage(s: int) -> void:
     stage = StageLogic.clamp_stage(s)
@@ -56,6 +65,8 @@ func set_repeat(on: bool) -> void:
 
 ## Botão "Próxima fase": vai para stage+1 imediatamente (só até uma fase já alcançada).
 func request_next() -> void:
+    if weekly_active:
+        return
     if not StageLogic.can_skip_to_next(stage, int(GameState.state["max_stage"])):
         return
     set_repeat(false)
@@ -63,6 +74,8 @@ func request_next() -> void:
 
 ## Escolhida no menu "Fases": vai para um andar JÁ alcançado e FICA nele (repete). No recorde, segue a progressão normal.
 func goto_stage(target: int) -> void:
+    if weekly_active:
+        return
     var mx: int = int(GameState.state["max_stage"])
     if not StageLogic.can_enter(stage, mx, target):
         return
@@ -70,6 +83,10 @@ func goto_stage(target: int) -> void:
     start_stage(target)
 
 func _on_enemy_died(_pos: Vector2, d: Dictionary, _boss: bool, _gold: int) -> void:
+    if weekly_active:
+        if d.get("weekly", false):
+            finish_weekly("killed")
+        return   # na luta semanal a fase fica congelada
     if d.get("summon", false):
         return   # invocações não contam para a limpeza da fase
     alive = maxi(0, alive - 1)
@@ -78,6 +95,9 @@ func _on_enemy_died(_pos: Vector2, d: Dictionary, _boss: bool, _gold: int) -> vo
 
 func _process(delta: float) -> void:
     if container == null:
+        return
+    if weekly_active:
+        _weekly_tick(delta)
         return
     _stage_time += delta / maxf(Engine.time_scale, 0.01)   # segundos REAIS (útil para calibrar)
     if boss_pending:
@@ -134,3 +154,66 @@ func _spawn(boss: bool, forced: Dictionary = {}, mini: Dictionary = {}) -> Enemy
     e.setup({} if boss else (forced if not forced.is_empty() else EnemiesDB.pick_type(stage, rng)), stage, boss, player, false, mini)
     alive += 1
     return e
+
+# ---------------------------------------------------------------- boss semanal
+## Começa a luta contra o Lucifer (a entrada já foi gasta por quem chamou). A fase atual é guardada e retomada no fim.
+func start_weekly() -> void:
+    if weekly_active:
+        return
+    _w_return_stage = stage
+    for e in container.get_children():
+        e.queue_free()
+    alive = 0
+    boss_pending = false
+    mini_pending = false
+    to_spawn = 0
+    _advancing = false
+    weekly_active = true
+    _w_left = Balance.WEEKLY_TIME_LIMIT
+    _w_dealt = 0.0
+    _w_max_hp = WeeklyBoss.lucifer_hp()
+    _w_clock = -1
+    var area := get_viewport().get_visible_rect().size
+    var luc := Enemy.new()
+    luc.position = Vector2(area.x * 0.5, 120.0)
+    container.add_child(luc)
+    luc.setup_lucifer(player)
+    Events.weekly_started.emit()
+    Events.boss_warning.emit(str(EnemiesDB.LUCIFER["name"]), false)
+    _weekly_progress()
+
+func _on_boss_hp(h: float, m: float) -> void:
+    if weekly_active and m >= _w_max_hp * 0.999:
+        _w_dealt = maxf(_w_dealt, m - maxf(h, 0.0))
+
+func _weekly_tick(delta: float) -> void:
+    _w_left -= delta
+    _weekly_progress()
+    if _w_left <= 0.0:
+        finish_weekly("timeout")
+
+func _weekly_progress() -> void:
+    var c: int = int(ceil(maxf(_w_left, 0.0)))
+    if c != _w_clock:
+        _w_clock = c
+        Events.stage_progress.emit(c, int(Balance.WEEKLY_TIME_LIMIT), "TEMPO")
+
+## Termina a luta: "killed" (Lucifer morreu), "timeout" (2 min) ou "died" (o anjo caiu). Volta à partida normal.
+func finish_weekly(reason: String) -> void:
+    if not weekly_active:
+        return
+    weekly_active = false
+    var killed_it: bool = reason == "killed"
+    var score: float = WeeklyBoss.compute_score(_w_dealt, _w_max_hp, killed_it, maxf(_w_left, 0.0))
+    for e in container.get_children():
+        e.queue_free()
+    player.buffs.clear()
+    player.refresh_stats(true)
+    player.heal(player.max_hp)
+    Events.boss_hp_changed.emit(0.0, 0.0)
+    start_stage(_w_return_stage)
+    Events.weekly_finished.emit({"score": score, "killed": killed_it, "reason": reason})
+
+## Só para o smoke do CI: esgota o tempo da luta semanal.
+func debug_weekly_timeout() -> void:
+    _w_left = 0.01

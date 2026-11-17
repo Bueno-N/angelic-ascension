@@ -29,6 +29,14 @@ var _death_ok := false
 var _goto_ok := false
 var _map_ok := true
 var _aud_ok := true
+var _wk_locked_ok := false
+var _wk_enter_ok := false
+var _wk_kinds_ok := false
+var _wk_summon_ok := false
+var _wk_timeout_ok := false
+var _wk_died_ok := false
+var _wk_entries_ok := false
+var _wk_res: Dictionary = {}
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -73,6 +81,7 @@ func _ready() -> void:
         Events.stage_cleared.connect(func(_s: int, _t: float): _cleared += 1)
         Events.ability_cast.connect(_on_ability_cast)
         Events.boss_warning.connect(_on_warning)
+        Events.weekly_finished.connect(func(r: Dictionary): _wk_res = r)
         _prepare_smoke()
 
 func _apply_fx() -> void:
@@ -83,6 +92,9 @@ func _apply_fx() -> void:
 func _on_player_died() -> void:
     if _dead:
         return   # vários golpes no mesmo frame
+    if stage_mgr.weekly_active:
+        stage_mgr.finish_weekly("died")   # cair no boss semanal não é a morte normal: encerra a luta e volta à partida
+        return
     _dead = true
     _before_death = stage_mgr.stage
     AudioHub.play("die", 1.0, 0.0)
@@ -153,6 +165,44 @@ func _smoke_audio_options() -> bool:
         GameState.menu_action("opt|svol|10")
     ok = ok and OptionsLogic.sfx_vol(cfg) == 100 and not AudioServer.is_bus_mute(sbus)
     return ok
+
+## Boss semanal (Lucifer) no jogo real: bloqueado antes da fase 50, luta, tempo esgotado, queda do anjo e limite de 4 entradas.
+func _smoke_weekly_steps() -> void:
+    match _frames:
+        4600:
+            GameState.state["max_stage"] = 40     # fase 50 ainda não concluída: botão travado e entrada recusada
+            Events.state_changed.emit()
+            _wk_locked_ok = hud.debug_weekly_step(0)
+        4620:
+            GameState.state["max_stage"] = 51     # concluiu a 50: libera; entra na luta (offline: sem servidor)
+            GameState.weekly_sync()
+            Events.state_changed.emit()
+            _wk_enter_ok = hud.debug_weekly_step(1) and stage_mgr.weekly_active and GameState.weekly()["entries"] == 1
+        5420:
+            var kinds: Array = ["summon_boss", "hell_nova", "abyss_beam", "inferno_storm", "soul_harvest"]
+            _wk_kinds_ok = true
+            for k in kinds:
+                _wk_kinds_ok = _wk_kinds_ok and _ability_kinds.has(k)
+            _wk_summon_ok = get_tree().get_nodes_in_group("summons").size() >= 1
+            for e in enemies.get_children():          # dano garantido no Lucifer: confere a pontuação (o anjo do smoke é fraco)
+                if e is Enemy and e.def.get("weekly", false):
+                    e.take_damage(1.0e6)
+            stage_mgr.debug_weekly_timeout()
+        5440:
+            _wk_timeout_ok = not stage_mgr.weekly_active and str(_wk_res.get("reason", "")) == "timeout" and float(GameState.weekly()["best"]) > 0.0
+        5450:
+            _wk_entries_ok = GameState.weekly_begin() and GameState.weekly_begin() and GameState.weekly_begin() and not GameState.weekly_begin()   # 4 por semana
+            GameState.weekly()["entries"] = 2
+            GameState.weekly_begin()
+            Events.weekly_requested.emit()
+        5500:
+            _wk_died_ok = stage_mgr.weekly_active
+            Events.player_died.emit()                 # o anjo cai no boss semanal: encerra a luta, sem tela de morte normal
+            _wk_died_ok = _wk_died_ok and not stage_mgr.weekly_active and str(_wk_res.get("reason", "")) == "died" \
+                and not hud.death_active() and player.visible and not _dead
+
+func _wk_ok() -> bool:
+    return _wk_locked_ok and _wk_enter_ok and _wk_kinds_ok and _wk_summon_ok and _wk_timeout_ok and _wk_entries_ok and _wk_died_ok
 
 func _on_warning(_n: String, is_mini: bool) -> void:
     _warn_count += 1
@@ -250,6 +300,7 @@ func _process(_delta: float) -> void:
         4540:
             stage_mgr.start_stage(15)    # mini-chefe 2 (Cérbero das Cinzas)
             stage_mgr.to_spawn = 2
+    _smoke_weekly_steps()
     # interface: menu (todas as abas) e perfil, com o desenho real rodando em frames seguidos
     var last_step: int = MenuModel.tabs(true).size() + 2   # abrir, 1 passo por aba, fechar+perfil, fechar perfil
     if _frames >= 180 and _frames % 20 == 0 and _frames <= 180 + 20 * last_step:
@@ -258,13 +309,13 @@ func _process(_delta: float) -> void:
         if step == last_step:
             GameState.set_profile("Teste", 3)
             _profile_ok = str(GameState.state["profile"]["name"]) == "Teste" and int(GameState.state["profile"]["avatar"]) == 3
-    if _frames >= 4940:
+    if _frames >= 5700:
         _aud_ok = _aud_ok and AudioHub.played >= 50 and AudioHub.missing.is_empty()
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d aud=%d sfx=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d aud=%d sfx=%d wk=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
             _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
-            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok), int(_aud_ok), AudioHub.played])
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok), int(_aud_ok), AudioHub.played, int(_wk_ok())])
         get_tree().quit(0)

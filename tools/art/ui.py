@@ -284,10 +284,20 @@ SKILL_ICON_NAMES = ["sk_celestial_lance", "sk_holy_shield", "sk_rain_of_light", 
 SKILL_ICON_FNS = [sk_lance, sk_shield, sk_rain, sk_swords, sk_judgment, sk_wings, sk_army, sk_fury, sk_apocalypse, sk_hell]
 
 
+def lucifer_icon():
+    c = Canvas(24, 24)
+    c.poly([(4, 2), (8, 9), (6, 12)], BONE if 'BONE' in globals() else WHITE); c.poly([(20, 2), (16, 9), (18, 12)], BONE if 'BONE' in globals() else WHITE)
+    c.poly([(1, 9), (7, 12), (5, 21)], hexc('#2a1448')); c.poly([(23, 9), (17, 12), (19, 21)], hexc('#2a1448'))
+    c.ell(12, 13, 7.5, 7.5, hexc('#c9b8d8'))
+    c.rect(8, 11, 10, 12, hexc('#ff2a2a')); c.rect(14, 11, 16, 12, hexc('#ff2a2a'))
+    c.rect(9, 16, 15, 16, hexc('#0c0412'))
+    c.ell(12, 3, 6, 1.6, GOLD_L); c.ell(12, 3, 3.5, 0.6, None)
+    return c.finish(OUT)
+
 ICONS = [("sword", sword), ("heart", heart), ("shield", shield), ("boot", boot), ("bolt", bolt), ("aura", aura),
          ("coin", coin), ("gem", gem), ("shard", shard), ("skills", skills), ("wings", wings), ("armor", armor),
          ("glove", glove), ("menu", menu), ("user", user), ("glow", glow), ("close", close), ("back", back),
-         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages), ("skull", skull)] + list(zip(SKILL_ICON_NAMES, SKILL_ICON_FNS))
+         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages), ("skull", skull)] + list(zip(SKILL_ICON_NAMES, SKILL_ICON_FNS)) + [("lucifer", lucifer_icon)]
 
 # ------------------------------------------------------------------ avatares 32x32
 def av_hood(hood, trim, eye, halo):
