@@ -13,5 +13,7 @@ signal debug_heal
 signal debug_reset_cooldowns
 signal request_next_stage
 signal repeat_mode_changed(on: bool)
+signal stage_progress(killed: int, total: int, label: String)
+signal boss_warning(boss_name: String, is_mini: bool)
 signal ability_cast(id: String)
 signal boss_defeated(stage: int, gems: int, shards: int)

@@ -46,7 +46,7 @@ func _context() -> Dictionary:
     for e in list:
         if e.global_position.distance_to(player.global_position) <= 150.0:
             close += 1
-        if e.is_boss:
+        if e.is_boss or e.is_mini:
             boss = true
     return {"total": list.size(), "close": close, "boss": boss, "hp_ratio": player.hp / maxf(player.max_hp, 1.0)}
 
@@ -106,18 +106,29 @@ func _damage_radius(pos: Vector2, r: float, id: String, atk: float, glow: float)
 func _heal(id: String, glow: float) -> void:
     player.heal(player.max_hp * SkillsDB.scaled_heal_pct(id, glow))
 
-# ---------------- efeitos visuais ----------------
+# ---------------- efeitos visuais (sprites animados) ----------------
+const GOLD := Color(1.0, 0.9, 0.5)
+const BLUE := Color(0.55, 0.8, 1.0)
+const ORANGE := Color(1.0, 0.55, 0.2)
+const WHITE := Color(1.0, 1.0, 1.0)
+
 func _fx(f: Fx) -> void:
     if fx_layer.get_child_count() > UiLogic.fx_cap(GameState.state["settings"]):
         f.free()   # teto de efeitos (poupa aparelhos intermediários)
         return
     fx_layer.add_child(f)
 
+## Explosão em anel (o sprite tem 64 px: escala = diâmetro / 64).
 func _ring(pos: Vector2, r: float, col: Color) -> void:
-    _fx(Fx.make("ring", pos, 0.55, r, col))
+    SpriteFx.spawn(fx_layer, "fx_burst", pos, r * 2.0 / 64.0, col)
 
-func _strike(pos: Vector2, col: Color) -> void:
-    _fx(Fx.make("strike", pos, 0.45, 40.0, col))
+## Pilar de luz com a base em `pos`.
+func _strike(pos: Vector2, col: Color, scale: float = 2.0) -> void:
+    SpriteFx.spawn(fx_layer, "fx_strike", pos, scale, col, 0.0, true, Vector2(16.0, 90.0))
+    SpriteFx.spawn(fx_layer, "fx_burst", pos, scale * 1.1, col)
+
+func _spark(pos: Vector2, col: Color) -> void:
+    SpriteFx.spawn(fx_layer, "fx_hit", pos, 2.2, col)
 
 func _flash(col: Color) -> void:
     _fx(Fx.make("flash", player.global_position, 0.6, 0.0, col))
@@ -131,6 +142,7 @@ func execute(id: String) -> void:
         return
     var e: Dictionary = sk["effects"]
     casts += 1
+    player.cast_anim()
     match id:
         "celestial_lance":
             var t := _nearest()
@@ -138,9 +150,10 @@ func execute(id: String) -> void:
                 var beam := Fx.make("beam", player.global_position, 0.3, 0.0, Color(1.0, 0.95, 0.6))
                 beam.to = t.global_position - player.global_position
                 _fx(beam)
+                _spark(t.global_position, GOLD)
                 deal_damage(t, id, atk, glow)
         "holy_shield":
-            _ring(player.global_position, float(e["radius"]), Color(0.6, 0.85, 1.0))
+            _ring(player.global_position, float(e["radius"]), BLUE)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)
             player.buffs.add(id, float(sk["duration"]), {}, SkillsDB.scaled_absorb(id, glow))
         "rain_of_light":
@@ -159,12 +172,13 @@ func execute(id: String) -> void:
         "divine_judgment":
             var t2 := _strongest()
             if t2 != null:
-                _strike(t2.global_position, Color(1.0, 1.0, 0.7))
+                _strike(t2.global_position, WHITE, 3.0)
                 deal_damage(t2, id, atk, glow)
         "wings_of_redemption":
-            _ring(player.global_position, float(e["radius"]), Color(1.0, 0.95, 0.75))
+            _ring(player.global_position, float(e["radius"]), GOLD)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)
             _heal(id, glow)
+            SpriteFx.spawn(fx_layer, "fx_hit", player.global_position, 4.0, GOLD)
         "army_of_archangels":
             var n: int = int(e["summons"])
             for i in range(n):
@@ -176,17 +190,24 @@ func execute(id: String) -> void:
                 a.tick = float(e["ally_tick"])
                 a.position = player.global_position + Vector2.from_angle(TAU * float(i) / float(maxi(1, n))) * 60.0
                 fx_layer.add_child(a)
+                _ring(a.position, 40.0, GOLD)
         "celestial_fury":
-            _ring(player.global_position, float(e["radius"]), Color(1.0, 0.6, 0.25))
+            _ring(player.global_position, float(e["radius"]), ORANGE)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)
             player.buffs.add(id, float(sk["duration"]), SkillsDB.buff_mods(id, glow))
         "holy_apocalypse":
             _flash(Color(1.0, 0.97, 0.8))
+            _ring(player.global_position, 700.0, WHITE)
+            var shown := 0
             for en in _enemies():
                 deal_damage(en, id, atk, glow)
+                if shown < 10:
+                    _strike(en.global_position, GOLD, 1.6)
+                    shown += 1
         "death_of_hell":
             _flash(Color(1.0, 0.9, 0.6))
-            _ring(player.global_position, 900.0, Color(1.0, 0.95, 0.7))
+            _ring(player.global_position, 900.0, WHITE)
+            _ring(player.global_position, 450.0, GOLD)
             for en in _enemies():
                 deal_damage(en, id, atk, glow)
             _heal(id, glow)
@@ -205,5 +226,5 @@ func _rain(id: String, atk: float, glow: float, e: Dictionary) -> void:
         get_tree().create_timer(spread * float(i) / float(n)).timeout.connect(_rain_hit.bind(pos, r, id, atk, glow))
 
 func _rain_hit(pos: Vector2, r: float, id: String, atk: float, glow: float) -> void:
-    _strike(pos, Color(1.0, 0.95, 0.65))
+    _strike(pos, GOLD, 2.0)
     _damage_radius(pos, r, id, atk, glow)

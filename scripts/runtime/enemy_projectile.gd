@@ -1,13 +1,18 @@
 class_name EnemyProjectile
 extends Node2D
-## Projétil inimigo (bola de fogo, projéteis infernais). Fica no mesmo container dos inimigos,
-## então é removido junto quando a fase muda.
+## Projétil inimigo (bola de fogo, projéteis infernais): sprite animado. Fica no mesmo container dos
+## inimigos, então é removido junto quando a fase muda.
 
 var velocity := Vector2.ZERO
 var damage := 1.0
 var hit_radius := 14.0
 var life := 4.0
 var player: Player
+
+func _ready() -> void:
+    var s := SpriteLib.make("fx_fireball", "play", 1.6)
+    s.rotation = velocity.angle()
+    add_child(s)
 
 func _process(delta: float) -> void:
     life -= delta
@@ -18,9 +23,3 @@ func _process(delta: float) -> void:
         return
     if life <= 0.0:
         queue_free()
-        return
-    queue_redraw()
-
-func _draw() -> void:
-    draw_circle(Vector2.ZERO, hit_radius, Color(1.0, 0.4, 0.1, 0.9))
-    draw_circle(Vector2.ZERO, hit_radius * 0.5, Color(1.0, 0.9, 0.5))

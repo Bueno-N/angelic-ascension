@@ -19,6 +19,9 @@ var _repeat_ok := false
 var _next_ok := false
 var _speed_ok := false
 var _fx_ok := false
+var _warn_count := 0
+var _mini_count := 0
+var _profile_ok := false
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -32,6 +35,7 @@ func _ready() -> void:
     add_child(player)
     fx_layer = Node2D.new()
     add_child(fx_layer)
+    player.fx_layer = fx_layer
     caster = SkillCaster.new()
     add_child(caster)
     caster.setup(player, fx_layer)
@@ -59,6 +63,7 @@ func _ready() -> void:
     if _smoke:
         Events.stage_cleared.connect(func(_s: int, _t: float): _cleared += 1)
         Events.ability_cast.connect(_on_ability_cast)
+        Events.boss_warning.connect(_on_warning)
         _prepare_smoke()
 
 func _apply_fx() -> void:
@@ -79,6 +84,7 @@ func _on_enemy_died_fx(pos: Vector2, def: Dictionary, is_boss: bool, _gold: int)
         return
     if not UiLogic.fx_enabled(settings) and not is_boss:
         return   # "Efeitos: Baixo" só mantém a explosão dos chefes
+    SpriteFx.spawn(fx_layer, "fx_poof", pos, 5.0 if is_boss else 2.0, Color(0.75, 0.35, 1.0) if def.get("special", false) else Color(1.0, 0.6, 0.3))
     var p := CPUParticles2D.new()
     p.position = pos
     p.one_shot = true
@@ -108,6 +114,11 @@ func _prepare_smoke() -> void:
     Enemy.smoke_fast = true     # habilidades inimigas sem recarga inicial
     GameState.recalc()
 
+func _on_warning(_n: String, is_mini: bool) -> void:
+    _warn_count += 1
+    if is_mini:
+        _mini_count += 1
+
 func _on_ability_cast(id: String) -> void:
     _ability_count += 1
     _ability_kinds[id] = true
@@ -128,6 +139,10 @@ func _process(_delta: float) -> void:
             # Dentro do alcance e muito resistentes (só no smoke): o anjo desbloqueado os mataria antes de agirem.
             stage_mgr.debug_spawn_type("hex_caster", player.position + Vector2(350.0, 0.0), true)
             stage_mgr.debug_spawn_type("soul_leech", player.position + Vector2(0.0, -260.0), true)
+            # um de cada tipo comum (sprites de todos os demônios são instanciados)
+            for t in EnemiesDB.TYPES:
+                if not t["special"]:
+                    stage_mgr.debug_spawn_type(str(t["id"]), player.position + Vector2(-300.0, float(randi() % 200) - 100.0), false)
         2700:
             var before: int = stage_mgr.stage      # morte: volta 1 fase e entra em modo repetir
             Events.player_died.emit()
@@ -148,11 +163,28 @@ func _process(_delta: float) -> void:
         2910:
             GameState.toggle_low_fx()
             _fx_ok = _fx_ok and UiLogic.fx_enabled(GameState.state["settings"])
-    if _frames >= 2940:
+        2960:
+            stage_mgr.start_stage(30)    # chefe 3 (Ignarr): sprite, pancada e investida
+        3040:
+            stage_mgr.start_stage(40)    # chefe 4 (Azazel): sprite, projéteis e invocação
+        3120:
+            stage_mgr.start_stage(5)     # mini-chefe 1 (Capitão Infernal) no fim da horda
+            stage_mgr.to_spawn = 2
+        3500:
+            stage_mgr.start_stage(15)    # mini-chefe 2 (Cérbero das Cinzas)
+            stage_mgr.to_spawn = 2
+    # interface: menu (todas as abas) e perfil, com o desenho real rodando em frames seguidos
+    if _frames >= 180 and _frames % 20 == 0 and _frames <= 180 + 20 * 7:
+        var step: int = floori(float(_frames - 180) / 20.0)
+        hud.debug_ui_step(step)
+        if step == 7:
+            GameState.set_profile("Teste", 3)
+            _profile_ok = str(GameState.state["profile"]["name"]) == "Teste" and int(GameState.state["profile"]["avatar"]) == 3
+    if _frames >= 3900:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
-            _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok)])
+            _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok)])
         get_tree().quit(0)

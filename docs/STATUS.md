@@ -50,6 +50,44 @@ Log do usuário: smoke `stage=12 cleared=2 repeat=1 next=1 speed=1` (morrer→re
 Testes: 89 testes / 8.136 verificações, mas com **2 SCRIPT ERROR** (`bool("x")` no `sanitize` do save). Corrigido com conversores seguros (`SaveData.as_int/as_bool`) + teste com lixo em todos os campos. Aguardando novo run.
 Obs.: "0 falhas" no resumo **não** inclui erros de script; o CI os detecta lendo o log.
 
+## Rodada 11 — gameplay + HUD + menu novo (escrita, ainda NÃO executada no CI)
+
+Depois de corrigir o layout do repositório (zip direto na raiz), o CI rodou. Esta rodada ainda não passou pelo CI. A maquete do layout (`docs/ui_maquete.png`) foi gerada em Python com a mesma fonte/ícones/medidas; **não é captura do jogo**.
+
+| Item | Estado | Observação |
+|---|---|---|
+| Mobs aceleram com o tempo de fase (intervalo cai pela metade a cada 25 s; +1 simultâneo a cada 15 s, até +10) | ⬜ | `Balance.SPAWN_*`, `ALIVE_EXTRA_*`. **Muda a economia**: fases mais curtas = mais gemas/h. Reavaliar com o HUD "Gemas/h" |
+| Mini-chefe no FIM da horda nas fases 5, 15, 25... (versão campeã, 1 habilidade, 40% da vida do chefe, ouro + 1-2 gemas, sem fragmentos) | ⬜ | `EnemiesDB.MINIS` |
+| Aviso de chefe/mini-chefe (banner), arena de chefe com chamas nos 4 cantos + brilho vermelho pulsante + mais brasas | ⬜ | `fx_flame`, `Backdrop` |
+| Contador de mobs (MOBS 37/100) + barra, "Próx.: Mini-chefe/Chefe na fase N (em K)" | ⬜ | |
+| Vida do anjo VERDE | ⬜ | |
+| Perfil: avatar (8 ícones originais) + nome editável + painel com TODOS os status | ⬜ | Toque no avatar. Nome usa o teclado do Android (LineEdit) |
+| Menu novo: grade de ícones -> lista da aba com ícones, custo e botão; fonte pixel própria (com acentos) | ⬜ | `MenuModel` (lógica testada) + `UiList` |
+| Multitoque no menu: andar e fazer upgrade ao mesmo tempo | ⬜ | Controles próprios por ScreenTouch. **Só o celular confirma** |
+| Testes: `test_pacing_minis`, `test_profile_menu`, `test_ui_assets` (inclui: todo texto do jogo é desenhável pela fonte) | ⬜ | |
+| Smoke: mini-chefes 5/15, 6+ avisos, percorre todas as abas do menu e o perfil | ⬜ | |
+
+Riscos: nenhuma UI nova foi vista rodando; o teclado do nome (LineEdit) depende do Android; avatar/ícones são arte procedural.
+
+## Rodada 9 — arte e animações (escrita, ainda NÃO executada no CI)
+
+Toda a arte é **original**, gerada por código (`tools/art/*.py`), sem assets de terceiros (CC0, veja `assets/LICENSE.txt`). Prévia: `docs/art_preview.png`. A arte foi **conferida visualmente aqui** (PNGs); a integração no Godot **nunca rodou**.
+
+| Item | Estado | Observação |
+|---|---|---|
+| 31 folhas de sprites (anjo em camadas, 6 demônios, 4 chefes, 8 efeitos, aliado, espada, tocha, chão) | ✅ arte gerada/inspecionada · ⬜ no jogo | `assets/sprites/*.png` + `data/sprite_manifest.gd` (gerado; .json não entra no APK) |
+| Anjo REDESENHADO (rodada 10): arcanjo encapuzado de armadura branca/azul/dourada, 72x64 (era 48x48), espada sempre empunhada, asas de penas lavanda com placas douradas | ⬜ | Design **original** inspirado no estilo da referência enviada (não é cópia). Armadura de tier alto fica dourada |
+| Anjo animado: idle / attack / cast, asas em 4 estágios, equipamentos tingidos por tier, piscada ao levar dano | ⬜ | Camadas alinhadas por tabela de poses; sincronia entre camadas só se confirma rodando |
+| Aura: anel rúnico giratório, pulsa a cada tick, intensidade pelo nível de Aura, muda com Fúria/Morte do Inferno | ⬜ | |
+| Ataque: animação de golpe + arco de luz + faíscas no alvo | ⬜ | |
+| Skills: explosões, pilares de luz, escudo, espadas de luz orbitando, aliados animados | ⬜ | `SkillCaster` + `SpriteFx` |
+| Monstros e chefes animados (andar + conjurar), sombra no chão, piscada branca ao levar dano | ⬜ | Fase de aviso mostra a pose "cast" |
+| Cenário: chão de pedra com lava + tochas animadas + brasas | ⬜ | |
+| Testes `test_sprites.gd` (manifesto, dimensões dos PNGs, animações, camadas, SpriteFrames) | ⬜ | |
+| Smoke: instancia todos os demônios e os 4 chefes | ⬜ | |
+
+Riscos conhecidos: FPS com ~8 AnimatedSprite2D no anjo + dezenas de inimigos (só o celular mede; "Efeitos: Baixo" ajuda); alinhamento fino das camadas do anjo; escala 2x fixa dos sprites.
+
 ## Rodada 8 (escrita, ainda NÃO executada no CI)
 
 | Item | Estado | Observação |

@@ -1,22 +1,17 @@
 class_name HUD
 extends CanvasLayer
-## HUD fixa (fase, ouro, gemas, fragmentos, vida, chefe) + botão de menu + indicadores de calibração.
+## HUD: cartão do jogador (avatar -> perfil), botões de fase/velocidade/efeitos, menu e painel de perfil.
+## Todos os botões são UiButton (toque próprio): funcionam junto com o joystick (multitoque).
 
 var _root: Control
-var _gold: Label
-var _gems: Label
-var _shards: Label
-var _stage: Label
-var _pace: Label
-var _hp_bar: ProgressBar
-var _boss_bar: ProgressBar
+var _top: HudTop
+var _avatar_btn: UiButton
+var _next_btn: UiButton
+var _speed_btn: UiButton
+var _fx_btn: UiButton
+var _menu_btn: UiButton
 var _menu: MenuPanel
-var _next_btn: Button
-var _speed_btn: Button
-var _fx_btn: Button
-var _repeat := false
-var _last_stage_secs := 0.0
-var _pace_timer := 0.0
+var _profile: ProfilePanel
 
 func _ready() -> void:
     layer = 10
@@ -24,62 +19,77 @@ func _ready() -> void:
     _root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _root.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(_root)
-    _build_top()
-    _build_stage_buttons()
-    _build_menu()
+    _top = HudTop.new()
+    _root.add_child(_top)
+    _avatar_btn = _make_button("", "", Rect2(20.0, 16.0, 84.0, 84.0), _open_profile)
+    _next_btn = _make_button("", "next", Rect2(12.0, 168.0, 224.0, 46.0), func(): Events.request_next_stage.emit())
+    _speed_btn = _make_button("", "speed", Rect2(244.0, 168.0, 172.0, 46.0), func(): GameState.toggle_speed())
+    _fx_btn = _make_button("", "fx", Rect2(424.0, 168.0, 216.0, 46.0), func(): GameState.toggle_low_fx())
+    _menu = MenuPanel.new()
+    _root.add_child(_menu)
+    _menu_btn = UiButton.new()
+    _menu_btn.configure("MENU", "menu")
+    _menu_btn.font_scale = 3
+    _menu_btn.anchor_left = 1.0
+    _menu_btn.anchor_right = 1.0
+    _menu_btn.anchor_top = 1.0
+    _menu_btn.anchor_bottom = 1.0
+    _menu_btn.offset_left = -216.0
+    _menu_btn.offset_right = -16.0
+    _menu_btn.offset_top = -96.0
+    _menu_btn.offset_bottom = -16.0
+    _menu_btn.pressed.connect(_menu.toggle)
+    _root.add_child(_menu_btn)
+    _profile = ProfilePanel.new()
+    _root.add_child(_profile)
     _apply_safe_area()
     get_viewport().size_changed.connect(_apply_safe_area)
     Events.state_changed.connect(_refresh)
-    Events.player_hp_changed.connect(_on_hp)
     Events.stage_changed.connect(func(_s: int): _refresh())
-    Events.stage_cleared.connect(func(_s: int, secs: float): _last_stage_secs = secs)
-    Events.boss_hp_changed.connect(_on_boss_hp)
-    Events.repeat_mode_changed.connect(func(on: bool): _repeat = on; _refresh())
+    Events.player_hp_changed.connect(func(h: float, m: float): _top.hp = h; _top.max_hp = m; _top.queue_redraw())
+    Events.boss_hp_changed.connect(func(h: float, m: float): _top.boss_hp = h; _top.boss_max = m; _top.queue_redraw())
+    Events.stage_progress.connect(func(k: int, t: int, l: String): _top.killed = k; _top.total = t; _top.label = l; _top.queue_redraw())
+    Events.stage_cleared.connect(func(_s: int, secs: float): _top.last_stage_secs = secs)
+    Events.repeat_mode_changed.connect(func(on: bool): _top.repeat = on; _refresh())
+    Events.boss_warning.connect(_on_boss_warning)
     _refresh()
+
+## Só para o smoke do CI: passo 0 abre o menu; 1..N percorre as abas; depois abre/fecha o perfil.
+func debug_ui_step(step: int) -> void:
+    var tabs: Array = MenuModel.tabs(true)
+    if step == 0:
+        _menu.visible = true
+    elif step <= tabs.size():
+        _menu.debug_open(str(tabs[step - 1]["id"]))
+    elif step == tabs.size() + 1:
+        _menu.close()
+        _profile.open()
+    else:
+        _profile.close()
 
 func add_control(c: Control) -> void:
     _root.add_child(c)
     _root.move_child(c, 0)   # joystick atrás dos botões
 
-func _label(size: int) -> Label:
-    var l := Label.new()
-    l.add_theme_font_size_override("font_size", size)
-    return l
+func _make_button(t: String, ic: String, r: Rect2, cb: Callable) -> UiButton:
+    var b := UiButton.new()
+    b.configure(t, ic)
+    if t == "" and ic == "":
+        b.avatar = 0
+    b.position = r.position
+    b.size = r.size
+    b.pressed.connect(cb)
+    _root.add_child(b)
+    return b
 
-func _build_top() -> void:
-    var top := HBoxContainer.new()
-    top.anchor_right = 1.0
-    top.offset_left = 16.0
-    top.offset_top = 8.0
-    top.offset_right = -16.0
-    top.add_theme_constant_override("separation", 28)
-    top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    _root.add_child(top)
-    _stage = _label(26)
-    _gold = _label(26)
-    _gems = _label(26)
-    _shards = _label(26)
-    _hp_bar = ProgressBar.new()
-    _hp_bar.custom_minimum_size = Vector2(260, 26)
-    _hp_bar.show_percentage = false
-    _hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    for n in [_stage, _gold, _gems, _shards, _hp_bar]:
-        top.add_child(n)
-    _boss_bar = ProgressBar.new()
-    _boss_bar.anchor_left = 0.2
-    _boss_bar.anchor_right = 0.8
-    _boss_bar.offset_top = 52.0
-    _boss_bar.offset_bottom = 76.0
-    _boss_bar.show_percentage = false
-    _boss_bar.visible = false
-    _boss_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    _root.add_child(_boss_bar)
-    # Indicador de calibração (para o teste no celular): tempo da última fase e gemas/h da sessão.
-    _pace = _label(16)
-    _pace.modulate = Color(1, 1, 1, 0.6)
-    _pace.offset_left = 16.0
-    _pace.offset_top = 46.0
-    _root.add_child(_pace)
+func _open_profile() -> void:
+    _menu.close()
+    _profile.open()
+
+func _on_boss_warning(boss_name: String, is_mini: bool) -> void:
+    _top.boss_name = boss_name
+    _top.boss_is_mini = is_mini
+    _top.show_banner("MINI-CHEFE!" if is_mini else "AVISO: CHEFE!", boss_name)
 
 ## Só em aparelhos móveis: afasta o HUD do notch/cantos arredondados (DisplayServer.get_display_safe_area).
 func _apply_safe_area() -> void:
@@ -93,74 +103,13 @@ func _apply_safe_area() -> void:
     _root.offset_right = -m["r"]
     _root.offset_bottom = -m["b"]
 
-func _build_stage_buttons() -> void:
-    _next_btn = Button.new()
-    _next_btn.add_theme_font_size_override("font_size", 22)
-    _next_btn.offset_left = 16.0
-    _next_btn.offset_top = 80.0
-    _next_btn.offset_right = 256.0
-    _next_btn.offset_bottom = 132.0
-    _next_btn.pressed.connect(func(): Events.request_next_stage.emit())
-    _root.add_child(_next_btn)
-    _speed_btn = Button.new()
-    _speed_btn.add_theme_font_size_override("font_size", 22)
-    _speed_btn.offset_left = 268.0
-    _speed_btn.offset_top = 80.0
-    _speed_btn.offset_right = 448.0
-    _speed_btn.offset_bottom = 132.0
-    _speed_btn.pressed.connect(func(): GameState.toggle_speed())
-    _root.add_child(_speed_btn)
-    _fx_btn = Button.new()
-    _fx_btn.add_theme_font_size_override("font_size", 22)
-    _fx_btn.offset_left = 460.0
-    _fx_btn.offset_top = 80.0
-    _fx_btn.offset_right = 650.0
-    _fx_btn.offset_bottom = 132.0
-    _fx_btn.pressed.connect(func(): GameState.toggle_low_fx())
-    _root.add_child(_fx_btn)
-
-func _build_menu() -> void:
-    _menu = MenuPanel.new()
-    _root.add_child(_menu)
-    var btn := Button.new()
-    btn.text = "Menu"
-    btn.add_theme_font_size_override("font_size", 28)
-    btn.anchor_left = 1.0
-    btn.anchor_right = 1.0
-    btn.anchor_top = 1.0
-    btn.anchor_bottom = 1.0
-    btn.offset_left = -216.0
-    btn.offset_right = -16.0
-    btn.offset_top = -96.0
-    btn.offset_bottom = -16.0
-    btn.pressed.connect(func(): _menu.visible = not _menu.visible)
-    _root.add_child(btn)
-
-func _process(delta: float) -> void:
-    _pace_timer -= delta
-    if _pace_timer <= 0.0:
-        _pace_timer = 1.0
-        _pace.text = ("[TESTE] " if DebugTools.enabled() else "") + "Última fase: %s | Gemas/h (sessão): %s" % [
-            "-" if _last_stage_secs <= 0.0 else "%d s" % int(_last_stage_secs),
-            "-" if GameState.session_gems_per_hour() <= 0.0 else "%.0f" % GameState.session_gems_per_hour()]
-
 func _refresh() -> void:
     var s: Dictionary = GameState.state
-    _gold.text = "Ouro: " + UiLogic.fmt_int(int(s["gold"]))
-    _gems.text = "Gemas: " + UiLogic.fmt_int(int(s["gems"]))
-    _shards.text = "Fragm.: " + UiLogic.fmt_int(int(s["shards"]))
     var stg: int = int(s["stage"])
-    _stage.text = "Fase %d%s" % [stg, " (repetindo)" if _repeat else ""]
-    _next_btn.text = "Próxima fase (%d)" % (stg + 1)
-    _next_btn.disabled = not StageLogic.can_skip_to_next(stg, int(s["max_stage"]))
-    _speed_btn.text = "Velocidade %dx" % int(UiLogic.time_scale(s["settings"]))
-    _fx_btn.text = "Efeitos: Alto" if UiLogic.fx_enabled(s["settings"]) else "Efeitos: Baixo"
-
-func _on_hp(hp: float, max_hp: float) -> void:
-    _hp_bar.max_value = max_hp
-    _hp_bar.value = hp
-
-func _on_boss_hp(hp: float, max_hp: float) -> void:
-    _boss_bar.visible = max_hp > 0.0 and hp > 0.0
-    _boss_bar.max_value = maxf(max_hp, 1.0)
-    _boss_bar.value = hp
+    _avatar_btn.avatar = int(s["profile"]["avatar"])
+    _avatar_btn.queue_redraw()
+    _next_btn.set_text("PRÓX. FASE %d" % (stg + 1))
+    _next_btn.set_enabled(StageLogic.can_skip_to_next(stg, int(s["max_stage"])))
+    _speed_btn.set_text("VELOC. %dX" % int(UiLogic.time_scale(s["settings"])))
+    _fx_btn.set_text("EFEITOS: ALTO" if UiLogic.fx_enabled(s["settings"]) else "EFEITOS: BAIXO")
+    _top.queue_redraw()

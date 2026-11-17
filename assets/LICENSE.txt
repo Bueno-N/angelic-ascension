@@ -1,0 +1,4 @@
+Toda a arte em assets/sprites/ foi criada do zero para este projeto, por código (tools/art/*.py),
+sem usar, copiar ou derivar de nenhum asset, personagem, jogo ou obra de terceiros.
+Licença: CC0 1.0 (domínio público) - use, modifique e distribua livremente, inclusive comercialmente.
+Para regenerar: python3 tools/art/generate.py

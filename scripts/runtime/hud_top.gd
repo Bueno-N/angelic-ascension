@@ -1,0 +1,102 @@
+class_name HudTop
+extends Control
+## Parte desenhada do HUD: perfil, VIDA VERDE, fase, contador de mobs, marcos (mini-chefe/chefe), recursos,
+## barra do chefe e o banner de AVISO DE CHEFE. Não recebe toques (os botões são UiButton).
+
+var hp := 100.0
+var max_hp := 100.0
+var boss_hp := 0.0
+var boss_max := 0.0
+var boss_name := ""
+var boss_is_mini := false
+var killed := 0
+var total := 0
+var label := "MOBS"
+var repeat := false
+var last_stage_secs := 0.0
+var banner_t := 0.0
+var banner_title := ""
+var banner_sub := ""
+var _pace_t := 0.0
+
+func _ready() -> void:
+    mouse_filter = Control.MOUSE_FILTER_IGNORE
+    set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+func show_banner(title: String, sub: String) -> void:
+    banner_title = title
+    banner_sub = sub
+    banner_t = 3.0
+    queue_redraw()
+
+func _process(delta: float) -> void:
+    _pace_t -= delta
+    if banner_t > 0.0:
+        banner_t -= delta
+        queue_redraw()
+    elif _pace_t <= 0.0:
+        _pace_t = 1.0
+        queue_redraw()
+
+func _draw() -> void:
+    var s: Dictionary = GameState.state
+    var w: float = size.x
+    # ---- cartão do jogador: nome, VIDA VERDE, fase e mobs ----
+    UiTheme.panel(self, Rect2(12.0, 8.0, 384.0, 110.0), UiTheme.BG, UiTheme.GOLD)
+    PixelFont.draw(self, Vector2(112.0, 18.0), str(s["profile"]["name"]), 2, UiTheme.GOLD)
+    var bx := 112.0
+    var by := 42.0
+    var bw := 272.0
+    var bh := 28.0
+    draw_rect(Rect2(bx - 2.0, by - 2.0, bw + 4.0, bh + 4.0), Color(0, 0, 0, 0.85))
+    var ratio: float = clampf(hp / maxf(max_hp, 1.0), 0.0, 1.0)
+    draw_rect(Rect2(bx, by, bw, bh), Color(0.05, 0.12, 0.06, 1.0))
+    draw_rect(Rect2(bx, by, bw * ratio, bh), UiTheme.GREEN_D)
+    draw_rect(Rect2(bx, by, bw * ratio, bh * 0.55), UiTheme.GREEN)
+    draw_rect(Rect2(bx, by + 3.0, bw * ratio, 3.0), Color(1, 1, 1, 0.28))
+    var ht: String = "%d / %d" % [int(ceil(maxf(hp, 0.0))), int(max_hp)]
+    PixelFont.draw(self, Vector2(bx + (bw - float(PixelFont.width(ht, 2))) / 2.0, by + 7.0), ht, 2, Color.WHITE)
+    var stg: int = int(s["stage"])
+    PixelFont.draw(self, Vector2(112.0, 78.0), "FASE %d%s" % [stg, " (repetindo)" if repeat else ""], 2, UiTheme.TEXT)
+    var mt: String = "%s %d/%d" % [label, killed, total]
+    PixelFont.draw(self, Vector2(bx + bw - float(PixelFont.width(mt, 2)), 78.0), mt, 2, UiTheme.GOLD)
+    draw_rect(Rect2(bx, 100.0, bw, 7.0), Color(0, 0, 0, 0.7))
+    var pr: float = clampf(float(killed) / maxf(float(total), 1.0), 0.0, 1.0)
+    draw_rect(Rect2(bx, 100.0, bw * pr, 7.0), Color(1.0, 0.6, 0.2) if label != "MOBS" else UiTheme.BLUE)
+    # ---- próximo marco e ritmo ----
+    var ms := StageLogic.next_milestone(stg)
+    if not ms.is_empty():
+        var kind: String = "Mini-chefe" if ms["kind"] == "mini" else "Chefe"
+        var when: String = "AGORA" if int(ms["in"]) == 0 else "na fase %d (em %d)" % [int(ms["stage"]), int(ms["in"])]
+        PixelFont.draw(self, Vector2(16.0, 126.0), "Próx.: %s %s" % [kind, when], 2, UiTheme.TEXT_DIM)
+    var pace := "Última fase: %s | Gemas/h: %s" % ["-" if last_stage_secs <= 0.0 else "%d s" % int(last_stage_secs),
+        "-" if GameState.session_gems_per_hour() <= 0.0 else "%d" % int(GameState.session_gems_per_hour())]
+    PixelFont.draw(self, Vector2(16.0, 148.0), ("[TESTE] " if DebugTools.enabled() else "") + pace, 2, Color(UiTheme.TEXT_DIM, 0.8))
+    # ---- recursos (topo direito) ----
+    UiTheme.panel(self, Rect2(w - 404.0, 8.0, 392.0, 44.0), UiTheme.BG, UiTheme.GOLD_D)
+    var x: float = w - 394.0
+    for it in [["coin", int(s["gold"])], ["gem", int(s["gems"])], ["shard", int(s["shards"])]]:
+        UiIcons.draw(self, str(it[0]), Rect2(x, 18.0, 24.0, 24.0))
+        PixelFont.draw(self, Vector2(x + 30.0, 23.0), UiLogic.fmt_int(int(it[1])), 2, UiTheme.TEXT)
+        x += 130.0
+    # ---- barra do chefe / mini-chefe ----
+    if boss_max > 0.0 and boss_hp > 0.0:
+        var cx: float = w / 2.0
+        var nm: String = boss_name
+        PixelFont.draw(self, Vector2(cx - float(PixelFont.width(nm, 2)) / 2.0, 58.0), nm, 2, Color(1.0, 0.7, 0.3) if boss_is_mini else Color(1.0, 0.35, 0.3))
+        draw_rect(Rect2(cx - 222.0, 78.0, 444.0, 26.0), Color(0, 0, 0, 0.85))
+        var br: float = clampf(boss_hp / boss_max, 0.0, 1.0)
+        draw_rect(Rect2(cx - 220.0, 80.0, 440.0 * br, 22.0), Color(0.55, 0.08, 0.1))
+        draw_rect(Rect2(cx - 220.0, 80.0, 440.0 * br, 11.0), Color(0.9, 0.2, 0.18))
+    # ---- banner de AVISO DE CHEFE ----
+    if banner_t > 0.0:
+        var a: float = clampf(banner_t / 0.6, 0.0, 1.0)
+        var pulse: float = 0.5 + 0.5 * sin(banner_t * 14.0)
+        var y: float = size.y * 0.22
+        draw_rect(Rect2(0.0, y - 24.0, w, 132.0), Color(0, 0, 0, 0.5 * a))
+        draw_rect(Rect2(0.0, y - 24.0, w, 4.0), Color(1.0, 0.25, 0.15, a))
+        draw_rect(Rect2(0.0, y + 104.0, w, 4.0), Color(1.0, 0.25, 0.15, a))
+        var col := Color(1.0, 0.22 + 0.3 * pulse, 0.15, a)
+        PixelFont.draw(self, Vector2((w - float(PixelFont.width(banner_title, 5))) / 2.0, y), banner_title, 5, col)
+        PixelFont.draw(self, Vector2((w - float(PixelFont.width(banner_sub, 3))) / 2.0, y + 58.0), banner_sub, 3, Color(1.0, 0.9, 0.7, a))

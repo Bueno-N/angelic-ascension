@@ -41,6 +41,23 @@ const FX_CAP_NORMAL := 80            # máx. de efeitos/partículas simultâneos
 const FX_CAP_LOW := 20               # idem no modo "Efeitos: Baixo"
 const UI_REDRAW_INTERVAL := 0.05     # a barra de habilidades redesenha a 20 fps
 
+# --- Ritmo DENTRO da fase: os mobs chegam cada vez mais rápido com o passar do tempo ---
+const SPAWN_MIN_INTERVAL := 0.25      # intervalo mínimo entre mobs (s)
+const SPAWN_ACCEL_SECONDS := 25.0     # o intervalo cai pela metade a cada ~25 s de fase
+const ALIVE_EXTRA_EVERY := 15.0       # +1 inimigo simultâneo a cada 15 s de fase
+const ALIVE_EXTRA_MAX := 10
+
+# --- Mini-chefes (fases 5, 15, 25...): aparecem no FINAL da horda ---
+const MINI_OFFSET := 5                # fase % BOSS_EVERY == 5
+const MINI_SPAWN_ALIVE := 3           # surge quando restam no máx. 3 mobs vivos
+const MINI_HP_FRAC := 0.4             # vida = 40% da do chefe da mesma fase
+const MINI_DMG_FRAC := 0.8            # dano = 80% do dano do chefe
+const MINI_GOLD_FRAC := 0.4           # ouro = 40% do ouro do chefe
+const MINI_RADIUS_MULT := 1.6
+const MINI_SCALE := 3.0               # escala do sprite (pixel art: inteiro)
+const MINI_GEM_MIN := 1               # gemas garantidas do mini-chefe (sem fragmentos de asa)
+const MINI_GEM_MAX := 2
+
 # --- Modo acelerado (botão de velocidade no HUD) ---
 const FAST_MODE_SCALE := 2.0
 

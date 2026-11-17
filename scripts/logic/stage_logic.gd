@@ -6,6 +6,41 @@ extends RefCounted
 static func can_skip_to_next(stage: int, max_stage: int) -> bool:
     return stage < max_stage
 
+static func is_mini_stage(stage: int) -> bool:
+    return stage > 0 and stage % Balance.BOSS_EVERY == Balance.MINI_OFFSET
+
+## Intervalo entre mobs: cai com o tempo de fase (a horda acelera).
+static func spawn_interval(stage_time: float) -> float:
+    return maxf(Balance.SPAWN_MIN_INTERVAL, Balance.SPAWN_INTERVAL / (1.0 + maxf(0.0, stage_time) / Balance.SPAWN_ACCEL_SECONDS))
+
+static func extra_alive(stage_time: float) -> int:
+    return mini(Balance.ALIVE_EXTRA_MAX, floori(maxf(0.0, stage_time) / Balance.ALIVE_EXTRA_EVERY))
+
+static func total_alive_cap(stage: int, stage_time: float) -> int:
+    return max_alive(stage) + extra_alive(stage_time)
+
+## Próximo marco a partir desta fase (inclusive): {"kind": "boss"|"mini", "stage": N, "in": fases até lá}.
+static func next_milestone(stage: int) -> Dictionary:
+    for s in range(maxi(1, stage), maxi(1, stage) + 11):
+        if is_boss_stage(s):
+            return {"kind": "boss", "stage": s, "in": s - stage}
+        if is_mini_stage(s):
+            return {"kind": "mini", "stage": s, "in": s - stage}
+    return {}
+
+## O mini-chefe é sempre mais fraco que o chefe da MESMA fase (fração dele).
+static func mini_hp(stage: int) -> float:
+    return boss_hp(stage) * Balance.MINI_HP_FRAC
+
+static func mini_dmg(stage: int) -> float:
+    return boss_dmg(stage) * Balance.MINI_DMG_FRAC
+
+static func mini_gold(stage: int) -> int:
+    return maxi(1, int(round(float(boss_gold(stage)) * Balance.MINI_GOLD_FRAC)))
+
+static func mini_gems(rng: RandomNumberGenerator) -> int:
+    return rng.randi_range(Balance.MINI_GEM_MIN, Balance.MINI_GEM_MAX)
+
 static func is_boss_stage(stage: int) -> bool:
     return stage > 0 and stage % Balance.BOSS_EVERY == 0
 

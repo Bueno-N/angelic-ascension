@@ -79,6 +79,22 @@ func toggle_low_fx() -> void:
     save()
     Events.state_changed.emit()
 
+## Ações do menu (ver MenuModel): compra/equipa/evolui. Debug passa pelo debug_apply.
+func menu_action(action: String) -> bool:
+    var p := action.split("|")
+    if p[0] == "debug" and p.size() > 2:
+        debug_apply(p[1], int(p[2]))
+        return true
+    if p[0] == "skill_unequip" and p.size() > 1 and skill_remaining(p[1]) > 0.0:
+        return false   # trava: não dá para trocar habilidade em recarga
+    return _commit(MenuModel.perform(state, action))
+
+func set_profile(pname: String, avatar: int) -> void:
+    state["profile"]["name"] = ProfileLogic.clean_name(pname)
+    state["profile"]["avatar"] = clampi(avatar, 0, ProfileLogic.AVATAR_COUNT - 1)
+    save()
+    Events.state_changed.emit()
+
 func apply_speed() -> void:
     Engine.time_scale = UiLogic.time_scale(state["settings"])
 
@@ -136,6 +152,11 @@ func _on_enemy_died(_pos: Vector2, def: Dictionary, is_boss: bool, gold: int) ->
         session_gems += g
         state["shards"] = int(state["shards"]) + sh
         Events.boss_defeated.emit(stage, g, sh)
+        save()
+    elif def.get("mini", false):
+        var mg: int = StageLogic.mini_gems(rng)   # mini-chefe: ouro alto + 1-2 gemas, sem fragmentos de asa
+        state["gems"] = int(state["gems"]) + mg
+        session_gems += mg
         save()
     else:
         var dg: int = DropLogic.roll_gems(def, rng)

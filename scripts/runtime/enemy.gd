@@ -1,7 +1,7 @@
 class_name Enemy
 extends Node2D
-## Inimigo comum, especial ou chefe. Chefes e especiais usam habilidades (EnemiesDB.ABILITIES) com
-## AVISO VISUAL (telegraph) antes do golpe.
+## Inimigo comum, especial ou chefe, com sprite animado (walk / cast). Chefes e especiais usam habilidades
+## (EnemiesDB.ABILITIES) com AVISO VISUAL (telegraph) antes do golpe.
 
 static var smoke_fast := false   # só no modo --smoke do CI: habilidades começam sem recarga inicial
 
@@ -14,10 +14,12 @@ var gold := 1
 var radius := 14.0
 var is_boss := false
 var is_summon := false
+var is_mini := false
 var stage := 1
-var color := Color.RED
 var player: Player
 var abilities := AbilityCooldowns.new()
+var _spr: AnimatedSprite2D
+var _base_mod := Color.WHITE
 var _atk_cd := 0.0
 var _hit := 0.0
 var _cast_id := ""
@@ -25,15 +27,16 @@ var _cast_t := 0.0
 var _cast_dir := Vector2.ZERO
 var _dash_t := 0.0
 var _dash_hit := false
-var _pulse_t := 0.0
 
-func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = false) -> void:
+func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = false, mini: Dictionary = {}) -> void:
     player = target
     is_boss = boss
     is_summon = summon
+    is_mini = not mini.is_empty()
     stage = st
     add_to_group("enemies")
     var ability_ids: Array = []
+    var sprite_name := "imp"
     if boss:
         var b := EnemiesDB.boss_for(st)
         def = {"id": b["id"], "special": false}
@@ -42,8 +45,8 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
         gold = StageLogic.boss_gold(st)
         speed = float(EnemiesDB.BOSS_BASE["speed"])
         radius = float(EnemiesDB.BOSS_BASE["radius"])
-        color = Color(b["color"])
         ability_ids = b["abilities"]
+        sprite_name = str(b["sprite"])
     else:
         def = d.duplicate()
         max_hp = StageLogic.enemy_hp(float(d["hp"]), st)
@@ -51,16 +54,33 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
         gold = StageLogic.enemy_gold(float(d["gold"]), st)
         speed = float(d["speed"])
         radius = float(d["radius"])
-        color = Color(d["color"])
-        if d.has("ability"):
+        sprite_name = str(d.get("sprite", "imp"))
+        if is_mini:
+            # mini-chefe: versão campeã do demônio comum (maior, mais forte, 1 habilidade)
+            max_hp = StageLogic.mini_hp(st)
+            dmg = StageLogic.mini_dmg(st)
+            gold = StageLogic.mini_gold(st)
+            radius *= Balance.MINI_RADIUS_MULT
+            ability_ids = mini["abilities"]
+            def["mini"] = true
+            def["name"] = mini["name"]
+            def["special"] = false
+            def.erase("ability")
+            _base_mod = Color(1.0, 0.82, 0.7)
+        elif d.has("ability"):
             ability_ids = [d["ability"]]
     if summon:
         def["summon"] = true
         gold = 0
         add_to_group("summons")
+        _base_mod = Color(0.8, 0.6, 1.0, 0.9)   # invocações ficam arroxeadas
+    _spr = SpriteLib.make(sprite_name, "walk", Balance.MINI_SCALE if is_mini else EnemiesDB.SPRITE_SCALE)
+    _spr.modulate = _base_mod
+    _spr.speed_scale = clampf(speed / 70.0, 0.6, 1.5)
+    add_child(_spr)
     abilities.setup(ability_ids, EnemiesDB.ABILITIES, 0.0 if smoke_fast else EnemiesDB.ABILITY_INITIAL_FRACTION)
     hp = max_hp
-    if is_boss:
+    if is_boss or is_mini:
         Events.boss_hp_changed.emit(hp, max_hp)
 
 func take_damage(amount: float) -> void:
@@ -68,8 +88,10 @@ func take_damage(amount: float) -> void:
         return
     hp -= amount
     _hit = 0.08
+    if _spr != null:
+        _spr.modulate = Color(2.2, 2.2, 2.2, _base_mod.a)   # piscada branca ao levar dano
     queue_redraw()
-    if is_boss:
+    if is_boss or is_mini:
         Events.boss_hp_changed.emit(maxf(hp, 0.0), max_hp)
     if hp <= 0.0:
         Events.enemy_died.emit(global_position, def, is_boss, gold)
@@ -80,21 +102,23 @@ func _process(delta: float) -> void:
         return
     var was_hit: bool = _hit > 0.0
     _think(delta)
-    # Mover o nó não exige redesenhar. Só redesenha: piscada, aviso de habilidade, pulso de chefe/especial.
-    var animated: bool = _cast_id != "" or _dash_t > 0.0
-    _pulse_t -= delta
-    if is_boss or str(def.get("kind", "")) == "special":
-        if _pulse_t <= 0.0:
-            _pulse_t = 0.066
-            animated = true
-    if animated or (was_hit and _hit <= 0.0):
+    if was_hit and _hit <= 0.0 and _spr != null:
+        _spr.modulate = _base_mod
+    # Mover o nó não exige redesenhar; só o aviso de habilidade muda a cada frame.
+    if _cast_id != "" or _dash_t > 0.0:
         queue_redraw()
+
+func _play(anim: String) -> void:
+    if _spr != null and _spr.sprite_frames != null and _spr.sprite_frames.has_animation(anim) and _spr.animation != anim:
+        _spr.play(anim)
 
 func _think(delta: float) -> void:
     _hit = maxf(0.0, _hit - delta)
     abilities.tick(delta)
     var to := player.global_position - global_position
     var dist := to.length()
+    if _spr != null and absf(to.x) > 2.0:
+        _spr.flip_h = to.x < 0.0
 
     if _dash_t > 0.0:
         _process_dash(delta)
@@ -131,21 +155,24 @@ func _start_cast(id: String, to: Vector2) -> void:
     _cast_t = float(EnemiesDB.ABILITIES[id]["telegraph"])
     _cast_dir = to.normalized()
     abilities.start(id, EnemiesDB.ABILITIES)
+    _play("cast")   # pose de conjuração durante o aviso
 
 func _execute_ability() -> void:
     var id := _cast_id
     var cfg: Dictionary = EnemiesDB.ABILITIES[id]
     _cast_id = ""
+    _play("walk")
     Events.ability_cast.emit(id)
     match id:
         "area_slam":
-            _fx("ring", float(cfg["radius"]), Color(1.0, 0.3, 0.2))
+            _burst(float(cfg["radius"]), Color(1.0, 0.3, 0.2))
             if player.global_position.distance_to(global_position) <= float(cfg["radius"]):
                 player.take_damage(dmg * float(cfg["dmg_mult"]))
         "charge":
             _dash_t = float(cfg["duration"])
             _dash_hit = false
         "summon_demons":
+            _burst(80.0, Color(0.7, 0.3, 1.0))
             _summon(int(cfg["count"]))
         "hellfire_projectiles":
             _fan(cfg)
@@ -160,6 +187,7 @@ func _execute_ability() -> void:
                 var beam := Fx.make("beam", global_position, 0.3, 0.0, Color(0.3, 1.0, 0.7))
                 beam.to = player.global_position - global_position
                 get_parent().add_child(beam)
+                SpriteFx.spawn(get_parent(), "fx_hit", player.global_position, 2.0, Color(0.4, 1.0, 0.8))
 
 func _process_dash(delta: float) -> void:
     var cfg: Dictionary = EnemiesDB.ABILITIES["charge"]
@@ -170,8 +198,8 @@ func _process_dash(delta: float) -> void:
         _dash_hit = true
         player.take_damage(dmg * float(cfg["dmg_mult"]))
 
-func _fx(kind: String, r: float, col: Color) -> void:
-    get_parent().add_child(Fx.make(kind, global_position, 0.5, r, col))
+func _burst(r: float, col: Color) -> void:
+    SpriteFx.spawn(get_parent(), "fx_burst", global_position, r * 2.0 / 64.0, col)
 
 func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float) -> void:
     var p := EnemyProjectile.new()
@@ -200,41 +228,16 @@ func _summon(n: int) -> void:
         m.setup(EnemiesDB.pick_normal(stage, rng), stage, false, player, true)
 
 func _draw() -> void:
-    var c := Color.WHITE if _hit > 0.0 else color
-    draw_circle(Vector2.ZERO, radius, c)
-    draw_colored_polygon(PackedVector2Array([Vector2(-radius * 0.7, -radius * 0.5), Vector2(-radius * 0.9, -radius * 1.4), Vector2(-radius * 0.2, -radius * 0.8)]), c.darkened(0.3))
-    draw_colored_polygon(PackedVector2Array([Vector2(radius * 0.7, -radius * 0.5), Vector2(radius * 0.9, -radius * 1.4), Vector2(radius * 0.2, -radius * 0.8)]), c.darkened(0.3))
-    draw_circle(Vector2(-radius * 0.35, -radius * 0.1), radius * 0.15, Color(1.0, 0.9, 0.2))
-    draw_circle(Vector2(radius * 0.35, -radius * 0.1), radius * 0.15, Color(1.0, 0.9, 0.2))
-    _draw_kind_details(c)
+    # sombra no chão (dá peso ao sprite)
+    draw_set_transform(Vector2(0, radius + 6.0), 0.0, Vector2(1.0, 0.32))
+    draw_circle(Vector2.ZERO, radius * 1.25, Color(0, 0, 0, 0.35))
+    draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
     if hp < max_hp and not is_boss:
         var w := radius * 2.0
-        draw_rect(Rect2(-radius, radius + 4.0, w, 4.0), Color(0, 0, 0, 0.6))
-        draw_rect(Rect2(-radius, radius + 4.0, w * clampf(hp / max_hp, 0.0, 1.0), 4.0), Color(0.9, 0.2, 0.2))
+        draw_rect(Rect2(-radius, -radius - 16.0, w, 4.0), Color(0, 0, 0, 0.6))
+        draw_rect(Rect2(-radius, -radius - 16.0, w * clampf(hp / max_hp, 0.0, 1.0), 4.0), Color(0.9, 0.2, 0.2))
     if _cast_id != "":
         _draw_telegraph()
-
-## Detalhes visuais por tipo de demônio (a silhueta ajuda a reconhecer o perigo).
-func _draw_kind_details(c: Color) -> void:
-    var pulse: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 220.0)
-    var kind: String = "boss" if is_boss else str(def.get("kind", "common"))
-    match kind:
-        "warrior":
-            draw_arc(Vector2(radius * 0.9, 0), radius * 0.6, -PI / 2.0, PI / 2.0, 12, c.lightened(0.35), 3.0)
-        "shadow":
-            draw_circle(Vector2(0, radius * 0.9), radius * 0.6, Color(c, 0.35))
-            draw_circle(Vector2(0, radius * 1.5), radius * 0.35, Color(c, 0.2))
-        "beast":
-            for k in range(3):
-                var x: float = (float(k) - 1.0) * radius * 0.6
-                draw_colored_polygon(PackedVector2Array([Vector2(x - 4, -radius * 0.9), Vector2(x, -radius * 1.4), Vector2(x + 4, -radius * 0.9)]), c.darkened(0.4))
-        "special":
-            draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 24, Color(color.lightened(0.4), 0.4 + 0.5 * pulse), 2.0)
-        "boss":
-            for k in range(5):
-                var x2: float = (float(k) - 2.0) * radius * 0.35
-                draw_colored_polygon(PackedVector2Array([Vector2(x2 - 6, -radius * 0.95), Vector2(x2, -radius * 1.5), Vector2(x2 + 6, -radius * 0.95)]), Color(1.0, 0.75, 0.2))
-            draw_arc(Vector2.ZERO, radius * 1.35, 0.0, TAU, 40, Color(1.0, 0.2, 0.1, 0.25 + 0.35 * pulse), 4.0)
 
 ## AVISO VISUAL: a área/linha fica mais vermelha até o golpe acontecer.
 func _draw_telegraph() -> void:

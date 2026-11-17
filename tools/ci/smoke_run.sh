@@ -16,8 +16,12 @@ for k in area_slam charge summon_demons hellfire_projectiles fire_bolt life_stea
 done
 casts=$(grep -o "casts=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${casts:-0}" -lt 10 ]; then echo "Habilidades não foram executadas (casts=${casts:-0}, esperado >= 10)"; exit 1; fi
-for k in repeat next speed fx; do
+for k in repeat next speed fx profile; do
   v=$(grep -o " $k=[0-9]" build/smoke.log | head -1 | cut -d= -f2)
   if [ "${v:-0}" != "1" ]; then echo "Verificação '$k' falhou no smoke (valor=${v:-ausente}): modo repetir / próxima fase / velocidade 2x"; exit 1; fi
 done
+warn=$(grep -o " warn=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
+mini=$(grep -o " mini=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
+if [ "${warn:-0}" -lt 6 ]; then echo "Avisos de chefe insuficientes (warn=${warn:-0}, esperado >= 6: chefes 10/20/30/40 + 2 mini-chefes)"; exit 1; fi
+if [ "${mini:-0}" -lt 2 ]; then echo "Mini-chefes não apareceram (mini=${mini:-0}, esperado >= 2: fases 5 e 15)"; exit 1; fi
 exit $rc

@@ -1,24 +1,44 @@
 class_name Player
 extends Node2D
+## O anjo: sprite animado em camadas (AngelSprite), aura rúnica giratória, golpe com arco de luz e faíscas.
 
 var hp: float = 100.0
 var max_hp: float = 100.0
 var joystick: VirtualJoystick
+var fx_layer: Node2D
 var buffs := BuffState.new()
 var god_mode := false   # só no modo --smoke do CI
+var visual: AngelSprite
+var aura_fx: AnimatedSprite2D
+var shield_fx: AnimatedSprite2D
 var _atk_timer := 0.0
 var _aura_timer := 0.0
+var _aura_pulse := 0.0
+var _aura_scale := 2.0
+var _hurt := 0.0
 var _flash := 0.0
+var _last_flash := false
 var _flash_target := Vector2.ZERO
 var _hp_emit := 0.0
 var _sparks: CPUParticles2D
 var _sparks_tier := -1
-var _last_vis := -1
 
 func _ready() -> void:
     add_to_group("player")
+    aura_fx = SpriteLib.make("fx_aura", "play", 2.0)   # anel rúnico: raio visual = raio da aura (112 px)
+    aura_fx.material = SpriteLib.additive()
+    aura_fx.modulate = Color(1.0, 0.9, 0.5, 0.5)
+    add_child(aura_fx)
+    visual = AngelSprite.new()
+    add_child(visual)
+    shield_fx = SpriteLib.make("fx_shield", "play", 2.4)
+    shield_fx.material = SpriteLib.additive()
+    shield_fx.modulate = Color(0.6, 0.85, 1.0, 0.85)
+    shield_fx.visible = false
+    add_child(shield_fx)
     Events.state_changed.connect(_on_state_changed)
     _setup_sparks()
+    _update_look()
     refresh_stats(true)
 
 ## Atributo final = (base + ouro) * (1 + asas% + equip%) * multiplicador dos buffs ativos.
@@ -37,14 +57,36 @@ func refresh_stats(full_heal: bool) -> void:
 func _on_state_changed() -> void:
     refresh_stats(false)
     _update_sparks()
-    queue_redraw()
+    _update_look()
+
+func _update_look() -> void:
+    visual.set_look(int(GameState.state["wings_level"]), int(GameState.state["glow_tier"]), GameState.state["equipped"])
+
+## Pose de conjuração (chamada pelo SkillCaster).
+func cast_anim() -> void:
+    visual.cast()
+
+func heal(amount: float) -> void:
+    hp = minf(max_hp, hp + amount)
+    Events.player_hp_changed.emit(hp, max_hp)
+
+func take_damage(raw: float) -> void:
+    var after_shield: float = raw * (1.0 - buffs.absorb())
+    hp -= StatsCalc.damage_after_armor(after_shield, get_stat("armor"))
+    _hurt = 0.12
+    visual.modulate = Color(1.7, 0.7, 0.7)   # piscada vermelha ao ser atingido
+    if god_mode:
+        hp = maxf(hp, 1.0)
+    Events.player_hp_changed.emit(maxf(hp, 0.0), max_hp)
+    if hp <= 0.0:
+        Events.player_died.emit()
 
 ## Partículas celestiais ao redor do anjo: surgem ao comprar o brilho das asas e aumentam com o tier.
 func _setup_sparks() -> void:
     _sparks = CPUParticles2D.new()
     _sparks.lifetime = 1.4
     _sparks.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-    _sparks.emission_sphere_radius = 34.0
+    _sparks.emission_sphere_radius = 52.0
     _sparks.direction = Vector2(0, -1)
     _sparks.spread = 40.0
     _sparks.gravity = Vector2(0, -20)
@@ -71,19 +113,6 @@ func _update_sparks() -> void:
     if tier > 0:
         _sparks.amount = 6 + 6 * tier
 
-func heal(amount: float) -> void:
-    hp = minf(max_hp, hp + amount)
-    Events.player_hp_changed.emit(hp, max_hp)
-
-func take_damage(raw: float) -> void:
-    var after_shield: float = raw * (1.0 - buffs.absorb())
-    hp -= StatsCalc.damage_after_armor(after_shield, get_stat("armor"))
-    if god_mode:
-        hp = maxf(hp, 1.0)
-    Events.player_hp_changed.emit(maxf(hp, 0.0), max_hp)
-    if hp <= 0.0:
-        Events.player_died.emit()
-
 func _process(delta: float) -> void:
     buffs.tick(delta)
     var dir := Vector2.ZERO
@@ -93,6 +122,9 @@ func _process(delta: float) -> void:
         dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
     var area := get_viewport_rect().size
     position = (position + dir * get_stat("speed") * delta).clamp(Vector2(40, 40), area - Vector2(40, 40))
+    if dir.x != 0.0:
+        visual.face(dir.x)
+    visual.set_speed(get_stat("attack_speed"))
 
     if hp > 0.0 and hp < max_hp:
         hp = minf(max_hp, hp + StatsCalc.regen_amount(max_hp, delta))
@@ -105,25 +137,59 @@ func _process(delta: float) -> void:
     if _atk_timer <= 0.0:
         var target := _nearest_enemy(Balance.ATTACK_RANGE)
         if target != null:
-            target.take_damage(get_stat("attack"))
-            _flash = 0.12
-            _flash_target = target.global_position
+            _attack(target)
             _atk_timer = 1.0 / maxf(0.1, get_stat("attack_speed"))
 
     _aura_timer -= delta
     if _aura_timer <= 0.0:
         _aura_timer = Balance.AURA_TICK
+        _aura_pulse = 1.0   # a aura "pulsa" a cada tick de dano
         var tick: float = get_stat("aura") * Balance.AURA_TICK
         for e in get_tree().get_nodes_in_group("enemies"):
             if e.global_position.distance_to(global_position) <= Balance.AURA_RADIUS:
                 e.take_damage(tick)
 
+    _update_aura(delta)
+    shield_fx.visible = buffs.absorb() > 0.0
+    if _hurt > 0.0:
+        _hurt -= delta
+        if _hurt <= 0.0:
+            visual.modulate = Color.WHITE
     _flash = maxf(0.0, _flash - delta)
-    # Só redesenha quando há algo animado (disparo, escudo, fúria) ou quando isso acabou de terminar.
-    var vis: int = (1 if _flash > 0.0 else 0) | (2 if buffs.absorb() > 0.0 else 0) | (4 if buffs.multiplier("attack") > 1.4 else 0)
-    if vis != 0 or vis != _last_vis:
+    var flashing: bool = _flash > 0.0
+    if flashing or _last_flash:
         queue_redraw()
-    _last_vis = vis
+    _last_flash = flashing
+
+## Aura: intensidade cresce com o nível de Aura; muda de cor/tamanho com Fúria e Morte do Inferno.
+func _update_aura(delta: float) -> void:
+    var lvl: int = int(GameState.state["upgrades"].get("aura", 0))
+    var base_a: float = 0.35 + minf(0.4, float(lvl) * 0.01)
+    var tint := Color(1.0, 0.9, 0.5)
+    var target_scale := 2.0
+    var atk_m: float = buffs.multiplier("attack")
+    if atk_m > 2.5:
+        tint = Color(1.0, 1.0, 0.92)
+        target_scale = 2.6
+    elif atk_m > 1.4:
+        tint = Color(1.0, 0.55, 0.25)
+        target_scale = 2.3
+    _aura_scale = lerpf(_aura_scale, target_scale, minf(1.0, delta * 6.0))
+    aura_fx.scale = Vector2(_aura_scale, _aura_scale)
+    _aura_pulse = maxf(0.0, _aura_pulse - delta * 2.5)
+    aura_fx.modulate = Color(tint, minf(1.0, base_a + _aura_pulse * 0.4))
+
+func _attack(target: Node2D) -> void:
+    var to_t: Vector2 = target.global_position - global_position
+    visual.face(to_t.x)
+    visual.attack()
+    target.take_damage(get_stat("attack"))
+    _flash = 0.1
+    _flash_target = target.global_position
+    if fx_layer != null:
+        var d: Vector2 = to_t.normalized()
+        SpriteFx.spawn(fx_layer, "fx_slash", global_position + d * 46.0, 2.0, Color(1.0, 0.95, 0.75), d.angle())
+        SpriteFx.spawn(fx_layer, "fx_hit", target.global_position, 1.6, Color(1.0, 0.9, 0.5))
 
 func _nearest_enemy(max_dist: float) -> Node2D:
     var best: Node2D = null
@@ -136,12 +202,5 @@ func _nearest_enemy(max_dist: float) -> Node2D:
     return best
 
 func _draw() -> void:
-    draw_circle(Vector2.ZERO, Balance.AURA_RADIUS, Color(1.0, 0.92, 0.55, 0.07))
-    draw_arc(Vector2.ZERO, Balance.AURA_RADIUS, 0.0, TAU, 48, Color(1.0, 0.92, 0.55, 0.25), 2.0)
-    AngelDraw.draw_angel(self, int(GameState.state["wings_level"]), int(GameState.state["glow_tier"]), 1.0, GameState.state["equipped"])
-    if buffs.absorb() > 0.0:
-        draw_arc(Vector2.ZERO, 38.0, 0.0, TAU, 40, Color(0.6, 0.85, 1.0, 0.85), 4.0)
-    if buffs.multiplier("attack") > 1.4:
-        draw_arc(Vector2.ZERO, 46.0, 0.0, TAU, 40, Color(1.0, 0.55, 0.2, 0.85), 3.0)
     if _flash > 0.0:
-        draw_line(Vector2.ZERO, _flash_target - global_position, Color(1.0, 1.0, 0.7, 0.9), 3.0)
+        draw_line(Vector2.ZERO, _flash_target - global_position, Color(1.0, 1.0, 0.7, 0.5), 2.0)

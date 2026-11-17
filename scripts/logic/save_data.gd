@@ -37,6 +37,7 @@ static func default_state() -> Dictionary:
         "wings_level": 0, "glow_tier": 0,
         "skills_owned": [], "skills_equipped": [],
         "settings": {"auto_slots": [true, true, true], "speed_2x": false, "low_fx": false},
+        "profile": {"name": ProfileLogic.DEFAULT_NAME, "avatar": 0},
     }
 
 static func to_json(state: Dictionary) -> String:
@@ -99,6 +100,11 @@ static func sanitize(raw: Dictionary) -> Dictionary:
             if s["skills_owned"].has(id) and not s["skills_equipped"].has(id) \
                     and s["skills_equipped"].size() < SkillsDB.MAX_EQUIPPED:
                 s["skills_equipped"].append(id)
+
+    if raw.get("profile") is Dictionary:
+        var rp: Dictionary = raw["profile"]
+        s["profile"]["name"] = ProfileLogic.clean_name(rp.get("name", ProfileLogic.DEFAULT_NAME))
+        s["profile"]["avatar"] = clampi(as_int(rp.get("avatar", 0)), 0, ProfileLogic.AVATAR_COUNT - 1)
 
     if raw.get("settings") is Dictionary:
         var rs: Dictionary = raw["settings"]

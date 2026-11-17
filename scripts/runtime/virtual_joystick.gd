@@ -11,7 +11,7 @@ var _center := Vector2.ZERO
 
 func _ready() -> void:
     anchor_left = 0.0
-    anchor_top = 0.3
+    anchor_top = 0.38
     anchor_right = 0.45
     anchor_bottom = 1.0
     offset_left = 0.0

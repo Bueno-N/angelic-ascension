@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verificar layout do repositório
+        run: bash tools/ci/check_layout.sh
+
       - name: Cache do Godot
         uses: actions/cache@v4
         with:
