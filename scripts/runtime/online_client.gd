@@ -7,7 +7,7 @@ signal done(kind: String, ok: bool, data: Variant)
 
 const TIMEOUT := 8.0
 
-func rpc(kind: String, fn: String, body: Dictionary) -> void:
+func call_remote(kind: String, fn: String, body: Dictionary) -> void:
     if not OnlineConfig.enabled():
         done.emit(kind, false, null)
         return
@@ -34,10 +34,10 @@ func _on_done(result: int, code: int, _headers: PackedStringArray, body: PackedB
     done.emit(kind, true, j.data)
 
 func overview(pid: String) -> void:
-    rpc("overview", "weekly_overview", {"p_player": pid, "p_limit": 10})
+    call_remote("overview", "weekly_overview", {"p_player": pid, "p_limit": 10})
 
 func start_attempt(pid: String, pname: String) -> void:
-    rpc("attempt", "start_attempt", {"p_player": pid, "p_name": pname, "p_max": Balance.WEEKLY_MAX_ENTRIES})
+    call_remote("attempt", "start_attempt", {"p_player": pid, "p_name": pname, "p_max": Balance.WEEKLY_MAX_ENTRIES})
 
 func submit(pid: String, score: float) -> void:
-    rpc("submit", "submit_score", {"p_player": pid, "p_score": score})
+    call_remote("submit", "submit_score", {"p_player": pid, "p_score": score})
