@@ -158,11 +158,6 @@ func menu_action(action: String) -> bool:
         go_to_title()
         return true
     var p := action.split("|")
-    if p[0] == "stage_go":   # escolher andar no menu "Fases": quem muda a fase é o StageManager (via evento)
-        if p.size() > 1 and MenuModel.perform(state, action):
-            Events.goto_stage_requested.emit(int(p[1]))
-            return true
-        return false
     if p[0] == "debug" and p.size() > 2:
         debug_apply(p[1], int(p[2]))
         return true

@@ -66,4 +66,5 @@ func test_pause_rule() -> void:
     check(not OptionsLogic.should_pause(false), "perfil fechado: o jogo roda (inclusive com o menu aberto)")
     check(OptionsLogic.should_pause(true), "perfil aberto: pausa")
     check(OptionsLogic.should_pause(false, true), "tela de morte: pausa")
+    check(OptionsLogic.should_pause(false, false, true), "mapa das fases aberto: pausa")
     check(not OptionsLogic.should_pause(false, false), "sem perfil nem morte: não pausa")

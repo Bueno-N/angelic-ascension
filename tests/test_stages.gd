@@ -76,47 +76,85 @@ func test_formatting() -> void:
         for ch in UiLogic.fmt_short(v):
             check(SpriteManifest.FONT_CHARS.contains(ch), "a fonte desenha '%s' (%s)" % [ch, str(v)])
 
-func test_stages_menu_rows() -> void:
-    var st := SaveData.default_state()
-    st["stage"] = 12
-    st["max_stage"] = 40
-    var rows := MenuModel.rows("stages", st, StatsCalc.compute(st), {})
-    check(rows.size() == 1 + Balance.TIER_NAMES.size() * MenuModel.STAGE_ROWS_PER_TIER, "linhas: resumo + 6 degraus (cabeçalho, info, 50 fases)")
-    var seen := {}
-    for r in rows:
-        if r["kind"] == "item":
-            seen[str(r["title"]).split("  ")[0]] = true
-    check(seen.size() == Balance.MAX_STAGE, "300 fases listadas, cada uma uma vez")
-    for n in [1, 12, 40, 41, 50, 51, 150, 299, 300]:
-        var i := MenuModel.stage_row_index(n)
-        check(i >= 0 and i < rows.size() and str(rows[i]["title"]).begins_with("Fase %d" % n), "índice da fase %d aponta para a linha certa" % n)
-    var cur: Dictionary = rows[MenuModel.stage_row_index(12)]
-    check(str(cur["button"]) == "ATUAL" and not bool(cur["enabled"]), "fase atual: ATUAL")
-    var past: Dictionary = rows[MenuModel.stage_row_index(5)]
-    check(str(past["button"]) == "IR" and str(past["action"]) == "stage_go|5" and bool(past["enabled"]), "fase já alcançada: IR")
-    var rec: Dictionary = rows[MenuModel.stage_row_index(40)]
-    check(str(rec["button"]) == "IR", "o recorde também dá para escolher")
-    var locked: Dictionary = rows[MenuModel.stage_row_index(41)]
-    check(str(locked["button"]) == "BLOQUEADO" and not bool(locked["enabled"]) and str(locked["action"]) == "", "fase não alcançada: BLOQUEADO")
-    check(str(rows[MenuModel.stage_row_index(10)]["title"]).contains("Chefe"), "fase 10 marcada como chefe")
-    check(str(rows[MenuModel.stage_row_index(15)]["title"]).contains("Mini-chefe"), "fase 15 marcada como mini-chefe")
-    check(str(rows[MenuModel.stage_row_index(10)]["sub"]).contains("Frag."), "chefe mostra fragmentos")
-    check(str(rows[MenuModel.stage_row_index(1)]["sub"]).contains("Ouro") and str(rows[MenuModel.stage_row_index(1)]["sub"]).contains("Gemas"), "projeção de ouro e gemas")
-    var headers := 0
-    for r in rows:
-        if r["kind"] == "header":
-            headers += 1
-    check(headers == Balance.TIER_NAMES.size(), "um cabeçalho por dificuldade")
+func test_map_nodes_and_kinds() -> void:
+    check(MapLogic.node_kind(10) == "boss" and MapLogic.node_kind(300) == "boss", "chefes: caveira")
+    check(MapLogic.node_kind(5) == "mini" and MapLogic.node_kind(295) == "mini", "mini-chefes: espada")
+    check(MapLogic.node_kind(1) == "normal" and MapLogic.node_kind(11) == "normal", "demais: bolinha")
+    var bosses := 0
+    for st in range(1, Balance.MAX_STAGE + 1):
+        if MapLogic.node_kind(st) == "boss":
+            bosses += 1
+    check(bosses == 30, "30 chefes no mapa (de 10 em 10)")
+    check(MapLogic.node_radius("boss") > MapLogic.node_radius("mini") and MapLogic.node_radius("mini") > MapLogic.node_radius("normal"), "chefe é o maior nó")
+    var prev := -1.0
+    for st in range(1, Balance.MAX_STAGE + 1):
+        var p := MapLogic.node_pos(st, 72.0, 520.0)
+        check(p.x > prev, "x cresce (fase %d)" % st)
+        check(p.y > 72.0 and p.y < 72.0 + 520.0, "nó dentro da área do mapa (fase %d)" % st)
+        prev = p.x
+    check_approx(MapLogic.total_width(), MapLogic.X0 * 2.0 + 299.0 * MapLogic.SPACING, "largura total do mapa")
+    check(MapLogic.node_pos(300, 72.0, 520.0).x < MapLogic.total_width(), "a fase 300 cabe no mapa")
+    check(MapLogic.SPACING >= float(PixelFont.width("Fase 300", 2)), "o rótulo 'Fase N' cabe entre dois nós")
 
-func test_stage_go_action_validates_only() -> void:
-    var st := SaveData.default_state()
-    st["stage"] = 12
-    st["max_stage"] = 40
-    check(MenuModel.perform(st, "stage_go|5"), "andar alcançado é válido")
-    check(int(st["stage"]) == 12, "perform não muda a fase (quem muda é o StageManager)")
-    check(not MenuModel.perform(st, "stage_go|41"), "não alcançado é recusado")
-    check(not MenuModel.perform(st, "stage_go|12"), "a fase atual é recusada")
-    check(not MenuModel.perform(st, "stage_go"), "ação incompleta")
+func test_map_background_gets_redder_with_difficulty() -> void:
+    check(MapLogic.TIER_BG.size() == Balance.TIER_NAMES.size(), "uma cor por dificuldade")
+    var prev := -10.0
+    for t in range(MapLogic.TIER_BG.size()):
+        var c: Color = MapLogic.TIER_BG[t]
+        var redness: float = c.r - (c.g + c.b) / 2.0
+        check(redness > prev, "degrau %d é mais vermelho que o anterior" % t)
+        prev = redness
+    var easy := MapLogic.bg_color(1.0)
+    var hard := MapLogic.bg_color(300.0)
+    check(hard.r > easy.r and hard.b < easy.b, "fase 300 mais vermelha e menos azul que a 1")
+    var last := -10.0
+    for st in range(1, 301, 7):
+        var c2 := MapLogic.bg_color(float(st))
+        var red2: float = c2.r - (c2.g + c2.b) / 2.0
+        check(red2 >= last - 0.0001, "o fundo nunca fica menos vermelho ao avançar (fase %d)" % st)
+        last = red2
+    check(MapLogic.bg_color(25.0).is_equal_approx(MapLogic.TIER_BG[0]), "meio do degrau 1 = cor pura")
+    check(MapLogic.bg_color(75.0).is_equal_approx(MapLogic.TIER_BG[1]), "meio do degrau 2 = cor pura")
+    check(MapLogic.bg_color(-5.0).is_equal_approx(MapLogic.TIER_BG[0]) and MapLogic.bg_color(9999.0).is_equal_approx(MapLogic.TIER_BG[5]), "fora da faixa")
+    check(MapLogic.tier_accent(5).r > MapLogic.tier_accent(0).r and MapLogic.tier_accent(5).b < MapLogic.tier_accent(0).b, "destaque também esquenta")
+
+func test_map_hit_test() -> void:
+    var top := 72.0
+    var mh := 520.0
+    for st in [1, 12, 100, 299, 300]:
+        var p := MapLogic.node_pos(st, top, mh)
+        check(MapLogic.hit(p, top, mh, 46.0) == st, "toque no centro da fase %d" % st)
+        check(MapLogic.hit(p + Vector2(20.0, -15.0), top, mh, 46.0) == st, "toque perto da fase %d" % st)
+    check(MapLogic.hit(Vector2(MapLogic.node_x(10) + 60.0, top + 5.0), top, mh, 20.0) == 0, "toque no vazio não seleciona")
+    check(MapLogic.hit(Vector2(-500.0, 300.0), top, mh, 46.0) == 0, "fora do mapa")
+
+func test_map_scroll_centering() -> void:
+    check_approx(MapLogic.scroll_for(1, 1280.0), 0.0, "fase 1 não rola para a esquerda")
+    check_approx(MapLogic.scroll_for(300, 1280.0), MapLogic.total_width() - 1280.0, "fase 300 encosta no fim")
+    check_approx(MapLogic.scroll_for(50, 1280.0), MapLogic.node_x(50) - 640.0, "fase do meio centralizada")
+
+func test_map_info_panel() -> void:
+    var cur := MapLogic.info(12, 12, 40)
+    check(str(cur["state"]) == "current" and str(cur["button"]) == "FASE ATUAL" and not bool(cur["enabled"]), "fase atual")
+    var go := MapLogic.info(5, 12, 40)
+    check(str(go["state"]) == "go" and str(go["button"]) == "IR PARA A FASE" and bool(go["enabled"]), "fase alcançada: pode ir")
+    var rec := MapLogic.info(40, 12, 40)
+    check(bool(rec["enabled"]), "o recorde também")
+    var locked := MapLogic.info(41, 12, 40)
+    check(str(locked["state"]) == "locked" and str(locked["button"]) == "BLOQUEADA" and not bool(locked["enabled"]), "fase não alcançada")
+    var boss := MapLogic.info(10, 1, 1)
+    check(str(boss["title"]) == "Fase 10 - Chefe" and str(boss["line1"]).begins_with("Chefe: ") and str(boss["line2"]).contains("Frag."), "chefe: nome e fragmentos")
+    var mini := MapLogic.info(15, 1, 1)
+    check(str(mini["title"]).contains("Mini-chefe") and str(mini["line1"]).contains("mobs"), "mini-chefe")
+    var norm := MapLogic.info(1, 1, 1)
+    check(str(norm["line1"]) == "50 mobs" and str(norm["line2"]).contains("Ouro") and str(norm["line2"]).contains("Gemas"), "projeção de ouro e gemas")
+    check(str(MapLogic.info(51, 1, 1)["tag"]) == "Dificuldade: Normal", "dificuldade do degrau")
+    var chars: String = SpriteManifest.FONT_CHARS
+    for st in range(1, Balance.MAX_STAGE + 1):
+        var inf := MapLogic.info(st, 1, 300)
+        for k in ["title", "tag", "line1", "line2", "button"]:
+            for ch in str(inf[k]):
+                check(chars.contains(ch), "a fonte desenha '%s' (fase %d, %s)" % [ch, st, k])
 
 func test_save_clamps_stage_range() -> void:
     var s := SaveData.sanitize({"stage": 5000, "max_stage": 9000})

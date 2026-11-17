@@ -1,7 +1,8 @@
 class_name HUD
 extends CanvasLayer
 ## HUD: cartão do jogador (avatar -> perfil) com recursos embaixo e botões de velocidade/próxima fase ao lado;
-## botão MENU no canto superior direito. Só o PERFIL aberto pausa o jogo (get_tree().paused); o menu NÃO pausa.
+## botão MENU no canto superior direito, com o botão FASES (mapa) logo abaixo. Pausam o jogo: PERFIL aberto, MAPA aberto
+## e a tela de MORTE (get_tree().paused); o menu NÃO pausa.
 ## Todos os botões são UiButton (toque próprio): funcionam junto com o joystick (multitoque).
 
 var _root: Control
@@ -10,6 +11,8 @@ var _avatar_btn: UiButton
 var _next_btn: UiButton
 var _speed_btn: UiButton
 var _menu_btn: UiButton
+var _stages_btn: UiButton
+var _map: MapPanel
 var _menu: MenuPanel
 var _profile: ProfilePanel
 var _death: DeathOverlay
@@ -49,10 +52,24 @@ func _ready() -> void:
     _menu_btn.offset_right = -16.0
     _menu_btn.offset_top = 16.0
     _menu_btn.offset_bottom = 88.0
-    _menu_btn.pressed.connect(_menu.toggle)
+    _menu_btn.pressed.connect(_toggle_menu)
     _root.add_child(_menu_btn)
+    _stages_btn = UiButton.new()          # logo ABAIXO do botão MENU: abre o mapa das 300 fases
+    _stages_btn.configure("FASES", "stages")
+    _stages_btn.font_scale = 3
+    _stages_btn.anchor_left = 1.0
+    _stages_btn.anchor_right = 1.0
+    _stages_btn.offset_left = -196.0
+    _stages_btn.offset_right = -16.0
+    _stages_btn.offset_top = 96.0
+    _stages_btn.offset_bottom = 160.0
+    _stages_btn.pressed.connect(_toggle_map)
+    _root.add_child(_stages_btn)
     _profile = ProfilePanel.new()
     _root.add_child(_profile)
+    _map = MapPanel.new()            # tela cheia, por cima do jogo e dos botões
+    _root.add_child(_map)
+    _map.visibility_changed.connect(_update_pause)
     _death = DeathOverlay.new()      # por cima de tudo
     _root.add_child(_death)
     _death.dismissed.connect(_on_death_dismissed)
@@ -103,12 +120,12 @@ func _make_button(t: String, ic: String, r: Rect2, cb: Callable) -> UiButton:
 func _process(_delta: float) -> void:
     if _smoke:
         return
-    if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active()):
+    if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible):
         _update_pause()
 
 ## Pausa o jogo enquanto o perfil estiver aberto (o menu não pausa); solta o joystick para não "grudar" a direção.
 func _update_pause() -> void:
-    var want: bool = OptionsLogic.should_pause(_profile.visible, _death.is_active())
+    var want: bool = OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible)
     get_tree().paused = want
     if want:
         pause_checks += 1
@@ -126,7 +143,29 @@ func _on_next() -> void:
     if not get_tree().paused:
         Events.request_next_stage.emit()
 
+func _toggle_menu() -> void:
+    _map.close()
+    _menu.toggle()
+
+func _toggle_map() -> void:
+    _menu.close()
+    _map.toggle()
+
+## Só para o smoke do CI: 0 abre o mapa; 1 pula para uma dificuldade e escolhe uma fase; 2 fecha.
+func debug_map_step(step: int) -> bool:
+    match step:
+        0:
+            _map.open()
+            return _map.is_open() and _map.selected() == int(GameState.state["stage"])
+        1:
+            _map.debug_select(Balance.MAX_STAGE, 3)
+            return _map.selected() == Balance.MAX_STAGE
+        _:
+            _map.close()
+            return not _map.is_open()
+
 func _open_profile() -> void:
+    _map.close()
     _menu.close()
     _profile.open()
 
@@ -138,6 +177,7 @@ func _on_stage_changed(stg: int) -> void:
 ## Morte: congela o jogo e mostra a animação; o jogador toca na tela para voltar (ver Main).
 func show_death(world_pos: Vector2, to_stage: int) -> void:
     _menu.close()
+    _map.close()
     if _profile.visible:
         _profile.close()
     _death.start(world_pos, to_stage)

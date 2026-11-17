@@ -23,9 +23,10 @@ static func step_volume(settings: Dictionary, delta: int) -> int:
 static func gfx_label(settings: Dictionary) -> String:
     return "Efeitos: Alto" if UiLogic.fx_enabled(settings) else "Efeitos: Baixo"
 
-## O jogo só fica em pausa com o PERFIL (ícone do jogador) aberto ou na tela de MORTE. O menu NÃO pausa.
-static func should_pause(profile_open: bool, dead: bool = false) -> bool:
-    return profile_open or dead
+## O jogo fica em pausa com o PERFIL (ícone do jogador), o MAPA das fases (tela cheia) ou a tela de MORTE abertos.
+## O menu NÃO pausa.
+static func should_pause(profile_open: bool, dead: bool = false, map_open: bool = false) -> bool:
+    return profile_open or dead or map_open
 
 ## Aplica uma ação "opt|..." nas configurações. Devolve true se algo mudou.
 static func apply(settings: Dictionary, parts: PackedStringArray) -> bool:

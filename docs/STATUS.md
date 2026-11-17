@@ -208,3 +208,18 @@ Números das habilidades novas (dano, raios, recargas) são **primeiro palpite**
 | Grade do menu agora com 3 colunas (cabem 6-7 abas) | ⬜ | |
 | Ícone novo `stages` | ✅ visto (PNG) | |
 | Testes `test_stages.gd`; smoke com `death=` e `goto=` | ⬜ | |
+
+
+## Rodada 16 — mapa das fases (botão FASES abaixo de MENU) (⬜ escrita, **nunca executada no CI**)
+
+Substitui a lista de fases dentro do menu (rodada 15): a aba "Fases" saiu do menu; o resto da rodada 15 (morte, aviso de fase, dificuldades, projeção) continua.
+
+| Item | Estado | Observação |
+|---|---|---|
+| Botão **FASES** logo abaixo do botão MENU; abre o mapa em tela cheia | ⬜ | `map_panel.gd`, `map_logic.gd`; o menu desceu para não cobrir o botão |
+| Mapa: caminho sinuoso com bolinhas, "Fase N" em cima de cada uma, até a fase 300; rola arrastando (com inércia) | ⬜ | Chips de dificuldade no topo pulam para cada degrau |
+| Fundo mais vermelho a cada dificuldade (Fácil azul-noite ... Abismal vermelho vivo) | ⬜ | Cores em `MapLogic.TIER_BG` (palpite visual; ver no celular) |
+| Chefes com ícone de caveira (e nó maior); mini-chefes com espada | ⬜ | Ícone novo `skull` ✅ visto (PNG) |
+| Tocar numa fase mostra dificuldade e projeção de ganhos; **IR PARA A FASE** só em fases já alcançadas | ⬜ | Escolher uma abaixo do recorde fica repetindo nela |
+| O mapa **pausa** o jogo enquanto aberto (tela cheia) | ⬜ | Decisão minha; o menu continua sem pausar |
+| Testes de mapa em `test_stages.gd`; smoke com `map=` | ⬜ | |

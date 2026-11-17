@@ -42,13 +42,13 @@ func test_stat_rows_show_everything() -> void:
 
 func test_menu_tabs() -> void:
     var t := MenuModel.tabs(false)
-    check(t.size() == 6, "6 abas sem modo de teste (inclui Fases e Opções)")
+    check(t.size() == 5, "5 abas sem modo de teste (inclui Opções; as fases ficam no mapa)")
     var ids := []
     for x in t:
         ids.append(x["id"])
-    for need in ["attrs", "skills", "wings", "equip", "stages", "options"]:
+    for need in ["attrs", "skills", "wings", "equip", "options"]:
         check(ids.has(need), "aba " + need)
-    check(MenuModel.tabs(true).size() == 7, "7 abas com modo de teste")
+    check(MenuModel.tabs(true).size() == 6, "6 abas com modo de teste")
     check(MenuModel.tab_has_preview("wings") and MenuModel.tab_has_preview("equip") and not MenuModel.tab_has_preview("attrs"), "prévia só em asas/equip.")
 
 func _rich_state() -> Dictionary:

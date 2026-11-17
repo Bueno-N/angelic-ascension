@@ -1,6 +1,6 @@
 class_name MenuPanel
 extends Control
-## Menu em duas etapas: 1) grade de ícones (Atributos, Habilidades, Asas, Equipamentos, Fases, Opções [+ Teste]);
+## Menu em duas etapas: 1) grade de ícones (Atributos, Habilidades, Asas, Equipamentos, Opções [+ Teste]);
 ## 2) ao tocar num ícone, abre a lista daquela aba para comprar/evoluir. Tudo por toque próprio (multitoque):
 ## dá para andar com o anjo (joystick) e fazer upgrades ao mesmo tempo.
 
@@ -25,7 +25,7 @@ func _ready() -> void:
     anchor_bottom = 1.0
     offset_left = -624.0
     offset_right = -16.0
-    offset_top = 112.0
+    offset_top = 176.0     # abaixo dos botões MENU e FASES
     offset_bottom = -168.0
     visible = false
     mouse_filter = Control.MOUSE_FILTER_STOP
@@ -86,8 +86,6 @@ func _open_tab(id: String) -> void:
     _list.scroll_to_top()
     _rebuild()
     _apply_layout()
-    if id == "stages":
-        _list.scroll_to_row(MenuModel.stage_row_index(int(GameState.state["stage"])))   # abre já na fase atual
 
 func _apply_layout() -> void:
     if _list == null:
@@ -139,9 +137,6 @@ func _on_action(id: String) -> void:
         return
     _reset_armed = false
     GameState.menu_action(id)
-    if id.begins_with("stage_go|"):
-        close()   # escolheu a fase: fecha o menu para jogar
-        return
     _last_rows = []
     _rebuild()
     queue_redraw()

@@ -27,6 +27,7 @@ var _dead := false
 var _before_death := 1
 var _death_ok := false
 var _goto_ok := false
+var _map_ok := true
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -161,6 +162,12 @@ func _process(_delta: float) -> void:
             for t in EnemiesDB.TYPES:
                 if not t["special"]:
                     stage_mgr.debug_spawn_type(str(t["id"]), player.position + Vector2(-300.0, float(randi() % 200) - 100.0), false)
+        400:
+            _map_ok = _map_ok and hud.debug_map_step(0)      # mapa das fases: abre, rola para outra dificuldade, escolhe, fecha
+        430:
+            _map_ok = _map_ok and hud.debug_map_step(1)
+        460:
+            _map_ok = _map_ok and hud.debug_map_step(2)
         2700:
             Events.player_died.emit()               # morte: congela, mostra a animação e espera o toque
             _death_ok = hud.death_active() and not player.visible and not hud.debug_tap_death()   # travado nos primeiros 1,2 s
@@ -224,8 +231,8 @@ func _process(_delta: float) -> void:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
             _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
-            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok)])
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok)])
         get_tree().quit(0)

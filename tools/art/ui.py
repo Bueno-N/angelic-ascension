@@ -175,6 +175,16 @@ def stages():
     c.rect(10, 7, 22, 12, GOLD_L)
     c.rect(14, 2, 22, 7, WHITE)
     return c.finish(OUT, 0.05, 0.1)
+def skull():
+    c = Canvas(24, 24)
+    c.ell(12, 10, 8.5, 8, WHITE)
+    c.rect(7, 14, 17, 21, WHITE)
+    for x in (9, 12, 15):
+        c.rect(x, 18, x + 1, 21, OUT)
+    c.ell(8.5, 10.5, 2.6, 3, OUT)
+    c.ell(15.5, 10.5, 2.6, 3, OUT)
+    c.poly([(12, 13), (10.5, 16), (13.5, 16)], OUT)
+    return c.finish(OUT, 0.05, 0.1)
 def speaker():
     c = Canvas(24, 24)
     c.poly([(3, 9), (8, 9), (14, 4), (14, 20), (8, 15), (3, 15)], WHITE)
@@ -184,7 +194,7 @@ def speaker():
 ICONS = [("sword", sword), ("heart", heart), ("shield", shield), ("boot", boot), ("bolt", bolt), ("aura", aura),
          ("coin", coin), ("gem", gem), ("shard", shard), ("skills", skills), ("wings", wings), ("armor", armor),
          ("glove", glove), ("menu", menu), ("user", user), ("glow", glow), ("close", close), ("back", back),
-         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages)]
+         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages), ("skull", skull)]
 
 # ------------------------------------------------------------------ avatares 32x32
 def av_hood(hood, trim, eye, halo):
