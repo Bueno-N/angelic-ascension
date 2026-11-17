@@ -3,8 +3,9 @@ extends TestCase
 
 const FIXED_TEXTS := ["PRÓX. FASE 12", "VELOC. 2X", "EFEITOS: ALTO", "EFEITOS: BAIXO", "MENU", "VOLTAR", "FECHAR", "PERFIL DO ANJO",
     "Nome", "Escolha seu ícone", "Status", "AVISO: CHEFE!", "MINI-CHEFE!", "CHEFE", "MOBS", "MINI-CHEFE", "(repetindo)", "Próx.: Mini-chefe na fase 15 (em 3)",
-    "Próx.: Chefe AGORA", "Última fase: 85 s | Gemas/h: 60", "[TESTE] ", "FASE 10", "HP", "AUTO ON", "AUTO OFF", "vazio", "Atributos", "Habilidades", "Asas", "Equipamentos", "Teste"]
-const FIXED_ICONS := ["coin", "gem", "shard", "menu", "close", "back", "speed", "fx", "next", "user", "skills", "wings", "armor"]
+    "Próx.: Chefe AGORA", "Última fase: 85 s | Gemas/h: 60", "[TESTE] ", "FASE 10", "HP", "AUTO ON", "AUTO OFF", "vazio", "Atributos", "Habilidades", "Asas", "Equipamentos", "Teste", "Opções", "Gráficos", "Som", "MUDO", "MÁXIMO", "MÍNIMO",
+    "AUMENTAR", "DIMINUIR", "ALTERAR", "Volume do jogo  80%"]
+const FIXED_ICONS := ["coin", "gem", "shard", "menu", "close", "back", "speed", "fx", "next", "user", "skills", "wings", "armor", "gear", "speaker"]
 
 func _font_image() -> Image:
     return Image.load_from_file(ProjectSettings.globalize_path("res://assets/sprites/font.png"))

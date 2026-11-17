@@ -45,3 +45,16 @@ e o HUD mostra `[TESTE]`. Isso existe só quando `Balance.DEBUG_TOOLS = true` **
 
 ## Versão final (release)
 Veja `docs/RELEASE.md`: chave de assinatura própria em secrets + workflow manual "Gerar APK de release".
+
+## Arte (original, CC0)
+Toda a arte pixel art é gerada por código em `tools/art/` (sem assets de terceiros). Para regenerar: `python3 tools/art/generate.py`
+(gera `assets/sprites/*.png`, `data/sprite_manifest.gd` e `docs/art_preview.png`). Para mudar um sprite, edite o gerador e rode de novo.
+
+## Como atualizar o repositório com um novo zip
+Extraia o zip **direto na raiz do repositório** (os arquivos `project.godot`, `data/`, `scripts/`, `.github/` devem ficar na raiz,
+sem subpasta). Se aparecer uma pasta `angelic_ascension/` dentro do repositório, apague-a. O CI verifica isso (`tools/ci/check_layout.sh`).
+
+## Interface (toque próprio, multitoque)
+Todos os botões/menus são controles próprios (`UiButton`, `UiList`) que usam `InputEventScreenTouch/Drag`, então o joystick e o menu
+funcionam ao mesmo tempo. Fonte pixel e ícones são originais (`tools/art/ui.py`). Todo texto exibido deve usar só caracteres de
+`SpriteManifest.FONT_CHARS` (há teste que verifica isso). Maquete do layout: `docs/ui_maquete.png`.

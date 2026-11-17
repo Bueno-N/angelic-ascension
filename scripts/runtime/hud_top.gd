@@ -64,31 +64,37 @@ func _draw() -> void:
     draw_rect(Rect2(bx, 100.0, bw, 7.0), Color(0, 0, 0, 0.7))
     var pr: float = clampf(float(killed) / maxf(float(total), 1.0), 0.0, 1.0)
     draw_rect(Rect2(bx, 100.0, bw * pr, 7.0), Color(1.0, 0.6, 0.2) if label != "MOBS" else UiTheme.BLUE)
+    # ---- recursos: ouro / gemas / fragmentos, logo EMBAIXO do cartão do anjo ----
+    var items: Array = [["coin", int(s["gold"])], ["gem", int(s["gems"])], ["shard", int(s["shards"])]]
+    var need := 16.0
+    for it in items:
+        need += 30.0 + float(PixelFont.width(UiLogic.fmt_int(int(it[1])), 2)) + 18.0
+    UiTheme.panel(self, Rect2(12.0, 124.0, maxf(384.0, need), 44.0), UiTheme.BG, UiTheme.GOLD_D)
+    var x := 24.0
+    for it in items:
+        var txt: String = UiLogic.fmt_int(int(it[1]))
+        UiIcons.draw(self, str(it[0]), Rect2(x, 134.0, 24.0, 24.0))
+        PixelFont.draw(self, Vector2(x + 30.0, 139.0), txt, 2, UiTheme.TEXT)
+        x += 30.0 + float(PixelFont.width(txt, 2)) + 18.0 + maxf(0.0, 384.0 - need) / 3.0
     # ---- próximo marco e ritmo ----
     var ms := StageLogic.next_milestone(stg)
     if not ms.is_empty():
         var kind: String = "Mini-chefe" if ms["kind"] == "mini" else "Chefe"
         var when: String = "AGORA" if int(ms["in"]) == 0 else "na fase %d (em %d)" % [int(ms["stage"]), int(ms["in"])]
-        PixelFont.draw(self, Vector2(16.0, 126.0), "Próx.: %s %s" % [kind, when], 2, UiTheme.TEXT_DIM)
+        PixelFont.draw(self, Vector2(16.0, 180.0), "Próx.: %s %s" % [kind, when], 2, UiTheme.TEXT_DIM)
     var pace := "Última fase: %s | Gemas/h: %s" % ["-" if last_stage_secs <= 0.0 else "%d s" % int(last_stage_secs),
         "-" if GameState.session_gems_per_hour() <= 0.0 else "%d" % int(GameState.session_gems_per_hour())]
-    PixelFont.draw(self, Vector2(16.0, 148.0), ("[TESTE] " if DebugTools.enabled() else "") + pace, 2, Color(UiTheme.TEXT_DIM, 0.8))
-    # ---- recursos (topo direito) ----
-    UiTheme.panel(self, Rect2(w - 404.0, 8.0, 392.0, 44.0), UiTheme.BG, UiTheme.GOLD_D)
-    var x: float = w - 394.0
-    for it in [["coin", int(s["gold"])], ["gem", int(s["gems"])], ["shard", int(s["shards"])]]:
-        UiIcons.draw(self, str(it[0]), Rect2(x, 18.0, 24.0, 24.0))
-        PixelFont.draw(self, Vector2(x + 30.0, 23.0), UiLogic.fmt_int(int(it[1])), 2, UiTheme.TEXT)
-        x += 130.0
-    # ---- barra do chefe / mini-chefe ----
+    PixelFont.draw(self, Vector2(16.0, 200.0), ("[TESTE] " if DebugTools.enabled() else "") + pace, 2, Color(UiTheme.TEXT_DIM, 0.8))
+    # ---- barra do chefe / mini-chefe (centro, abaixo da faixa de botões) ----
     if boss_max > 0.0 and boss_hp > 0.0:
-        var cx: float = w / 2.0
+        var cx: float = (636.0 + (w - 208.0)) / 2.0   # entre os botões de velocidade/fase e o MENU
+        var bw2 := 420.0
         var nm: String = boss_name
-        PixelFont.draw(self, Vector2(cx - float(PixelFont.width(nm, 2)) / 2.0, 58.0), nm, 2, Color(1.0, 0.7, 0.3) if boss_is_mini else Color(1.0, 0.35, 0.3))
-        draw_rect(Rect2(cx - 222.0, 78.0, 444.0, 26.0), Color(0, 0, 0, 0.85))
+        PixelFont.draw(self, Vector2(cx - float(PixelFont.width(nm, 2)) / 2.0, 20.0), nm, 2, Color(1.0, 0.7, 0.3) if boss_is_mini else Color(1.0, 0.35, 0.3))
+        draw_rect(Rect2(cx - bw2 / 2.0 - 2.0, 42.0, bw2 + 4.0, 26.0), Color(0, 0, 0, 0.85))
         var br: float = clampf(boss_hp / boss_max, 0.0, 1.0)
-        draw_rect(Rect2(cx - 220.0, 80.0, 440.0 * br, 22.0), Color(0.55, 0.08, 0.1))
-        draw_rect(Rect2(cx - 220.0, 80.0, 440.0 * br, 11.0), Color(0.9, 0.2, 0.18))
+        draw_rect(Rect2(cx - bw2 / 2.0, 44.0, bw2 * br, 22.0), Color(0.55, 0.08, 0.1))
+        draw_rect(Rect2(cx - bw2 / 2.0, 44.0, bw2 * br, 11.0), Color(0.9, 0.2, 0.18))
     # ---- banner de AVISO DE CHEFE ----
     if banner_t > 0.0:
         var a: float = clampf(banner_t / 0.6, 0.0, 1.0)

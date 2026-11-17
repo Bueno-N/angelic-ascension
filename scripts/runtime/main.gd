@@ -22,6 +22,7 @@ var _fx_ok := false
 var _warn_count := 0
 var _mini_count := 0
 var _profile_ok := false
+var _opt_ok := false
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -163,6 +164,17 @@ func _process(_delta: float) -> void:
         2910:
             GameState.toggle_low_fx()
             _fx_ok = _fx_ok and UiLogic.fx_enabled(GameState.state["settings"])
+        2930:
+            # opções (mesmo caminho do menu): volume em passos, mudo e efeitos
+            var v0: int = OptionsLogic.volume(GameState.state["settings"])
+            GameState.menu_action("opt|vol|-10")
+            _opt_ok = OptionsLogic.volume(GameState.state["settings"]) == maxi(0, v0 - 10)
+            GameState.menu_action("opt|fx|0")
+            _opt_ok = _opt_ok and not UiLogic.fx_enabled(GameState.state["settings"])
+        2940:
+            GameState.menu_action("opt|fx|0")
+            GameState.menu_action("opt|vol|10")
+            _opt_ok = _opt_ok and UiLogic.fx_enabled(GameState.state["settings"]) and OptionsLogic.volume(GameState.state["settings"]) >= 10
         2960:
             stage_mgr.start_stage(30)    # chefe 3 (Ignarr): sprite, pancada e investida
         3040:
@@ -174,17 +186,19 @@ func _process(_delta: float) -> void:
             stage_mgr.start_stage(15)    # mini-chefe 2 (Cérbero das Cinzas)
             stage_mgr.to_spawn = 2
     # interface: menu (todas as abas) e perfil, com o desenho real rodando em frames seguidos
-    if _frames >= 180 and _frames % 20 == 0 and _frames <= 180 + 20 * 7:
+    var last_step: int = MenuModel.tabs(true).size() + 2   # abrir, 1 passo por aba, fechar+perfil, fechar perfil
+    if _frames >= 180 and _frames % 20 == 0 and _frames <= 180 + 20 * last_step:
         var step: int = floori(float(_frames - 180) / 20.0)
         hud.debug_ui_step(step)
-        if step == 7:
+        if step == last_step:
             GameState.set_profile("Teste", 3)
             _profile_ok = str(GameState.state["profile"]["name"]) == "Teste" and int(GameState.state["profile"]["avatar"]) == 3
     if _frames >= 3900:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
-            _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok)])
+            _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok)])
         get_tree().quit(0)

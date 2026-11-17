@@ -160,10 +160,24 @@ def nxt():
     c.poly([(10, 6), (21, 12), (10, 18)], WHITE)
     return c.finish(OUT, 0.05, 0.1)
 
+def gear():
+    c = Canvas(24, 24)
+    for k in range(8):
+        a = k * math.tau / 8
+        c.line(12 + math.cos(a) * 6, 12 + math.sin(a) * 6, 12 + math.cos(a) * 10.5, 12 + math.sin(a) * 10.5, STEEL, 4)
+    c.ell(12, 12, 8, 8, STEEL)
+    c.ell(12, 12, 3.6, 3.6, OUT)
+    return c.finish(OUT, 0.05, 0.1)
+def speaker():
+    c = Canvas(24, 24)
+    c.poly([(3, 9), (8, 9), (14, 4), (14, 20), (8, 15), (3, 15)], WHITE)
+    c.line(17, 8, 17, 16, GOLD, 2); c.line(20, 5, 20, 19, GOLD, 2)
+    return c.finish(OUT, 0.05, 0.1)
+
 ICONS = [("sword", sword), ("heart", heart), ("shield", shield), ("boot", boot), ("bolt", bolt), ("aura", aura),
          ("coin", coin), ("gem", gem), ("shard", shard), ("skills", skills), ("wings", wings), ("armor", armor),
          ("glove", glove), ("menu", menu), ("user", user), ("glow", glow), ("close", close), ("back", back),
-         ("speed", speed), ("fx", fx), ("next", nxt)]
+         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker)]
 
 # ------------------------------------------------------------------ avatares 32x32
 def av_hood(hood, trim, eye, halo):

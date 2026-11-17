@@ -22,6 +22,7 @@ static func tabs(debug: bool) -> Array:
         {"id": "wings", "name": "Asas", "icon": "wings"},
         {"id": "equip", "name": "Equipamentos", "icon": "armor"},
     ]
+    t.append({"id": "options", "name": "Opções", "icon": "gear"})
     if debug:
         t.append({"id": "debug", "name": "Teste", "icon": "fx"})
     return t
@@ -40,6 +41,8 @@ static func rows(tab: String, state: Dictionary, stats: Dictionary, ctx: Diction
             return _wings(state)
         "equip":
             return _equip(state)
+        "options":
+            return _options(state["settings"])
         "debug":
             return _debug(bool(ctx.get("reset_armed", false)))
     return []
@@ -159,6 +162,22 @@ static func _equip(state: Dictionary) -> Array:
             out.append(row)
     return out
 
+# ---------------------------------------------------------------- opções
+static func _options(settings: Dictionary) -> Array:
+    var vol: int = OptionsLogic.volume(settings)
+    var vtxt := "Volume do jogo  %d%%" % vol if vol > 0 else "Volume do jogo  MUDO"
+    return [
+        _header("Gráficos"),
+        _item("fx", OptionsLogic.gfx_label(settings), "Baixo reduz partículas e efeitos: economiza bateria e ajuda em aparelhos fracos.",
+            "ALTERAR", 0, "", "opt|fx|0", "ok", true),
+        _header("Som"),
+        _item("speaker", vtxt, "Controla o volume geral do jogo (em passos de %d%%)." % OptionsLogic.VOLUME_STEP,
+            "AUMENTAR" if vol < 100 else "MÁXIMO", 0, "", "opt|vol|%d" % OptionsLogic.VOLUME_STEP, "ok" if vol < 100 else "locked", vol < 100),
+        _item("speaker", vtxt, "", "DIMINUIR" if vol > 0 else "MÍNIMO", 0, "", "opt|vol|-%d" % OptionsLogic.VOLUME_STEP,
+            "ok" if vol > 0 else "locked", vol > 0),
+        _info("Mais opções virão em breve."),
+    ]
+
 # ---------------------------------------------------------------- modo de teste
 static func _debug(reset_armed: bool) -> Array:
     var out: Array = [_header("Modo de teste"), _info("Só existe em builds de debug. As alterações são salvas: use o reset no fim.")]
@@ -190,4 +209,6 @@ static func perform(state: Dictionary, action: String) -> bool:
             return p.size() > 2 and Shop.buy_equipment(state, p[1], int(p[2]))
         "equip_set":
             return p.size() > 2 and Shop.equip_equipment(state, p[1], int(p[2]))
+        "opt":
+            return OptionsLogic.apply(state["settings"], p)
     return false

@@ -19,8 +19,17 @@ func _ready() -> void:
     offset_right = 0.0
     offset_bottom = 0.0
     mouse_filter = Control.MOUSE_FILTER_STOP
+    Events.pause_started.connect(release)
+
+## Solta o dedo ativo (ex.: o jogo entrou em pausa com o joystick pressionado).
+func release() -> void:
+    _index = -1
+    output = Vector2.ZERO
+    queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
+    if get_tree().paused:
+        return
     if event is InputEventScreenTouch:
         if event.pressed and _index == -1:
             _index = event.index

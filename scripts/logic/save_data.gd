@@ -36,7 +36,7 @@ static func default_state() -> Dictionary:
         "upgrades": ups, "owned_equipment": owned, "equipped": equipped,
         "wings_level": 0, "glow_tier": 0,
         "skills_owned": [], "skills_equipped": [],
-        "settings": {"auto_slots": [true, true, true], "speed_2x": false, "low_fx": false},
+        "settings": {"auto_slots": [true, true, true], "speed_2x": false, "low_fx": false, "volume": OptionsLogic.DEFAULT_VOLUME},
         "profile": {"name": ProfileLogic.DEFAULT_NAME, "avatar": 0},
     }
 
@@ -110,6 +110,7 @@ static func sanitize(raw: Dictionary) -> Dictionary:
         var rs: Dictionary = raw["settings"]
         s["settings"]["speed_2x"] = as_bool(rs.get("speed_2x", false), false)
         s["settings"]["low_fx"] = as_bool(rs.get("low_fx", false), false)
+        s["settings"]["volume"] = clampi(as_int(rs.get("volume", OptionsLogic.DEFAULT_VOLUME), OptionsLogic.DEFAULT_VOLUME), 0, 100)
         if rs.get("auto_slots") is Array:
             var src: Array = rs["auto_slots"]
             var arr2: Array = []

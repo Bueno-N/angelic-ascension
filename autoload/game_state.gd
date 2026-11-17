@@ -13,6 +13,7 @@ func _ready() -> void:
     state = SaveManager.load_state()
     stats = StatsCalc.compute(state)
     apply_speed()
+    apply_audio()
     if not OS.get_cmdline_user_args().has("--smoke"):
         Engine.max_fps = Balance.MAX_FPS
     Events.enemy_died.connect(_on_enemy_died)
@@ -87,13 +88,22 @@ func menu_action(action: String) -> bool:
         return true
     if p[0] == "skill_unequip" and p.size() > 1 and skill_remaining(p[1]) > 0.0:
         return false   # trava: não dá para trocar habilidade em recarga
-    return _commit(MenuModel.perform(state, action))
+    var ok := _commit(MenuModel.perform(state, action))
+    if ok and p[0] == "opt":
+        apply_audio()
+    return ok
 
 func set_profile(pname: String, avatar: int) -> void:
     state["profile"]["name"] = ProfileLogic.clean_name(pname)
     state["profile"]["avatar"] = clampi(avatar, 0, ProfileLogic.AVATAR_COUNT - 1)
     save()
     Events.state_changed.emit()
+
+## Volume geral do jogo (barramento Master). Ainda não há áudio no jogo; a opção já fica salva e aplicada.
+func apply_audio() -> void:
+    var db: float = OptionsLogic.volume_db(state["settings"])
+    AudioServer.set_bus_volume_db(0, db)
+    AudioServer.set_bus_mute(0, db <= -80.0)
 
 func apply_speed() -> void:
     Engine.time_scale = UiLogic.time_scale(state["settings"])

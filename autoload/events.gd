@@ -16,4 +16,5 @@ signal repeat_mode_changed(on: bool)
 signal stage_progress(killed: int, total: int, label: String)
 signal boss_warning(boss_name: String, is_mini: bool)
 signal ability_cast(id: String)
+signal pause_started                    # menu/perfil abriu: o jogo entrou em pausa
 signal boss_defeated(stage: int, gems: int, shards: int)

@@ -21,8 +21,8 @@ func _ready() -> void:
     anchor_right = 1.0
     anchor_top = 1.0
     anchor_bottom = 1.0
-    offset_right = -232.0
-    offset_left = -232.0 - float(SkillsDB.MAX_EQUIPPED) * (BTN + GAP)
+    offset_right = -16.0
+    offset_left = -16.0 - float(SkillsDB.MAX_EQUIPPED) * (BTN + GAP)
     offset_bottom = -16.0
     offset_top = -16.0 - (TOGGLE_H + TOGGLE_GAP + BTN)
     mouse_filter = Control.MOUSE_FILTER_STOP
@@ -37,6 +37,8 @@ func _slot_x(i: int) -> float:
     return GAP + float(i) * (BTN + GAP)
 
 func _gui_input(event: InputEvent) -> void:
+    if get_tree().paused:
+        return   # menu/perfil aberto: jogo em pausa
     if event is InputEventScreenTouch and event.pressed:
         var x: float = event.position.x
         var y: float = event.position.y

@@ -145,3 +145,20 @@ Riscos conhecidos: FPS com ~8 AnimatedSprite2D no anjo + dezenas de inimigos (s�
 - `BOSS_GEM_GROWTH = 1.12`: escolhido pela projeção; o ritmo real depende da dificuldade (HP dos inimigos cresce exponencialmente; atributos de ouro crescem de forma polinomial — existirá um "muro" de fase que o modelo não captura).
 - Dano extra do Julgamento Divino em chefes: +50% (sugestão).
 - Preços das habilidades: mantidos como no design original.
+
+
+## Rodada 12 — aba Opções, novo layout do HUD e pausa (⬜ escrita, **nunca executada no CI**)
+
+A rodada 11 passou no CI (confirmado pelo usuário; logs não anexados aqui). Esta rodada ainda não passou por nenhum CI nem foi vista num celular.
+
+| Item | Estado | Observação |
+|---|---|---|
+| Aba **Opções** no menu (ícone de engrenagem): Efeitos Alto/Baixo e Volume do jogo (passos de 10%) | ⬜ | `options_logic.gd`, `menu_model.gd`; volume salvo em `settings.volume` e aplicado ao barramento Master (ainda não há áudio no jogo) |
+| Botão MENU no canto superior direito | ⬜ | Habilidades passaram para o canto inferior direito |
+| Ouro/gemas/fragmentos embaixo do cartão do anjo | ⬜ | |
+| Velocidade 2x e Próxima fase ao lado do cartão da vida | ⬜ | Botão "Efeitos" saiu do HUD (agora na aba Opções) |
+| Só o **perfil** (ícone do jogador) aberto = jogo em **pausa**; o menu NÃO pausa | ⬜ | `get_tree().paused`; o perfil continua ativo; joystick é solto ao pausar. Menu mantém o multitoque (andar enquanto faz upgrades) |
+| Novos testes `test_options.gd`; smoke com `pause=` e `opt=` | ⬜ | Smoke despausa logo após checar (a cena precisa contar frames) |
+| Ícones novos `gear` e `speaker` | ✅ visto (PNG) | Só conferidos visualmente; arte gerada por `tools/art/ui.py` |
+
+Pontos de atenção para o celular: posição da barra do chefe (agora entre os botões e o MENU), largura do painel de recursos com números grandes, e se os controles pausados realmente ignoram toque (há guardas extras no código). `docs/ui_maquete.png` **não** foi atualizada para o novo layout.
