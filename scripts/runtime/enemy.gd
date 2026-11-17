@@ -27,6 +27,7 @@ var _cast_t := 0.0
 var _cast_dir := Vector2.ZERO
 var _dash_t := 0.0
 var _dash_hit := false
+var _cast_pts: Array = []     # alvos (posições globais) avisados no telegraph: meteoros, destino do passo sombrio
 
 func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = false, mini: Dictionary = {}) -> void:
     player = target
@@ -154,8 +155,28 @@ func _start_cast(id: String, to: Vector2) -> void:
     _cast_id = id
     _cast_t = float(EnemiesDB.ABILITIES[id]["telegraph"])
     _cast_dir = to.normalized()
+    _cast_pts = _plan_targets(id)
     abilities.start(id, EnemiesDB.ABILITIES)
     _play("cast")   # pose de conjuração durante o aviso
+
+## Alvos escolhidos NO INÍCIO do aviso (o jogador vê onde vai cair e pode sair do lugar).
+func _plan_targets(id: String) -> Array:
+    var cfg: Dictionary = EnemiesDB.ABILITIES[id]
+    var area := get_viewport().get_visible_rect().size
+    var pts: Array = []
+    if id == "meteor_rain":
+        var rng := RandomNumberGenerator.new()
+        rng.randomize()
+        for i in range(int(cfg["count"])):
+            var p: Vector2 = player.global_position   # o primeiro cai exatamente onde o anjo está
+            if i > 0:
+                p += Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(40.0, float(cfg["scatter"]))
+            pts.append(p.clamp(Vector2(20, 20), area - Vector2(20, 20)))
+    elif id == "shadow_step":
+        var ang: float = randf() * TAU
+        var p2: Vector2 = player.global_position + Vector2.from_angle(ang) * float(cfg["land_offset"])
+        pts.append(p2.clamp(Vector2(20, 20), area - Vector2(20, 20)))
+    return pts
 
 func _execute_ability() -> void:
     var id := _cast_id
@@ -176,6 +197,39 @@ func _execute_ability() -> void:
             _summon(int(cfg["count"]))
         "hellfire_projectiles":
             _fan(cfg)
+        "meteor_rain":
+            var hit_by_meteor := false
+            for pt in _cast_pts:
+                SpriteFx.spawn(get_parent(), "fx_fireball", pt, 3.0, Color(1.0, 0.5, 0.15))
+                SpriteFx.spawn(get_parent(), "fx_burst", pt, float(cfg["radius"]) * 2.0 / 64.0, Color(1.0, 0.45, 0.1))
+                if not hit_by_meteor and player.global_position.distance_to(pt) <= float(cfg["radius"]):
+                    hit_by_meteor = true
+                    player.take_damage(dmg * float(cfg["dmg_mult"]))
+        "flame_breath":
+            var rng_f: float = float(cfg["range"])
+            for f in [0.35, 0.65, 1.0]:
+                _burst_at(global_position + _cast_dir * rng_f * f, rng_f * f * 0.5, Color(1.0, 0.5, 0.1))
+            var to_p: Vector2 = player.global_position - global_position
+            var inside: bool = to_p.length() <= rng_f + 20.0 \
+                and absf(angle_difference(_cast_dir.angle(), to_p.angle())) <= deg_to_rad(float(cfg["half_angle_deg"]))
+            if inside:
+                player.take_damage(dmg * float(cfg["dmg_mult"]))
+        "shadow_step":
+            _burst(float(cfg["radius"]) * 0.6, Color(0.5, 0.2, 0.8))      # some no ponto de partida
+            if not _cast_pts.is_empty():
+                position = _cast_pts[0]
+                _burst(float(cfg["radius"]), Color(0.6, 0.25, 0.9))       # surge no destino avisado
+                if player.global_position.distance_to(global_position) <= float(cfg["radius"]):
+                    player.take_damage(dmg * float(cfg["dmg_mult"]))
+        "soul_orbs":
+            _burst(70.0, Color(0.6, 0.3, 0.9))
+            var n_orbs: int = int(cfg["count"])
+            var base_ang: float = randf() * TAU
+            for i in range(n_orbs):
+                var p := _shoot(Vector2.from_angle(base_ang + TAU * float(i) / float(n_orbs)), cfg, 1.0)
+                p.homing = float(cfg["homing"])
+                p.life = float(cfg["life"])
+                p.tint = Color(0.7, 0.4, 1.0)
         "fire_bolt":
             _shoot((player.global_position - global_position).normalized(), cfg, 1.0)
         "life_steal":
@@ -199,9 +253,12 @@ func _process_dash(delta: float) -> void:
         player.take_damage(dmg * float(cfg["dmg_mult"]))
 
 func _burst(r: float, col: Color) -> void:
-    SpriteFx.spawn(get_parent(), "fx_burst", global_position, r * 2.0 / 64.0, col)
+    _burst_at(global_position, r, col)
 
-func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float) -> void:
+func _burst_at(pos: Vector2, r: float, col: Color) -> void:
+    SpriteFx.spawn(get_parent(), "fx_burst", pos, r * 2.0 / 64.0, col)
+
+func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float) -> EnemyProjectile:
     var p := EnemyProjectile.new()
     p.position = global_position
     p.velocity = dir * float(cfg["speed"])
@@ -209,6 +266,7 @@ func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float) -> void:
     p.hit_radius = float(cfg["hit_radius"])
     p.player = player
     get_parent().add_child(p)
+    return p
 
 func _fan(cfg: Dictionary) -> void:
     var n: int = int(cfg["count"])
@@ -257,5 +315,26 @@ func _draw_telegraph() -> void:
                 draw_line(Vector2.ZERO, _cast_dir.rotated(ang) * 420.0, warn, 4.0)
         "summon_demons":
             draw_arc(Vector2.ZERO, radius + 20.0, 0.0, TAU, 32, Color(0.7, 0.3, 1.0, 0.4 + 0.5 * t), 4.0)
+        "meteor_rain":
+            for pt in _cast_pts:
+                var lp: Vector2 = to_local(pt)
+                draw_circle(lp, float(cfg["radius"]), warn)
+                draw_arc(lp, float(cfg["radius"]), 0.0, TAU, 32, Color(1.0, 0.55, 0.15, 0.9), 3.0)
+        "flame_breath":
+            var half: float = deg_to_rad(float(cfg["half_angle_deg"]))
+            var cone := PackedVector2Array([Vector2.ZERO])
+            for k in range(9):
+                cone.append(_cast_dir.rotated(-half + 2.0 * half * float(k) / 8.0) * float(cfg["range"]))
+            draw_colored_polygon(cone, Color(1.0, 0.4, 0.1, 0.18 + 0.4 * t))
+        "shadow_step":
+            for pt in _cast_pts:
+                var lp2: Vector2 = to_local(pt)
+                draw_line(Vector2.ZERO, lp2, Color(0.6, 0.3, 0.9, 0.25), 3.0)
+                draw_circle(lp2, float(cfg["radius"]), Color(0.55, 0.2, 0.85, 0.2 + 0.4 * t))
+                draw_arc(lp2, float(cfg["radius"]), 0.0, TAU, 40, Color(0.75, 0.4, 1.0, 0.9), 3.0)
+        "soul_orbs":
+            draw_arc(Vector2.ZERO, radius + 20.0, 0.0, TAU, 32, Color(0.6, 0.3, 1.0, 0.4 + 0.5 * t), 4.0)
+            for k in range(int(cfg["count"])):
+                draw_circle(Vector2.from_angle(TAU * float(k) / float(cfg["count"])) * (radius + 20.0), 6.0, Color(0.8, 0.5, 1.0, 0.9))
         _:
             draw_arc(Vector2.ZERO, radius + 10.0, 0.0, TAU, 24, warn, 4.0)

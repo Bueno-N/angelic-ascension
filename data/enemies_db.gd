@@ -21,12 +21,12 @@ const TYPES := [
 const SPRITE_SCALE := 2.0   # os sprites são pixel art: escala inteira mantém os pixels nítidos
 const BOSS_BASE := {"hp": 20.0, "dmg": 5.0, "speed": 55.0, "gold": 2.0, "radius": 42.0}
 
-# Cada chefe tem exatamente 2 habilidades (implementação em runtime: etapa futura).
+# Cada chefe tem exatamente 2 habilidades, e NENHUMA é repetida entre chefes (cada um tem as suas).
 const BOSSES := [
     {"id": "baal", "sprite": "boss_baal", "name": "Baal, o Devorador", "color": "#7a0f0f", "abilities": ["area_slam", "charge"]},
     {"id": "mordath", "sprite": "boss_mordath", "name": "Mordath, Senhor das Sombras", "color": "#2a1a4a", "abilities": ["summon_demons", "hellfire_projectiles"]},
-    {"id": "ignarr", "sprite": "boss_ignarr", "name": "Ignarr, Fera Infernal", "color": "#a8410f", "abilities": ["charge", "area_slam"]},
-    {"id": "azazel", "sprite": "boss_azazel", "name": "Azazel, Arauto do Abismo", "color": "#4a0f3a", "abilities": ["hellfire_projectiles", "summon_demons"]},
+    {"id": "ignarr", "sprite": "boss_ignarr", "name": "Ignarr, Fera Infernal", "color": "#a8410f", "abilities": ["meteor_rain", "flame_breath"]},
+    {"id": "azazel", "sprite": "boss_azazel", "name": "Azazel, Arauto do Abismo", "color": "#4a0f3a", "abilities": ["shadow_step", "soul_orbs"]},
 ]
 
 # Habilidades de chefes e inimigos especiais (todos os números aqui).
@@ -43,6 +43,16 @@ const ABILITIES := {
         "count": 3},
     "hellfire_projectiles": {"name": "Projéteis infernais", "cooldown": 8.0, "telegraph": 0.8, "min_range": 0.0, "max_range": 800.0,
         "count": 5, "speed": 260.0, "spread_deg": 60.0, "dmg_mult": 0.6, "hit_radius": 14.0},
+    # --- Ignarr (chefe 3): fogo ---
+    "meteor_rain": {"name": "Chuva de meteoros", "cooldown": 11.0, "telegraph": 1.4, "min_range": 0.0, "max_range": 99999.0,
+        "count": 5, "radius": 75.0, "scatter": 230.0, "dmg_mult": 1.6},
+    "flame_breath": {"name": "Sopro flamejante", "cooldown": 6.0, "telegraph": 0.9, "min_range": 0.0, "max_range": 360.0,
+        "range": 380.0, "half_angle_deg": 35.0, "dmg_mult": 1.7},
+    # --- Azazel (chefe 4): abismo ---
+    "shadow_step": {"name": "Passo sombrio", "cooldown": 10.0, "telegraph": 1.0, "min_range": 200.0, "max_range": 99999.0,
+        "land_offset": 100.0, "radius": 130.0, "dmg_mult": 1.6},
+    "soul_orbs": {"name": "Orbes de almas", "cooldown": 9.0, "telegraph": 0.9, "min_range": 0.0, "max_range": 900.0,
+        "count": 4, "speed": 170.0, "homing": 1.4, "life": 5.0, "dmg_mult": 0.9, "hit_radius": 16.0},
     "fire_bolt": {"name": "Bola de fogo", "cooldown": 3.5, "telegraph": 0.4, "min_range": 0.0, "max_range": 420.0,
         "speed": 300.0, "dmg_mult": 1.0, "hit_radius": 12.0},
     "life_steal": {"name": "Drenar vida", "cooldown": 4.0, "telegraph": 0.5, "min_range": 0.0, "max_range": 200.0,

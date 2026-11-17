@@ -7,8 +7,27 @@ func test_boss_abilities_defined_and_cover_the_design() -> void:
         for a in b["abilities"]:
             check(EnemiesDB.ABILITIES.has(a), "habilidade definida: " + str(a))
             seen[a] = true
-    for need in ["area_slam", "charge", "summon_demons", "hellfire_projectiles"]:
+    for need in ["area_slam", "charge", "summon_demons", "hellfire_projectiles", "meteor_rain", "flame_breath", "shadow_step", "soul_orbs"]:
         check(seen.has(need), "design pede: " + need)
+
+func test_every_boss_has_its_own_unique_abilities() -> void:
+    var owner_of := {}
+    for b in EnemiesDB.BOSSES:
+        for ab in b["abilities"]:
+            check(not owner_of.has(ab), "habilidade %s repetida entre %s e %s" % [ab, owner_of.get(ab, ""), b["name"]])
+            owner_of[ab] = b["name"]
+    check(owner_of.size() == EnemiesDB.BOSSES.size() * 2, "8 habilidades distintas para 4 chefes")
+    check(EnemiesDB.BOSSES[2]["abilities"] == ["meteor_rain", "flame_breath"], "Ignarr: meteoros e sopro")
+    check(EnemiesDB.BOSSES[3]["abilities"] == ["shadow_step", "soul_orbs"], "Azazel: passo sombrio e orbes")
+
+func test_new_boss_ability_numbers() -> void:
+    var c: Dictionary = EnemiesDB.ABILITIES
+    check(int(c["meteor_rain"]["count"]) >= 3 and float(c["meteor_rain"]["radius"]) > 0.0, "meteoros: vários e com raio")
+    check(float(c["flame_breath"]["range"]) > 0.0 and float(c["flame_breath"]["half_angle_deg"]) > 0.0 and float(c["flame_breath"]["half_angle_deg"]) < 90.0, "sopro: cone válido")
+    check(float(c["shadow_step"]["radius"]) > 0.0 and float(c["shadow_step"]["min_range"]) > 0.0, "passo sombrio só de longe")
+    check(int(c["soul_orbs"]["count"]) >= 2 and float(c["soul_orbs"]["homing"]) > 0.0 and float(c["soul_orbs"]["life"]) > 0.0, "orbes teleguiados com vida útil")
+    for id in ["meteor_rain", "flame_breath", "shadow_step", "soul_orbs"]:
+        check(float(c[id]["dmg_mult"]) > 0.0, id + ": causa dano")
 
 func test_special_enemies_have_defined_abilities() -> void:
     var n := 0

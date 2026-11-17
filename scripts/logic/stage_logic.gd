@@ -48,7 +48,8 @@ static func boss_index(stage: int) -> int:
     return maxi(1, floori(float(stage) / float(Balance.BOSS_EVERY)))
 
 static func enemy_count(stage: int) -> int:
-    return mini(Balance.ENEMY_COUNT_MAX, Balance.ENEMY_COUNT_BASE + int(Balance.ENEMY_COUNT_PER_STAGE * float(stage - 1)))
+    var steps: int = floori(float(maxi(1, stage) - 1) / float(Balance.ENEMY_COUNT_STEP_EVERY))
+    return mini(Balance.ENEMY_COUNT_MAX, Balance.ENEMY_COUNT_BASE + Balance.ENEMY_COUNT_STEP * steps)
 
 static func max_alive(stage: int) -> int:
     return mini(Balance.ALIVE_MAX, Balance.ALIVE_BASE + int(Balance.ALIVE_PER_STAGE * float(stage - 1)))

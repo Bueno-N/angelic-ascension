@@ -11,7 +11,7 @@ if [ "${gold:-0}" -le 0 ]; then echo "Nenhum inimigo morreu em 30s (ouro=0): com
 cleared=$(grep -o "cleared=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${cleared:-0}" -lt 1 ]; then echo "Nenhuma fase foi limpa no smoke (limpeza de fase/spawn com problema)"; exit 1; fi
 kinds=$(grep -o "kinds=[a-z_,]*" build/smoke.log | head -1 | cut -d= -f2)
-for k in area_slam charge summon_demons hellfire_projectiles fire_bolt life_steal; do
+for k in area_slam charge summon_demons hellfire_projectiles meteor_rain flame_breath shadow_step soul_orbs fire_bolt life_steal; do
   case ",$kinds," in *",$k,"*) ;; *) echo "Habilidade inimiga NÃO executada no smoke: $k (executadas: ${kinds:-nenhuma})"; exit 1;; esac
 done
 casts=$(grep -o "casts=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)

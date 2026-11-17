@@ -21,10 +21,12 @@ const ENEMY_HP_GROWTH := 1.12
 const ENEMY_DMG_GROWTH := 1.09
 const ENEMY_GOLD_GROWTH := 1.10
 # Ritmo: a fase é longa porque os inimigos chegam em fluxo (SPAWN_INTERVAL) e o nº simultâneo é limitado.
-# Tempo mínimo de uma fase ~= ENEMY_COUNT * SPAWN_INTERVAL (fase 1: ~100 s). Alvo: ~32 fases/h no início.
-const ENEMY_COUNT_BASE := 100
-const ENEMY_COUNT_PER_STAGE := 0.5
-const ENEMY_COUNT_MAX := 180
+# Mobs por fase: começa em 50 e sobe +5 a cada 5 fases (fases 1-5: 50, 6-10: 55, 11-15: 60...).
+# A horda acelera dentro da fase (SPAWN_ACCEL_SECONDS), então o tempo real é menor que contagem x SPAWN_INTERVAL.
+const ENEMY_COUNT_BASE := 50
+const ENEMY_COUNT_STEP := 5           # mobs a mais a cada degrau
+const ENEMY_COUNT_STEP_EVERY := 5     # tamanho do degrau, em fases
+const ENEMY_COUNT_MAX := 180          # teto (atingido na fase 131); aumente aqui se quiser que o aumento continue
 const BOSS_HP_MULT := 30.0
 const BOSS_DMG_MULT := 3.0
 const BOSS_GOLD_MULT := 25.0

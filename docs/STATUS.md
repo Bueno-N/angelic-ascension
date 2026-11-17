@@ -180,3 +180,16 @@ A rodada 12 (aba Opções, novo layout, pausa só com o perfil) foi confirmada c
 | Testes `test_slots.gd`; smoke com `title=` | ⬜ | O smoke percorre as telas do menu inicial e entra no jogo sem gravar nada (espaço 0) |
 
 Pontos de atenção para o celular: teclado virtual cobrindo o botão COMEÇAR (Enter/OK do teclado também confirma), legibilidade/tamanho dos botões do menu inicial, e se voltar ao menu inicial e iniciar outro jogo funciona repetidamente. `docs/ui_maquete.png` continua **sem** refletir o layout novo.
+
+
+## Rodada 14 — 50 mobs (+5 a cada 5 fases) e habilidades próprias dos chefes 3 e 4 (⬜ escrita, **nunca executada no CI**)
+
+| Item | Estado | Observação |
+|---|---|---|
+| Mobs por fase: 50 nas fases 1-5, +5 a cada 5 fases (55, 60...) | ⬜ | `StageLogic.enemy_count`; teto `ENEMY_COUNT_MAX = 180` (fase 131). **Muda a economia**: antes eram 100 na fase 1; gemas/h e ritmo precisam de nova medição |
+| Mobs ficam mais fortes com a fase | ✅ já existia (lógica testada em rodadas anteriores) | Vida x1,12, dano x1,09 e ouro x1,10 por fase (`Balance.ENEMY_*_GROWTH`); teste novo confere o crescimento |
+| Ignarr (fase 30): **Chuva de meteoros** + **Sopro flamejante** | ⬜ | Antes copiava Baal (investida + pancada) |
+| Azazel (fase 40): **Passo sombrio** + **Orbes de almas** (teleguiados) | ⬜ | Antes copiava Mordath (projéteis + invocação) |
+| Teste de que nenhuma habilidade se repete entre chefes; smoke exige as 4 novas | ⬜ | O smoke ficou mais longo (~4940 frames): 600 frames por chefe |
+
+Números das habilidades novas (dano, raios, recargas) são **primeiro palpite**, sem playtest: ajuste em `EnemiesDB.ABILITIES`.

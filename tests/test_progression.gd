@@ -22,6 +22,24 @@ func test_enemy_scaling_monotonic() -> void:
         cnt = c
     check(StageLogic.enemy_count(1) == Balance.ENEMY_COUNT_BASE, "fase 1 usa quantidade base")
 
+func test_enemy_count_starts_at_50_and_grows_5_every_5_stages() -> void:
+    check(Balance.ENEMY_COUNT_BASE == 50, "começa em 50 mobs")
+    for st in range(1, 6):
+        check(StageLogic.enemy_count(st) == 50, "fases 1-5: 50 (fase %d)" % st)
+    for st in range(6, 11):
+        check(StageLogic.enemy_count(st) == 55, "fases 6-10: 55 (fase %d)" % st)
+    check(StageLogic.enemy_count(11) == 60 and StageLogic.enemy_count(15) == 60, "fases 11-15: 60")
+    check(StageLogic.enemy_count(26) == 75 and StageLogic.enemy_count(30) == 75, "fases 26-30: 75")
+    check(StageLogic.enemy_count(100) == 50 + 5 * 19, "fase 100: 145")
+    check(StageLogic.enemy_count(10000) == Balance.ENEMY_COUNT_MAX, "respeita o teto")
+    check(StageLogic.enemy_count(0) == 50 and StageLogic.enemy_count(-3) == 50, "fase inválida usa a base")
+
+func test_mobs_get_stronger_with_stage() -> void:
+    for t in EnemiesDB.TYPES:
+        check(StageLogic.enemy_hp(float(t["hp"]), 30) > StageLogic.enemy_hp(float(t["hp"]), 1) * 10.0, "vida de %s cresce forte" % t["id"])
+        check(StageLogic.enemy_dmg(float(t["dmg"]), 30) > StageLogic.enemy_dmg(float(t["dmg"]), 1) * 5.0, "dano de %s cresce" % t["id"])
+        check(StageLogic.enemy_gold(float(t["gold"]), 30) > StageLogic.enemy_gold(float(t["gold"]), 1), "ouro de %s cresce" % t["id"])
+
 func test_boss_stronger_than_regular() -> void:
     for st in [10, 20, 50, 100]:
         check(StageLogic.boss_hp(st) > StageLogic.enemy_hp(float(EnemiesDB.TYPES[3]["hp"]), st), "chefe tem mais vida na fase %d" % st)
@@ -78,4 +96,4 @@ func test_pacing_params() -> void:
         prev = a
     check(StageLogic.max_alive(1) == Balance.ALIVE_BASE, "fase 1 usa ALIVE_BASE")
     var min_secs: float = float(StageLogic.enemy_count(1)) * Balance.SPAWN_INTERVAL
-    check(min_secs >= 60.0 and min_secs <= 180.0, "tempo mínimo da fase 1 entre 60 e 180 s (obtido %.0f s)" % min_secs)
+    check(min_secs >= 40.0 and min_secs <= 180.0, "tempo máximo da fase 1 (sem aceleração) entre 40 e 180 s (obtido %.0f s)" % min_secs)

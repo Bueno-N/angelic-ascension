@@ -176,13 +176,13 @@ func _process(_delta: float) -> void:
             GameState.menu_action("opt|vol|10")
             _opt_ok = _opt_ok and UiLogic.fx_enabled(GameState.state["settings"]) and OptionsLogic.volume(GameState.state["settings"]) >= 10
         2960:
-            stage_mgr.start_stage(30)    # chefe 3 (Ignarr): sprite, pancada e investida
-        3040:
-            stage_mgr.start_stage(40)    # chefe 4 (Azazel): sprite, projéteis e invocação
-        3120:
+            stage_mgr.start_stage(30)    # chefe 3 (Ignarr): chuva de meteoros + sopro flamejante
+        3560:
+            stage_mgr.start_stage(40)    # chefe 4 (Azazel): passo sombrio + orbes de almas
+        4160:
             stage_mgr.start_stage(5)     # mini-chefe 1 (Capitão Infernal) no fim da horda
             stage_mgr.to_spawn = 2
-        3500:
+        4540:
             stage_mgr.start_stage(15)    # mini-chefe 2 (Cérbero das Cinzas)
             stage_mgr.to_spawn = 2
     # interface: menu (todas as abas) e perfil, com o desenho real rodando em frames seguidos
@@ -193,7 +193,7 @@ func _process(_delta: float) -> void:
         if step == last_step:
             GameState.set_profile("Teste", 3)
             _profile_ok = str(GameState.state["profile"]["name"]) == "Teste" and int(GameState.state["profile"]["avatar"]) == 3
-    if _frames >= 3900:
+    if _frames >= 4940:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
