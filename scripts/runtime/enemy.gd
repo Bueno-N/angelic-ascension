@@ -40,6 +40,7 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
     add_to_group("enemies")
     var ability_ids: Array = []
     var sprite_name := "imp"
+    var boss_scale := 0.0
     if boss:
         var b := EnemiesDB.boss_for(st)
         def = {"id": b["id"], "special": false}
@@ -50,6 +51,9 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
         radius = float(EnemiesDB.BOSS_BASE["radius"])
         ability_ids = b["abilities"]
         sprite_name = str(b["sprite"])
+        if b["id"] == "lucifer":     # chefe final da fase 300: maior que os outros
+            radius = Balance.WEEKLY_RADIUS
+            boss_scale = Balance.WEEKLY_SCALE
     else:
         def = d.duplicate()
         max_hp = StageLogic.enemy_hp(float(d["hp"]), st)
@@ -77,7 +81,7 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
         gold = 0
         add_to_group("summons")
         _base_mod = Color(0.8, 0.6, 1.0, 0.9)   # invocações ficam arroxeadas
-    _build(sprite_name, Balance.MINI_SCALE if is_mini else EnemiesDB.SPRITE_SCALE, ability_ids)
+    _build(sprite_name, boss_scale if boss_scale > 0.0 else (Balance.MINI_SCALE if is_mini else EnemiesDB.SPRITE_SCALE), ability_ids)
 
 ## Sprite, habilidades e vida cheia (comum a todos os tipos de inimigo).
 func _build(sprite_name: String, sprite_scale: float, ability_ids: Array) -> void:
@@ -106,15 +110,15 @@ func setup_lucifer(target: Player) -> void:
     _build(str(EnemiesDB.LUCIFER["sprite"]), Balance.WEEKLY_SCALE, EnemiesDB.LUCIFER["abilities"])
 
 ## Chefe INVOCADO pelo Lucifer: aparência de um dos 4 chefes (o ciclo segue a contagem), vida/dano bem menores, 1 habilidade, sem recompensa.
-func setup_boss_summon(boss_def: Dictionary, target: Player) -> void:
+func setup_boss_summon(boss_def: Dictionary, target: Player, frac: float = 1.0) -> void:
     player = target
     is_summon = true
     stage = Balance.MAX_STAGE
     add_to_group("enemies")
     add_to_group("summons")
     def = {"id": str(boss_def["id"]), "special": false, "summon": true, "sprite": str(boss_def["sprite"])}
-    max_hp = WeeklyBoss.summon_hp()
-    dmg = WeeklyBoss.summon_dmg()
+    max_hp = WeeklyBoss.summon_hp(frac)
+    dmg = WeeklyBoss.summon_dmg(frac)
     gold = 0
     speed = float(EnemiesDB.BOSS_BASE["speed"])
     radius = 34.0
@@ -360,7 +364,7 @@ func _summon_boss() -> void:
     var m := Enemy.new()
     m.position = position + Vector2.from_angle(randf() * TAU) * (radius + 70.0)
     get_parent().add_child(m)
-    m.setup_boss_summon(b, player)
+    m.setup_boss_summon(b, player, 1.0 if bool(def.get("weekly", false)) else Balance.LUCIFER_STAGE_SUMMON_FRAC)
 
 func _draw() -> void:
     # sombra no chão (dá peso ao sprite)

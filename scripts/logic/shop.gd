@@ -10,6 +10,8 @@ static func buy_upgrade(state: Dictionary, attr: String) -> bool:
     if not Balance.ATTRIBUTES.has(attr):
         return false
     var lvl: int = upgrade_level(state, attr)
+    if lvl >= StatsCalc.max_level(attr):
+        return false
     var cost: int = StatsCalc.upgrade_cost(attr, lvl)
     if int(state["gold"]) < cost:
         return false

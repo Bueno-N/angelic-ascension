@@ -247,7 +247,7 @@ Pendências que só o aparelho resolve: soar bem? volume relativo música x efei
 | Item | Estado | Observação |
 |---|---|---|
 | Botão **BOSS SEMANAL** (ícone do Lucifer) logo abaixo de FASES; **travado até concluir a fase 50** (recorde > 50); o painel do menu desceu para não cobri-lo | ⬜ | `hud.gd`; `UiButton` aceita texto em 2 linhas |
-| **Lucifer** (chefe único, fora da lista de 4 chefes de fase): sprite 64x64 original (`tools/art/enemies.py`), 4 habilidades exclusivas — Nova infernal (rosca: segura colado nele ou longe), Raio do abismo, Tempestade infernal (9 meteoros), Colheita de almas (12 orbes teleguiados) — + **invoca 1 chefe a cada 20 s** (até 4 vivos; aparência Baal/Mordath/Ignarr/Azazel, vida 3% do chefe da fase 300) | ⬜ | `enemies_db.gd`, `enemy.gd`; 5 sons novos (`tools/audio/sfx.py`) |
+| **Lucifer** (chefe único, fora da lista de 4 chefes de fase): sprite 64x64 original (`tools/art/enemies.py`), 4 habilidades exclusivas — Nova infernal (rosca: segura colado nele ou longe), Raio do abismo, Tempestade infernal (9 meteoros), Colheita de almas (12 orbes teleguiados) — + **invoca 1 chefe a cada 20 s** (até 4 vivos; aparência Baal/Mordath/Ignarr/Azazel, vida e dano do chefe do andar 290) | ⬜ | `enemies_db.gd`, `enemy.gd`; 5 sons novos (`tools/audio/sfx.py`) |
 | Potência: vida **8x** e dano **1,2x** do chefe da fase 300 (`Balance.WEEKLY_*`) | ⬜ **palpite** | "Mais difícil que a última fase": só o playtest diz se a escala está certa |
 | Luta de **2 min**; fim: "O SEU TEMPO ACABOU" (ou "LUCIFER DERROTADO!" / "VOCE CAIU") e volta à partida normal (anjo curado); a fase fica congelada e mapa/próxima fase travados durante a luta | ⬜ | `stage_manager.gd` (modo semanal), `main.gd` |
 | **4 entradas por semana** (semana = segunda 00:00 UTC), gastas ao entrar | ⬜ | `weekly_boss.gd`, salvas em `state["weekly"]`; online o servidor conta as entradas |
@@ -267,3 +267,12 @@ Pendências que só o aparelho resolve: o Lucifer é legível/justo na tela? 2 m
 | Menu ocupa a tela (menos a coluna MENU/FASES/BOSS), por cima da fase; asas/equipamentos: prévia do anjo à esquerda e lista larga à direita | ⬜ | Precisa ver no celular |
 
 Atenção: com a progressão mais fácil o ritmo real de fases/hora vai subir; o modelo de economia (gemas) precisa de recalibração com playtest.
+
+## Rodada 20 — Lucifer como chefe final, semanal mais forte, velocidade limitada (⬜ escrita, **nunca executada no CI**)
+
+| Item | Estado | Observação |
+|---|---|---|
+| **Lucifer é o chefe da fase 300** (último do jogo): vida e dano x1,3 sobre a fórmula de chefe (`Balance.LUCIFER_STAGE_MULT`), maior que os outros chefes; invoca chefes com 50% do andar 290 | ⬜ palpite | `EnemiesDB.boss_for(300)`, `StageLogic.boss_hp/dmg`; recompensas normais de chefe (gemas/ouro) |
+| **Semanal mais forte**: vida 6x e dano 1,6x do chefe da fase 300 (já com o x1,3: ~7,8x e ~2x); **invocações = chefe do andar 290 inteiro** (vida e dano) | ⬜ palpite | `Balance.WEEKLY_*` |
+| **Velocidade de movimento limitada a 50 melhorias** (máx. 420 sem bônus); a linha mostra MÁXIMO; o save é limitado a 50 | ⬜ | `max_level` em `Balance.ATTRIBUTES`; outros atributos sem teto |
+| Testes: `test_weekly.gd` (Lucifer na fase 300, invocações no andar 290, teto da velocidade) | ⬜ | |

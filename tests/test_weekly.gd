@@ -162,3 +162,39 @@ func test_pause_with_weekly_panel() -> void:
     check(OptionsLogic.should_pause(false, false, false, true), "painel do boss semanal pausa o jogo")
     check(not OptionsLogic.should_pause(false, false, false, false), "sem painéis: não pausa")
     check(OptionsLogic.should_pause(true) and OptionsLogic.should_pause(false, true) and OptionsLogic.should_pause(false, false, true), "perfil, morte e mapa continuam pausando")
+
+func test_lucifer_is_the_stage_300_boss() -> void:
+    check(EnemiesDB.boss_for(Balance.MAX_STAGE)["id"] == "lucifer", "chefe da fase 300 = Lucifer")
+    check(EnemiesDB.boss_for(290)["id"] != "lucifer", "outros chefes continuam no ciclo")
+    var plain_hp: float = StageLogic.enemy_hp(float(EnemiesDB.BOSS_BASE["hp"]), Balance.MAX_STAGE) * Balance.BOSS_HP_MULT
+    var plain_dmg: float = StageLogic.enemy_dmg(float(EnemiesDB.BOSS_BASE["dmg"]), Balance.MAX_STAGE) * Balance.BOSS_DMG_MULT
+    check_approx(StageLogic.boss_hp(Balance.MAX_STAGE), plain_hp * Balance.LUCIFER_STAGE_MULT, "vida +30% na fase 300", plain_hp * 1.0e-6)
+    check_approx(StageLogic.boss_dmg(Balance.MAX_STAGE), plain_dmg * Balance.LUCIFER_STAGE_MULT, "dano +30% na fase 300", plain_dmg * 1.0e-6)
+    check(StageLogic.boss_hp(299) < StageLogic.boss_hp(Balance.MAX_STAGE), "fase 300 é o chefe mais forte")
+    check(WeeklyBoss.lucifer_hp() > StageLogic.boss_hp(Balance.MAX_STAGE) * 5.0, "semanal tem bem mais vida que o da fase 300")
+    check(WeeklyBoss.lucifer_dmg() > StageLogic.boss_dmg(Balance.MAX_STAGE) * 1.2, "semanal tem mais dano que o da fase 300")
+    check_approx(WeeklyBoss.summon_hp(), StageLogic.boss_hp(290), "invocações do semanal = chefe do andar 290", StageLogic.boss_hp(290) * 1.0e-6)
+    check_approx(WeeklyBoss.summon_dmg(), StageLogic.boss_dmg(290), "dano das invocações = andar 290", StageLogic.boss_dmg(290) * 1.0e-6)
+    check(WeeklyBoss.summon_hp(Balance.LUCIFER_STAGE_SUMMON_FRAC) < WeeklyBoss.summon_hp(), "na fase 300 as invocações são mais fracas que no semanal")
+
+func test_speed_upgrades_capped_at_50() -> void:
+    check(StatsCalc.max_level("speed") == 50 and StatsCalc.max_level("attack") > 1000000, "só a velocidade tem teto (50)")
+    var st := SaveData.default_state()
+    st["gold"] = 1000000000000
+    var bought := 0
+    for i in range(80):
+        if Shop.buy_upgrade(st, "speed"):
+            bought += 1
+    check(bought == 50 and int(st["upgrades"]["speed"]) == 50, "compra só 50 melhorias de velocidade (%d)" % bought)
+    check(Shop.buy_upgrade(st, "attack"), "os outros atributos seguem sem teto")
+    var raw: Dictionary = {"upgrades": {"speed": 999}}
+    check(int(SaveData.sanitize(raw)["upgrades"]["speed"]) == 50, "save com mais de 50 é limitado")
+    var stats: Dictionary = StatsCalc.compute(st)
+    check_approx(float(stats["speed"]), 220.0 + 4.0 * 50.0, "velocidade máxima = 420 sem bônus")
+    var rows: Array = MenuModel.rows("attrs", st, stats, {})
+    var found := false
+    for r in rows:
+        if r.get("kind", "") == "item" and str(r.get("title", "")).begins_with("Velocidade"):
+            found = true
+            check(r["button"] == "MÁXIMO" and not r["enabled"], "linha da velocidade mostra MÁXIMO e fica desligada")
+    check(found, "linha da velocidade existe")

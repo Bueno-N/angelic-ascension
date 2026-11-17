@@ -77,11 +77,12 @@ const MINI_GEM_MAX := 2
 const WEEKLY_UNLOCK_STAGE := 50       # precisa ter concluído esta fase (max_stage > 50)
 const WEEKLY_MAX_ENTRIES := 4         # tentativas por semana (semana começa na segunda 00:00 UTC)
 const WEEKLY_TIME_LIMIT := 120.0      # segundos
-const WEEKLY_HP_MULT := 8.0           # x a vida do chefe da fase 300 (muito mais difícil que a última fase)
-const WEEKLY_DMG_MULT := 1.2          # x o dano do chefe da fase 300
+const WEEKLY_HP_MULT := 6.0           # x a vida do chefe da fase 300 (que já inclui o x1,3 do Lucifer): ~7,8x o chefe "comum" de lá
+const WEEKLY_DMG_MULT := 1.6          # x o dano do chefe da fase 300 (já inclui o x1,3): ~2x
 const WEEKLY_SUMMON_EVERY := 20.0     # Lucifer invoca 1 chefe a cada 20 s
-const WEEKLY_SUMMON_HP_FRAC := 0.03   # vida do chefe invocado = 3% da vida do chefe da fase 300
-const WEEKLY_SUMMON_DMG_FRAC := 0.6
+const WEEKLY_SUMMON_STAGE := 290      # chefe invocado no semanal = chefe da fase 290 (vida e dano cheios)
+const LUCIFER_STAGE_MULT := 1.3       # Lucifer como chefe da fase 300: vida e dano x1,3 sobre a fórmula normal de chefe
+const LUCIFER_STAGE_SUMMON_FRAC := 0.5   # na fase 300 os chefes invocados têm 50% do chefe da fase 290
 const WEEKLY_MAX_SUMMONS := 4         # chefes invocados vivos ao mesmo tempo
 const WEEKLY_SPEED := 62.0
 const WEEKLY_RADIUS := 56.0
@@ -106,7 +107,7 @@ const ATTRIBUTES := {
     "attack":       {"name": "Ataque",             "base": 10.0,  "per_level": 2.0,  "base_cost": 10.0, "cost_growth": 1.15},
     "hp":           {"name": "Vida",               "base": 100.0, "per_level": 15.0, "base_cost": 10.0, "cost_growth": 1.15},
     "armor":        {"name": "Armadura",           "base": 0.0,   "per_level": 1.0,  "base_cost": 15.0, "cost_growth": 1.18},
-    "speed":        {"name": "Velocidade",         "base": 220.0, "per_level": 4.0,  "base_cost": 20.0, "cost_growth": 1.20},
+    "speed":        {"name": "Velocidade",         "base": 220.0, "per_level": 4.0,  "base_cost": 20.0, "cost_growth": 1.20, "max_level": 50},   # só 50 melhorias
     "attack_speed": {"name": "Vel. de ataque",     "base": 1.0,   "per_level": 0.03, "base_cost": 25.0, "cost_growth": 1.20},
     "aura":         {"name": "Aura",               "base": 5.0,   "per_level": 1.5,  "base_cost": 12.0, "cost_growth": 1.15},
 }

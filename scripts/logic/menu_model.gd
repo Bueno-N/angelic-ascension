@@ -68,7 +68,12 @@ static func _attrs(state: Dictionary, stats: Dictionary) -> Array:
         var cur: float = float(stats[attr])
         var cur_txt: String = "%.2f" % cur if attr == "attack_speed" else "%.1f" % cur
         var afford: bool = int(state["gold"]) >= cost
-        out.append(_item(ATTR_ICONS[attr], "%s  Nv %d" % [d["name"], lvl],
+        if lvl >= StatsCalc.max_level(attr):
+            out.append(_item(ATTR_ICONS[attr], "%s  Nv %d/%d" % [d["name"], lvl, StatsCalc.max_level(attr)],
+                "Atual %s  |  nível máximo" % cur_txt, "MÁXIMO", 0, "", "", "active", false))
+            continue
+        var lvl_txt: String = "%d" % lvl if StatsCalc.max_level(attr) > 100000 else "%d/%d" % [lvl, StatsCalc.max_level(attr)]
+        out.append(_item(ATTR_ICONS[attr], "%s  Nv %s" % [d["name"], lvl_txt],
             "Atual %s  |  +%s por nível" % [cur_txt, str(d["per_level"])], "UPAR", cost, "coin", "attr|" + str(attr),
             "buy", afford, not afford))
     return out

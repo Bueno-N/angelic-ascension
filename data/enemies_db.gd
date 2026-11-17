@@ -120,5 +120,7 @@ static func pick_type(stage: int, rng: RandomNumberGenerator) -> Dictionary:
     return normals[rng.randi_range(0, normals.size() - 1)]
 
 static func boss_for(stage: int) -> Dictionary:
+    if stage >= Balance.MAX_STAGE:
+        return LUCIFER     # o último chefe do jogo (fase 300) é o Lucifer
     var idx: int = maxi(1, floori(float(stage) / float(Balance.BOSS_EVERY)))
     return BOSSES[(idx - 1) % BOSSES.size()]

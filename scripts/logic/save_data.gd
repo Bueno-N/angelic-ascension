@@ -73,7 +73,7 @@ static func sanitize(raw: Dictionary) -> Dictionary:
     if raw.get("upgrades") is Dictionary:
         for a in Balance.ATTRIBUTE_ORDER:
             if raw["upgrades"].has(a):
-                s["upgrades"][a] = maxi(0, as_int(raw["upgrades"][a]))
+                s["upgrades"][a] = clampi(as_int(raw["upgrades"][a]), 0, StatsCalc.max_level(a))
 
     if raw.get("owned_equipment") is Dictionary:
         for c in EquipmentDB.CATEGORIES:

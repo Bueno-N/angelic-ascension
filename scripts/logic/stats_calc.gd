@@ -4,8 +4,13 @@ extends RefCounted
 ##   final = (base + nivel * por_nivel) * (1 + bônus_asas + bônus_equipamento[atributo])
 ## Os bônus percentuais são ADITIVOS entre si e multiplicam o valor base+gold (nunca em cascata).
 
+## Nível máximo da melhoria (a velocidade de movimento só tem 50); sem limite = muito alto.
+static func max_level(attr: String) -> int:
+    return int(Balance.ATTRIBUTES[attr].get("max_level", 1000000000))
+
 static func upgrade_value(attr: String, level: int) -> float:
     var d: Dictionary = Balance.ATTRIBUTES[attr]
+    level = mini(level, max_level(attr))
     return float(d["base"]) + float(d["per_level"]) * float(level)
 
 static func upgrade_cost(attr: String, level: int) -> int:

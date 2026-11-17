@@ -135,11 +135,12 @@ static func lucifer_hp() -> float:
 static func lucifer_dmg() -> float:
     return StageLogic.boss_dmg(Balance.MAX_STAGE) * Balance.WEEKLY_DMG_MULT
 
-static func summon_hp() -> float:
-    return StageLogic.boss_hp(Balance.MAX_STAGE) * Balance.WEEKLY_SUMMON_HP_FRAC
+## Chefe invocado: equivalente ao chefe do andar 290 (no semanal; na fase 300, frac = LUCIFER_STAGE_SUMMON_FRAC).
+static func summon_hp(frac: float = 1.0) -> float:
+    return StageLogic.boss_hp(Balance.WEEKLY_SUMMON_STAGE) * frac
 
-static func summon_dmg() -> float:
-    return StageLogic.boss_dmg(Balance.MAX_STAGE) * Balance.WEEKLY_SUMMON_DMG_FRAC
+static func summon_dmg(frac: float = 1.0) -> float:
+    return StageLogic.boss_dmg(Balance.WEEKLY_SUMMON_STAGE) * frac
 
 ## Pontuação = dano causado ao Lucifer. Se ele morrer, ganha bônus de até +25% da vida dele pelo tempo que sobrou.
 static func compute_score(dealt: float, max_hp: float, killed: bool, secs_left: float) -> float:

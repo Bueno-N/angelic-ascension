@@ -129,10 +129,12 @@ static func projection(stage: int) -> Dictionary:
     return out
 
 static func boss_hp(stage: int) -> float:
-    return enemy_hp(float(EnemiesDB.BOSS_BASE["hp"]), stage) * Balance.BOSS_HP_MULT
+    var m: float = Balance.LUCIFER_STAGE_MULT if stage >= Balance.MAX_STAGE else 1.0
+    return enemy_hp(float(EnemiesDB.BOSS_BASE["hp"]), stage) * Balance.BOSS_HP_MULT * m
 
 static func boss_dmg(stage: int) -> float:
-    return enemy_dmg(float(EnemiesDB.BOSS_BASE["dmg"]), stage) * Balance.BOSS_DMG_MULT
+    var m: float = Balance.LUCIFER_STAGE_MULT if stage >= Balance.MAX_STAGE else 1.0
+    return enemy_dmg(float(EnemiesDB.BOSS_BASE["dmg"]), stage) * Balance.BOSS_DMG_MULT * m
 
 static func boss_gold(stage: int) -> int:
     return maxi(1, int(round(enemy_gold(float(EnemiesDB.BOSS_BASE["gold"]), stage) * Balance.BOSS_GOLD_MULT)))
