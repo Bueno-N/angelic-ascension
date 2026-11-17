@@ -162,3 +162,21 @@ A rodada 11 passou no CI (confirmado pelo usuário; logs não anexados aqui). Es
 | Ícones novos `gear` e `speaker` | ✅ visto (PNG) | Só conferidos visualmente; arte gerada por `tools/art/ui.py` |
 
 Pontos de atenção para o celular: posição da barra do chefe (agora entre os botões e o MENU), largura do painel de recursos com números grandes, e se os controles pausados realmente ignoram toque (há guardas extras no código). `docs/ui_maquete.png` **não** foi atualizada para o novo layout.
+
+
+## Rodada 13 — menu inicial, 2 jogos salvos, nome obrigatório e barra de mobs no topo (⬜ escrita, **nunca executada no CI**)
+
+A rodada 12 (aba Opções, novo layout, pausa só com o perfil) foi confirmada como funcionando pelo usuário (sem logs do CI aqui).
+
+| Item | Estado | Observação |
+|---|---|---|
+| Menu inicial (`scenes/title.tscn`, `title_screen.gd`): INICIAR JOGO, CONFIGURAÇÕES, SAIR | ⬜ | Agora é a cena principal do projeto; o jogo (`main.tscn`) só abre depois de escolher |
+| INICIAR JOGO -> NOVO JOGO ou CARREGAR JOGO, **máx. 2 espaços** por conta | ⬜ | `SlotStore` (`user://save_1.json`, `save_2.json`); apagar e sobrescrever pedem 2º toque |
+| Novo jogo exige **nome** (1+ caracteres desenháveis, até 14) | ⬜ | O botão COMEÇAR fica desabilitado sem nome; o nome continua editável no perfil |
+| Save único antigo (`save.json`) vira o espaço 1 | ⬜ | `SlotStore.migrate_legacy` (teste em `test_slots.gd`) |
+| Configurações (volume/efeitos) valem para todos os jogos | ⬜ | `user://settings.json`; também editáveis dentro do jogo (aba Opções) |
+| Aba Opções: "Menu inicial" (salva e volta; permite trocar de jogo) | ⬜ | |
+| Barra de **progresso de mobs** no meio do topo, contador dentro | ⬜ | Saiu do cartão do anjo; botões VEL./PRÓX. FASE desceram p/ y=52; barra do chefe foi p/ a direita deles |
+| Testes `test_slots.gd`; smoke com `title=` | ⬜ | O smoke percorre as telas do menu inicial e entra no jogo sem gravar nada (espaço 0) |
+
+Pontos de atenção para o celular: teclado virtual cobrindo o botão COMEÇAR (Enter/OK do teclado também confirma), legibilidade/tamanho dos botões do menu inicial, e se voltar ao menu inicial e iniciar outro jogo funciona repetidamente. `docs/ui_maquete.png` continua **sem** refletir o layout novo.

@@ -1,30 +1,23 @@
 extends Node
-## E/S de disco. Escrita atômica (tmp -> rename) com backup do save anterior.
+## E/S de disco para o jogo: 2 espaços de salvamento por conta + configurações globais (ver SlotStore).
 
-const SAVE_PATH := "user://save.json"
-const BACKUP_PATH := "user://save.bak.json"
-const TMP_PATH := "user://save.tmp"
+func _ready() -> void:
+    SlotStore.migrate_legacy(SlotStore.DEFAULT_DIR)   # save único antigo vira o espaço 1
 
-func save_state(state: Dictionary) -> bool:
-    var f := FileAccess.open(TMP_PATH, FileAccess.WRITE)
-    if f == null:
-        push_warning("SaveManager: não foi possível abrir o arquivo temporário")
-        return false
-    f.store_string(SaveData.to_json(state))
-    f.close()
-    if FileAccess.file_exists(SAVE_PATH):
-        DirAccess.copy_absolute(ProjectSettings.globalize_path(SAVE_PATH), ProjectSettings.globalize_path(BACKUP_PATH))
-    var err := DirAccess.rename_absolute(ProjectSettings.globalize_path(TMP_PATH), ProjectSettings.globalize_path(SAVE_PATH))
-    return err == OK
+func save_slot(n: int, state: Dictionary) -> bool:
+    return SlotStore.write(SlotStore.DEFAULT_DIR, n, state)
 
-func load_state() -> Dictionary:
-    for path in [SAVE_PATH, BACKUP_PATH]:
-        if FileAccess.file_exists(path):
-            var f := FileAccess.open(path, FileAccess.READ)
-            if f != null:
-                var txt := f.get_as_text()
-                f.close()
-                var parsed = SaveData.parse_dict(txt)
-                if parsed is Dictionary:
-                    return SaveData.sanitize(parsed)
-    return SaveData.default_state()
+func load_slot(n: int) -> Dictionary:
+    return SlotStore.read(SlotStore.DEFAULT_DIR, n)
+
+func delete_slot(n: int) -> void:
+    SlotStore.delete(SlotStore.DEFAULT_DIR, n)
+
+func summaries() -> Array:
+    return SlotStore.summaries(SlotStore.DEFAULT_DIR)
+
+func load_global() -> Dictionary:
+    return SlotStore.read_global(SlotStore.DEFAULT_DIR)
+
+func save_global(g: Dictionary) -> bool:
+    return SlotStore.write_global(SlotStore.DEFAULT_DIR, g)

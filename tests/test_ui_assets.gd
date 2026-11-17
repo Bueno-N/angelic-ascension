@@ -4,7 +4,12 @@ extends TestCase
 const FIXED_TEXTS := ["PRÓX. FASE 12", "VELOC. 2X", "EFEITOS: ALTO", "EFEITOS: BAIXO", "MENU", "VOLTAR", "FECHAR", "PERFIL DO ANJO",
     "Nome", "Escolha seu ícone", "Status", "AVISO: CHEFE!", "MINI-CHEFE!", "CHEFE", "MOBS", "MINI-CHEFE", "(repetindo)", "Próx.: Mini-chefe na fase 15 (em 3)",
     "Próx.: Chefe AGORA", "Última fase: 85 s | Gemas/h: 60", "[TESTE] ", "FASE 10", "HP", "AUTO ON", "AUTO OFF", "vazio", "Atributos", "Habilidades", "Asas", "Equipamentos", "Teste", "Opções", "Gráficos", "Som", "MUDO", "MÁXIMO", "MÍNIMO",
-    "AUMENTAR", "DIMINUIR", "ALTERAR", "Volume do jogo  80%"]
+    "AUMENTAR", "DIMINUIR", "ALTERAR", "Volume do jogo  80%", "VEL. 2X",
+    "ANGELIC", "ASCENSION", "Um anjo guerreiro contra o inferno", "INICIAR JOGO", "CONFIGURAÇÕES", "SAIR", "NOVO JOGO", "CARREGAR JOGO",
+    "Máximo de 2 jogos salvos por conta", "Escolha um espaço", "ESPAÇO 1", "Vazio", "APAGAR", "CONFIRMAR", "SOBRESCREVER", "ESCOLHER", "CONTINUAR",
+    "COMEÇAR", "NOME DO SEU ANJO", "Seu nome", "Escolha um nome (até 14 letras). Dá para mudar depois no perfil.", "Espaço 1",
+    "Toque em CONFIRMAR para substituir este jogo ao começar um novo", "Toque em CONFIRMAR para apagar este jogo salvo",
+    "Nenhum jogo salvo", "Fase 12  (recorde 15)", "Asas Nv 3  |  Habilidades 2", "Menu inicial"]
 const FIXED_ICONS := ["coin", "gem", "shard", "menu", "close", "back", "speed", "fx", "next", "user", "skills", "wings", "armor", "gear", "speaker"]
 
 func _font_image() -> Image:

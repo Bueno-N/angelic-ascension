@@ -43,3 +43,11 @@ static func apply(settings: Dictionary, parts: PackedStringArray) -> bool:
             settings["volume"] = nv
             return changed
     return false
+
+## Configurações do aparelho (valem para qualquer jogo salvo): só volume e efeitos.
+static func default_global() -> Dictionary:
+    return {"volume": DEFAULT_VOLUME, "low_fx": false}
+
+static func sanitize_global(raw: Dictionary) -> Dictionary:
+    return {"volume": clampi(SaveData.as_int(raw.get("volume", DEFAULT_VOLUME), DEFAULT_VOLUME), 0, 100),
+        "low_fx": SaveData.as_bool(raw.get("low_fx", false), false)}

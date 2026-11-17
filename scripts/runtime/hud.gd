@@ -27,9 +27,9 @@ func _ready() -> void:
     _top = HudTop.new()
     _root.add_child(_top)
     _avatar_btn = _make_button("", "", Rect2(20.0, 16.0, 84.0, 84.0), _open_profile)
-    # ao lado do cartão da vida: velocidade 2x em cima, próxima fase embaixo
-    _speed_btn = _make_button("", "speed", Rect2(404.0, 8.0, 224.0, 52.0), _on_speed)
-    _next_btn = _make_button("", "next", Rect2(404.0, 66.0, 224.0, 52.0), _on_next)
+    # ao lado do cartão da vida (abaixo da barra de mobs, que fica no meio do topo): velocidade 2x e próxima fase
+    _speed_btn = _make_button("", "speed", Rect2(404.0, 52.0, 150.0, 66.0), _on_speed)
+    _next_btn = _make_button("", "next", Rect2(562.0, 52.0, 232.0, 66.0), _on_next)
     # estes não respondem com o jogo em pausa
     for b in [_avatar_btn, _speed_btn, _next_btn]:
         b.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -149,5 +149,5 @@ func _refresh() -> void:
     _avatar_btn.queue_redraw()
     _next_btn.set_text("PRÓX. FASE %d" % (stg + 1))
     _next_btn.set_enabled(StageLogic.can_skip_to_next(stg, int(s["max_stage"])))
-    _speed_btn.set_text("VELOC. %dX" % int(UiLogic.time_scale(s["settings"])))
+    _speed_btn.set_text("VEL. %dX" % int(UiLogic.time_scale(s["settings"])))
     _top.queue_redraw()

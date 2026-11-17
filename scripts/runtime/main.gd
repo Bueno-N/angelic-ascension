@@ -197,8 +197,8 @@ func _process(_delta: float) -> void:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
             _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
-            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok)])
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok)])
         get_tree().quit(0)

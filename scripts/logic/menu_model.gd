@@ -42,7 +42,7 @@ static func rows(tab: String, state: Dictionary, stats: Dictionary, ctx: Diction
         "equip":
             return _equip(state)
         "options":
-            return _options(state["settings"])
+            return _options(state["settings"], bool(ctx.get("in_game", true)))
         "debug":
             return _debug(bool(ctx.get("reset_armed", false)))
     return []
@@ -163,10 +163,10 @@ static func _equip(state: Dictionary) -> Array:
     return out
 
 # ---------------------------------------------------------------- opções
-static func _options(settings: Dictionary) -> Array:
+static func _options(settings: Dictionary, in_game: bool = true) -> Array:
     var vol: int = OptionsLogic.volume(settings)
     var vtxt := "Volume do jogo  %d%%" % vol if vol > 0 else "Volume do jogo  MUDO"
-    return [
+    var out: Array = [
         _header("Gráficos"),
         _item("fx", OptionsLogic.gfx_label(settings), "Baixo reduz partículas e efeitos: economiza bateria e ajuda em aparelhos fracos.",
             "ALTERAR", 0, "", "opt|fx|0", "ok", true),
@@ -177,6 +177,10 @@ static func _options(settings: Dictionary) -> Array:
             "ok" if vol > 0 else "locked", vol > 0),
         _info("Mais opções virão em breve."),
     ]
+    if in_game:
+        out.append(_header("Jogo"))
+        out.append(_item("back", "Menu inicial", "Salva o jogo e volta ao menu inicial (para trocar de jogo salvo).", "SAIR", 0, "", "opt|title|0", "ok", true))
+    return out
 
 # ---------------------------------------------------------------- modo de teste
 static func _debug(reset_armed: bool) -> Array:

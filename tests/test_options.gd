@@ -37,6 +37,13 @@ func test_rows() -> void:
         if r["kind"] == "item":
             actions.append(str(r["action"]))
     check(actions.has("opt|fx|0") and actions.has("opt|vol|10") and actions.has("opt|vol|-10"), "ações de efeitos e volume")
+    check(actions.has("opt|title|0"), "no jogo: voltar ao menu inicial")
+    var title_rows := MenuModel.rows("options", st, StatsCalc.compute(st), {"in_game": false})
+    var title_has := false
+    for r in title_rows:
+        if r["kind"] == "item" and str(r["action"]) == "opt|title|0":
+            title_has = true
+    check(not title_has, "no menu inicial não há 'voltar ao menu inicial'")
     st["settings"]["volume"] = 0
     var r0 := MenuModel.rows("options", st, StatsCalc.compute(st), {})
     var dim_enabled := true

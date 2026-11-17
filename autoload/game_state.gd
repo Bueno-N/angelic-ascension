@@ -6,12 +6,22 @@ var stats: Dictionary = {}
 var rng := RandomNumberGenerator.new()
 var session_start_msec := 0
 var session_gems := 0
+const TITLE_SCENE := "res://scenes/title.tscn"
+const GAME_SCENE := "res://scenes/main.tscn"
+var slot := 0                      # espaço de salvamento em uso (1..2); 0 = nenhum (menu inicial / smoke: não grava)
+var global_settings: Dictionary = OptionsLogic.default_global()   # volume e efeitos: valem para todos os jogos
+var _global_known := false
+var title_ok := false              # smoke: a tela inicial foi percorrida sem erro
 
 func _ready() -> void:
     rng.randomize()
     session_start_msec = Time.get_ticks_msec()
-    state = SaveManager.load_state()
+    state = SaveData.default_state()   # o jogo real só carrega um espaço quando o jogador escolhe no menu inicial
     stats = StatsCalc.compute(state)
+    var g: Dictionary = SaveManager.load_global()
+    if not g.is_empty():
+        global_settings = g
+        _global_known = true
     apply_speed()
     apply_audio()
     if not OS.get_cmdline_user_args().has("--smoke"):
@@ -29,7 +39,69 @@ func _notification(what: int) -> void:
         save()
 
 func save() -> void:
-    SaveManager.save_state(state)
+    if slot > 0:
+        SaveManager.save_slot(slot, state)
+
+## Começa um jogo NOVO no espaço `n` com o nome escolhido (sobrescreve o que houver lá).
+func new_game(n: int, pname: String) -> bool:
+    if not SlotStore.valid_slot(n):
+        return false
+    var st := SaveData.default_state()
+    st["profile"]["name"] = ProfileLogic.clean_name(pname)
+    _begin(st, n)
+    return true
+
+## Carrega o jogo salvo do espaço `n` (false se vazio).
+func load_game(n: int) -> bool:
+    var st: Dictionary = SaveManager.load_slot(n)
+    if st.is_empty():
+        return false
+    _begin(st, n)
+    return true
+
+## Só para o smoke do CI: jogo novo SEM espaço (nada é gravado no disco).
+func start_unsaved() -> void:
+    _begin(SaveData.default_state(), 0)
+
+func _begin(st: Dictionary, n: int) -> void:
+    state = st
+    slot = n
+    if _global_known:
+        state["settings"]["volume"] = int(global_settings["volume"])
+        state["settings"]["low_fx"] = bool(global_settings["low_fx"])
+    else:
+        global_settings = OptionsLogic.sanitize_global(state["settings"])
+    session_gems = 0
+    session_start_msec = Time.get_ticks_msec()
+    stats = StatsCalc.compute(state)
+    apply_speed()
+    apply_audio()
+    save()
+
+## Opção alterada no MENU INICIAL (sem jogo carregado): ações "opt|fx|0" e "opt|vol|±10".
+func set_global_option(parts: PackedStringArray) -> bool:
+    var changed := OptionsLogic.apply(global_settings, parts)
+    if changed:
+        _global_known = true
+        SaveManager.save_global(global_settings)
+        apply_audio()
+    return changed
+
+func go_to_title() -> void:
+    save()
+    slot = 0           # evita que um salvamento automático recrie um jogo apagado no menu inicial
+    get_tree().paused = false
+    Engine.time_scale = 1.0
+    _drop_scene_connections()
+    get_tree().change_scene_to_file.call_deferred(TITLE_SCENE)
+
+## Remove as conexões do barramento Events feitas pela cena de jogo que vai ser descartada (só as do próprio GameState ficam).
+func _drop_scene_connections() -> void:
+    for sig in Events.get_signal_list():
+        for c in Events.get_signal_connection_list(sig["name"]):
+            var cb: Callable = c["callable"]
+            if cb.get_object() != self:
+                Events.disconnect(sig["name"], cb)
 
 func recalc() -> void:
     stats = StatsCalc.compute(state)
@@ -82,6 +154,9 @@ func toggle_low_fx() -> void:
 
 ## Ações do menu (ver MenuModel): compra/equipa/evolui. Debug passa pelo debug_apply.
 func menu_action(action: String) -> bool:
+    if action == "opt|title|0":
+        go_to_title()
+        return true
     var p := action.split("|")
     if p[0] == "debug" and p.size() > 2:
         debug_apply(p[1], int(p[2]))
@@ -90,6 +165,9 @@ func menu_action(action: String) -> bool:
         return false   # trava: não dá para trocar habilidade em recarga
     var ok := _commit(MenuModel.perform(state, action))
     if ok and p[0] == "opt":
+        global_settings = OptionsLogic.sanitize_global(state["settings"])   # opções valem para todos os jogos
+        _global_known = true
+        SaveManager.save_global(global_settings)
         apply_audio()
     return ok
 
@@ -101,7 +179,7 @@ func set_profile(pname: String, avatar: int) -> void:
 
 ## Volume geral do jogo (barramento Master). Ainda não há áudio no jogo; a opção já fica salva e aplicada.
 func apply_audio() -> void:
-    var db: float = OptionsLogic.volume_db(state["settings"])
+    var db: float = OptionsLogic.volume_db(global_settings)
     AudioServer.set_bus_volume_db(0, db)
     AudioServer.set_bus_mute(0, db <= -80.0)
 

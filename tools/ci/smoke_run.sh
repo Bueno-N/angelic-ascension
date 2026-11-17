@@ -16,9 +16,9 @@ for k in area_slam charge summon_demons hellfire_projectiles fire_bolt life_stea
 done
 casts=$(grep -o "casts=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${casts:-0}" -lt 10 ]; then echo "Habilidades não foram executadas (casts=${casts:-0}, esperado >= 10)"; exit 1; fi
-for k in repeat next speed fx profile pause opt; do
+for k in repeat next speed fx profile pause opt title; do
   v=$(grep -o " $k=[0-9]" build/smoke.log | head -1 | cut -d= -f2)
-  if [ "${v:-0}" != "1" ]; then echo "Verificação '$k' falhou no smoke (valor=${v:-ausente}): modo repetir / próxima fase / velocidade 2x / perfil / pausa com menu aberto / opções"; exit 1; fi
+  if [ "${v:-0}" != "1" ]; then echo "Verificação '$k' falhou no smoke (valor=${v:-ausente}): modo repetir / próxima fase / velocidade 2x / perfil / pausa com o perfil aberto / opções / telas do menu inicial"; exit 1; fi
 done
 warn=$(grep -o " warn=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 mini=$(grep -o " mini=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
