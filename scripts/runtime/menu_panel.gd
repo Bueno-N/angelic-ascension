@@ -5,7 +5,7 @@ extends Control
 ## dá para andar com o anjo (joystick) e fazer upgrades ao mesmo tempo.
 
 const HEAD := 92.0
-const PREVIEW_H := 150.0
+const PREVIEW_W := 300.0     # prévia do anjo (asas/equipamentos) numa coluna à esquerda; a lista usa o resto da largura
 var _mode := "grid"
 var _tabs: Array = []
 var _tiles: Array = []
@@ -19,14 +19,16 @@ var _reset_armed := false
 var _last_rows: Array = []
 
 func _ready() -> void:
-    anchor_left = 1.0
+    # Ocupa a tela toda, por cima da fase (o jogo segue rodando), só deixando livre a coluna de botões à direita
+    # (MENU / FASES / BOSS SEMANAL): o jogador fecha esta aba para usar as outras.
+    anchor_left = 0.0
     anchor_right = 1.0
     anchor_top = 0.0
     anchor_bottom = 1.0
-    offset_left = -624.0
-    offset_right = -16.0
-    offset_top = 252.0     # abaixo dos botões MENU, FASES e BOSS SEMANAL
-    offset_bottom = -168.0
+    offset_left = 16.0
+    offset_right = -212.0
+    offset_top = 16.0
+    offset_bottom = -16.0
     visible = false
     mouse_filter = Control.MOUSE_FILTER_STOP
     _tabs = MenuModel.tabs(DebugTools.enabled())
@@ -108,12 +110,12 @@ func _apply_layout() -> void:
         _tiles[i].position = Vector2(14.0 + float(i % cols) * (tw + gap), HEAD + 10.0 + float(floori(float(i) / float(cols))) * (th + gap))
         _tiles[i].size = Vector2(tw, th)
     var preview: bool = (not grid) and MenuModel.tab_has_preview(_mode)
-    var top: float = HEAD + (PREVIEW_H if preview else 0.0)
+    var lx: float = 8.0 + (PREVIEW_W + 8.0 if preview else 0.0)
     _list.visible = not grid
-    _list.position = Vector2(8.0, top)
-    _list.size = Vector2(w - 16.0, maxf(40.0, h - top - 8.0))
+    _list.position = Vector2(lx, HEAD)
+    _list.size = Vector2(maxf(40.0, w - lx - 8.0), maxf(40.0, h - HEAD - 8.0))
     _angel.visible = preview
-    _angel.position = Vector2(w / 2.0, HEAD + PREVIEW_H / 2.0 + 6.0)
+    _angel.position = Vector2(8.0 + PREVIEW_W / 2.0, HEAD + (h - HEAD) / 2.0)
     queue_redraw()
 
 func _cooldowns() -> Dictionary:
@@ -167,4 +169,4 @@ func _draw() -> void:
         PixelFont.draw(self, Vector2(x + 30.0, 67.0), txt, 2, UiTheme.TEXT)
         x += 30.0 + float(PixelFont.width(txt, 2)) + 26.0
     if _mode != "grid" and MenuModel.tab_has_preview(_mode):
-        UiTheme.panel(self, Rect2(8.0, HEAD, size.x - 16.0, PREVIEW_H - 6.0), Color(0.04, 0.03, 0.09, 1.0), UiTheme.GOLD_D)
+        UiTheme.panel(self, Rect2(8.0, HEAD, PREVIEW_W, size.y - HEAD - 8.0), Color(0.04, 0.03, 0.09, 1.0), UiTheme.GOLD_D)

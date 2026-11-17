@@ -184,3 +184,13 @@ func test_map_craters_texture_and_slices() -> void:
         check(absf(covered.position.y - 72.0) < 0.01 and absf(covered.end.y - (72.0 + 524.0)) < 0.01, "fatias cobrem a altura do mapa")
     check(MapLogic.crater_offset(100.0) != MapLogic.crater_offset(0.0), "as crateras rolam junto com o mapa")
     check(MapLogic.CRATER_PARALLAX < 1.0, "paralaxe: crateras mais lentas que o caminho")
+
+func test_enemy_growth_is_polynomial_not_exponential() -> void:
+    var hp55: float = StageLogic.enemy_hp(20.0, 55)
+    var hp300: float = StageLogic.enemy_hp(20.0, 300)
+    check(hp55 > 300.0 and hp55 < 2000.0, "mob comum na fase 55 com vida moderada (%.0f)" % hp55)
+    check(hp300 < 100000.0, "mob comum na fase 300 sem explodir (%.0f)" % hp300)
+    check(hp300 / hp55 < 40.0, "da fase 55 à 300 a vida cresce < 40x (era > 1e12x)")
+    check(StageLogic.enemy_dmg(5.0, 300) < 2000.0, "dano do mob na fase 300 contido")
+    var ratio: float = StageLogic.enemy_hp(20.0, 150) / StageLogic.enemy_hp(20.0, 149)
+    check(ratio < 1.03 or int(StageLogic.tier_index(150)) != int(StageLogic.tier_index(149)), "salto por fase pequeno (sem contar degrau)")

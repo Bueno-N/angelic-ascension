@@ -22,12 +22,15 @@ const MAX_STAGE := 300
 const TIER_SIZE := 50
 const TIER_NAMES := ["Fácil", "Normal", "Difícil", "Pesadelo", "Infernal", "Abismal"]
 const TIER_HP_MULT := [1.0, 1.5, 2.5, 4.0, 6.5, 10.0]
-const TIER_DMG_MULT := [1.0, 1.25, 1.6, 2.1, 2.8, 3.8]
+const TIER_DMG_MULT := [1.0, 1.15, 1.35, 1.6, 1.9, 2.2]
 const TIER_REWARD_MULT := [1.0, 1.25, 1.6, 2.0, 2.5, 3.2]   # ouro dos inimigos e gemas de chefe
 
 # --- Escala de inimigos por fase ---
-const ENEMY_HP_GROWTH := 1.12
-const ENEMY_DMG_GROWTH := 1.09
+# REBALANCEADO (rodada 19): crescimento POLINOMIAL (fase^expoente), não exponencial. O poder do anjo cresce ~linearmente com a fase
+# (o ouro sobe 10%/fase e o custo do nível 15%), então vida/dano exponenciais viravam um muro já perto da fase 40.
+# Vida do mob comum (base 20): fase 55 ~740, 100 ~1.200, 300 ~19.000 (com o degrau). PALPITE por modelo, sem playtest.
+const ENEMY_HP_POWER := 0.8
+const ENEMY_DMG_POWER := 0.7
 const ENEMY_GOLD_GROWTH := 1.10
 # Ritmo: a fase é longa porque os inimigos chegam em fluxo (SPAWN_INTERVAL) e o nº simultâneo é limitado.
 # Mobs por fase: começa em 50 e sobe +5 a cada 5 fases (fases 1-5: 50, 6-10: 55, 11-15: 60...).
@@ -75,7 +78,7 @@ const WEEKLY_UNLOCK_STAGE := 50       # precisa ter concluído esta fase (max_st
 const WEEKLY_MAX_ENTRIES := 4         # tentativas por semana (semana começa na segunda 00:00 UTC)
 const WEEKLY_TIME_LIMIT := 120.0      # segundos
 const WEEKLY_HP_MULT := 8.0           # x a vida do chefe da fase 300 (muito mais difícil que a última fase)
-const WEEKLY_DMG_MULT := 1.6          # x o dano do chefe da fase 300
+const WEEKLY_DMG_MULT := 1.2          # x o dano do chefe da fase 300
 const WEEKLY_SUMMON_EVERY := 20.0     # Lucifer invoca 1 chefe a cada 20 s
 const WEEKLY_SUMMON_HP_FRAC := 0.03   # vida do chefe invocado = 3% da vida do chefe da fase 300
 const WEEKLY_SUMMON_DMG_FRAC := 0.6

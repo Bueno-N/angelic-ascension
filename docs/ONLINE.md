@@ -9,7 +9,7 @@ aparece como "MODO OFFLINE" e a recompensa semanal é só a de participação.
 - Libera ao **concluir a fase 50** (recorde > 50). O botão "BOSS SEMANAL" fica no HUD, abaixo de FASES, travado até lá.
 - Semana = **segunda 00:00 UTC** até domingo 23:59 UTC. **4 entradas por semana** (gastas ao ENTRAR, mesmo se perder).
 - Luta de **2 minutos** contra o **Lucifer**: 4 habilidades (Nova infernal, Raio do abismo, Tempestade infernal, Colheita de almas)
-  + **invoca 1 chefe a cada 20 s** (até 4 vivos). Vida = 8x a do chefe da fase 300; dano = 1,6x.
+  + **invoca 1 chefe a cada 20 s** (até 4 vivos). Vida = 8x a do chefe da fase 300; dano = 1,2x.
 - Acabou o tempo: aparece **"O SEU TEMPO ACABOU"** e volta a partida normal. Se o anjo cai, a luta também acaba (sem a tela de morte comum).
 - **Pontuação** = dano causado ao Lucifer (se matar: vida dele + até 25% de bônus pelo tempo que sobrou). Vale o melhor da semana.
 - **Prêmios** (resgatados na semana seguinte, pela posição final): ver `WeeklyBoss.REWARD_RANKS` (1º = 600 gemas + 25 fragmentos ... top 500 = 40 gemas + 2;

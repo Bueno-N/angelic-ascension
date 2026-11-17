@@ -55,10 +55,10 @@ static func max_alive(stage: int) -> int:
     return mini(Balance.ALIVE_MAX, Balance.ALIVE_BASE + int(Balance.ALIVE_PER_STAGE * float(stage - 1)))
 
 static func enemy_hp(base: float, stage: int) -> float:
-    return base * pow(Balance.ENEMY_HP_GROWTH, float(stage - 1)) * float(Balance.TIER_HP_MULT[tier_index(stage)])
+    return base * pow(float(maxi(stage, 1)), Balance.ENEMY_HP_POWER) * float(Balance.TIER_HP_MULT[tier_index(stage)])
 
 static func enemy_dmg(base: float, stage: int) -> float:
-    return base * pow(Balance.ENEMY_DMG_GROWTH, float(stage - 1)) * float(Balance.TIER_DMG_MULT[tier_index(stage)])
+    return base * pow(float(maxi(stage, 1)), Balance.ENEMY_DMG_POWER) * float(Balance.TIER_DMG_MULT[tier_index(stage)])
 
 static func enemy_gold(base: float, stage: int) -> int:
     return maxi(1, int(round(base * pow(Balance.ENEMY_GOLD_GROWTH, float(stage - 1)) * reward_mult(stage))))
