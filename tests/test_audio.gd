@@ -110,7 +110,7 @@ func test_voice_stealing() -> void:
     check(AudioLogic.pick_voice([], 1) == -1, "sem vozes")
 
 func test_music_and_sfx_options() -> void:
-    var s := SaveData.default_state()["settings"]
+    var s: Dictionary = SaveData.default_state()["settings"]
     check(OptionsLogic.music_on(s) and OptionsLogic.music_vol(s) == 60 and OptionsLogic.sfx_vol(s) == 100, "padrões: música ligada a 60%, efeitos a 100%")
     check(OptionsLogic.apply(s, PackedStringArray(["opt", "music", "0"])), "alterna música")
     check(not OptionsLogic.music_on(s) and not OptionsLogic.music_enabled(s), "música desligada")
