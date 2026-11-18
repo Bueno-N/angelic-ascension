@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Prepara SDK Android, keystore de debug e Editor Settings do Godot. Requer JAVA_HOME (JDK 17).
 set -uo pipefail
-V="${GODOT_VERSION:-4.3}"
+V="${GODOT_VERSION:-4.5}"
 SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
 SDKM="$SDK/cmdline-tools/latest/bin/sdkmanager"
 if [ ! -x "$SDKM" ]; then echo "sdkmanager não encontrado em $SDKM"; exit 1; fi
 yes | "$SDKM" --licenses > /dev/null 2>&1 || true
-"$SDKM" "platform-tools" "build-tools;34.0.0" "platforms;android-34" || exit 1
+"$SDKM" "platform-tools" "build-tools;35.0.1" "platforms;android-35" || exit 1
 
 KS="$HOME/debug.keystore"
 if [ ! -f "$KS" ]; then

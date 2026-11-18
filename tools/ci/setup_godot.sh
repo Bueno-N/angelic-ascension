@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Baixa o Godot headless (Linux) para $HOME/godot/godot. Versão via GODOT_VERSION/GODOT_CHANNEL.
 set -euo pipefail
-V="${GODOT_VERSION:-4.3}"
+V="${GODOT_VERSION:-4.5}"
 CH="${GODOT_CHANNEL:-stable}"
 BASE="https://github.com/godotengine/godot/releases/download/${V}-${CH}"
 mkdir -p "$HOME/godot"

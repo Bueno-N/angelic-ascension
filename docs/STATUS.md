@@ -276,3 +276,12 @@ Atenção: com a progressão mais fácil o ritmo real de fases/hora vai subir; o
 | **Semanal mais forte**: vida 6x e dano 1,6x do chefe da fase 300 (já com o x1,3: ~7,8x e ~2x); **invocações = chefe do andar 290 inteiro** (vida e dano) | ⬜ palpite | `Balance.WEEKLY_*` |
 | **Velocidade de movimento limitada a 50 melhorias** (máx. 420 sem bônus); a linha mostra MÁXIMO; o save é limitado a 50 | ⬜ | `max_level` em `Balance.ATTRIBUTES`; outros atributos sem teto |
 | Testes: `test_weekly.gd` (Lucifer na fase 300, invocações no andar 290, teto da velocidade) | ⬜ | |
+
+## Rodada 21 — migração para o Godot 4.5 (preparação para o AdMob) (⬜ escrita, **nunca executada no CI**)
+
+| Item | Estado | Observação |
+|---|---|---|
+| `GODOT_VERSION` 4.3 → **4.5** (build.yml, release.yml, scripts `tools/ci/setup_*.sh`), `project.godot` features "4.5" | ⬜ | Download de `4.5-stable` e templates `4.5.stable` |
+| Android SDK do CI: build-tools **35.0.1** e plataforma **android-35** (exigência do Godot 4.5); `apksigner` do release aponta para 35.0.1 | ⬜ | `setup_android.sh`, `build_release.sh` |
+| Código do jogo **não foi alterado**; pode haver avisos/erros novos do 4.5 no parse (avisos viram erro neste projeto) | ❌ desconhecido | Cole o log do CI e eu corrijo |
+| AdMob | ⬜ **não instalado** | Próximo passo: Android Build Template + build com Gradle + classe `Ads` |

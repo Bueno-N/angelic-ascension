@@ -29,7 +29,7 @@ godot --headless --path . --export-release "Android Release" "$APK" 2>&1 | tee b
 unzip -tq "$APK" || { echo "APK corrompido"; exit 1; }
 
 # 5) a assinatura NÃO pode ser a de debug
-APKSIGNER="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}/build-tools/34.0.0/apksigner"
+APKSIGNER="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}/build-tools/35.0.1/apksigner"
 "$APKSIGNER" verify --print-certs "$APK" 2>&1 | tee build/apk_certs.txt
 if grep -qi "CN=Android Debug" build/apk_certs.txt; then echo "ERRO: APK assinado com a chave de debug"; exit 1; fi
 if ! grep -qi "certificate" build/apk_certs.txt; then echo "ERRO: não foi possível ler a assinatura"; exit 1; fi

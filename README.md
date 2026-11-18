@@ -1,6 +1,6 @@
 # Angelic Ascension
 
-Jogo 2D de fantasia sombria (Godot 4.3, GDScript, 100% gratuito/open source). Alvo: **Android**, landscape.
+Jogo 2D de fantasia sombria (Godot 4.5, GDScript, 100% gratuito/open source). Alvo: **Android**, landscape.
 
 ## Estrutura
 ```
@@ -20,7 +20,7 @@ godot --headless --path . --script res://tools/economy_report.gd   # projeção 
 ```
 
 ## CI (GitHub Actions) — `.github/workflows/build.yml`
-1. **verify**: instala Godot 4.3 → importa → `--check-only` em todos os `.gd` → testes → relatório de economia.
+1. **verify**: instala Godot 4.5 → importa → `--check-only` em todos os `.gd` → testes → relatório de economia.
 2. **build-android** (só se verify passar): JDK 17, SDK Android, templates, keystore debug → exporta APK → artefato `AngelicAscension-debug-apk`.
 
 Logs sempre são enviados como artefatos (`logs-verify`, `logs-build-android`). Se algo falhar, baixe o log e traga para correção.
@@ -36,7 +36,7 @@ Depois abra a aba **Actions** do repositório.
 
 ## Notas
 - APK de **debug** (assinado com keystore de debug). Versão final/release exige keystore próprio (guardado em *secrets*); ainda não configurado.
-- Versão do Godot fixada em 4.3 via `GODOT_VERSION` no workflow.
+- Versão do Godot fixada em 4.5 via `GODOT_VERSION` no workflow.
 
 ## Modo de teste
 O menu ganha a aba **Teste** (dar ouro/gemas/fragmentos, pular de fase, curar, zerar recargas, desbloquear tudo, resetar progresso)

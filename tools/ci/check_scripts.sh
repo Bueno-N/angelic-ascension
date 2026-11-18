@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# --check-only em cada .gd. Limitação conhecida do Godot 4.3: nesse modo os AUTOLOADS não são
+# --check-only em cada .gd. Limitação conhecida do Godot 4.5: nesse modo os AUTOLOADS não são
 # resolvidos ("Identifier not found: Events"). Falhas cujo ÚNICO erro é esse são tratadas como
 # falso positivo e validadas de verdade pelo smoke_run.sh (que carrega o jogo com os autoloads).
 set -uo pipefail
