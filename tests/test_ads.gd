@@ -38,7 +38,9 @@ func test_states_and_platform() -> void:
     check(AdsLogic.platform_supported("Android", "Android") or AdsLogic.platform_supported("Android", "mobile"), "Android real suportado")
     check(not AdsLogic.platform_supported("Android", "headless") and not AdsLogic.platform_supported("Linux", "x11") and not AdsLogic.platform_supported("Windows", "windows"), "headless/PC: inerte")
 
-func test_no_reward_mechanics_in_the_game_state() -> void:
+func test_only_known_ad_fields_in_the_game_state() -> void:
     var st := SaveData.default_state()
     for k in st.keys():
-        check(not str(k).contains("ad_") and not str(k).contains("reward"), "o save não tem campo de anúncios/recompensas ainda: " + str(k))
+        if str(k) == "ad_gems":
+            continue    # gemas por anúncio (GemAdLogic, ver test_gem_ads.gd)
+        check(not str(k).contains("ad_") and not str(k).contains("reward"), "campo de anúncio/recompensa inesperado no save: " + str(k))

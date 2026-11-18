@@ -271,6 +271,30 @@ func weekly_claim(rank: int, total: int) -> Dictionary:
         Events.state_changed.emit()
     return r
 
+# ---------------------------------------------------------------- gemas por anúncio (lógica em GemAdLogic)
+func _gem_ad_now() -> Array:
+    var now: int = int(Time.get_unix_time_from_system())
+    var bias: int = int(Time.get_time_zone_from_system().get("bias", 0))
+    return [now, GemAdLogic.day_id(now, bias)]
+
+## {"available": bool, "reward": gemas do próximo anúncio, "seconds_left": espera até liberar}
+func gem_ad_status() -> Dictionary:
+    var nd: Array = _gem_ad_now()
+    var s: Dictionary = state["ad_gems"]
+    GemAdLogic.fix_clock(s, int(nd[0]))
+    var left: int = GemAdLogic.seconds_left(s, int(nd[0]), int(nd[1]))
+    return {"available": left == 0, "reward": GemAdLogic.next_reward(s, int(nd[1])), "seconds_left": left}
+
+## Chame SÓ depois que o jogador assistiu ao anúncio até o fim. Soma as gemas, salva e devolve quantas (0 se não estava liberado).
+func gem_ad_claim() -> int:
+    var nd: Array = _gem_ad_now()
+    var gems: int = GemAdLogic.claim(state["ad_gems"], int(nd[0]), int(nd[1]))
+    if gems > 0:
+        state["gems"] = int(state["gems"]) + gems
+        save()
+        Events.state_changed.emit()
+    return gems
+
 func set_stage(stage: int) -> void:
     state["stage"] = StageLogic.clamp_stage(stage)
     state["max_stage"] = maxi(int(state["max_stage"]), int(state["stage"]))

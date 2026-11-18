@@ -25,6 +25,8 @@ var reload_after_dismiss := true
 var _ad: Object = null
 var _keep: Array = []         # referências dos callbacks (senão o Godot os libera)
 var _classes: Dictionary = {}
+var _watch_cb: Callable = Callable()   # quem pediu o anúncio via watch_rewarded
+var _watch_earned := false
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -82,6 +84,27 @@ func show_rewarded() -> bool:
     _ad.call("show", listener)
     return true
 
+## Jeito simples de usar: mostra o premiado e chama on_done(earned: bool) UMA vez, quando ele fecha ou falha.
+## earned = true só se o jogador assistiu até ganhar a recompensa. Devolve false (e não chama nada) se não havia anúncio pronto.
+func watch_rewarded(on_done: Callable) -> bool:
+    if is_watching() or not is_rewarded_ready():
+        return false
+    _watch_cb = on_done
+    _watch_earned = false
+    if not show_rewarded():
+        _watch_cb = Callable()
+        return false
+    return true
+
+func is_watching() -> bool:
+    return _watch_cb.is_valid()
+
+func _finish_watch() -> void:
+    var cb: Callable = _watch_cb
+    _watch_cb = Callable()
+    if cb.is_valid():
+        cb.call(_watch_earned)
+
 ## Verificação do smoke (CI, sem plugin): inerte, só IDs de teste, nada carrega nem mostra.
 func smoke_ok() -> bool:
     return AdsLogic.is_test_id(unit_id()) and not is_rewarded_ready() and not load_rewarded() and not show_rewarded() \
@@ -104,11 +127,15 @@ func _on_earned(item: Object) -> void:
     if item != null:
         amount = int(item.get("amount"))
         kind = str(item.get("type"))
+    _watch_earned = true
     rewarded_earned.emit(amount, kind)
 
 func _on_dismissed() -> void:
     _clear_ad()
     rewarded_dismissed.emit()
+    if is_watching():
+        # em alguns aparelhos o "ganhou" chega logo DEPOIS do "fechou": espera um instante antes de responder
+        get_tree().create_timer(0.4, true, false, true).timeout.connect(_finish_watch)
     if reload_after_dismiss:
         load_rewarded()
 
@@ -116,6 +143,7 @@ func _on_show_failed(error: Object) -> void:
     last_error = _error_text(error)
     _clear_ad()
     rewarded_show_failed.emit(last_error)
+    _finish_watch()
 
 func _clear_ad() -> void:
     if _ad != null and is_instance_valid(_ad) and _ad.has_method("destroy"):

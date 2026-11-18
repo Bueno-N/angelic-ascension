@@ -14,6 +14,7 @@ var _menu_btn: UiButton
 var _stages_btn: UiButton
 var _map: MapPanel
 var _weekly_btn: UiButton
+var _gem_ad_btn: GemAdButton
 var _weekly: WeeklyPanel
 var _fight := false           # luta do boss semanal em andamento
 var _menu: MenuPanel
@@ -58,6 +59,16 @@ func _ready() -> void:
     _menu_btn.offset_bottom = 88.0
     _menu_btn.pressed.connect(_toggle_menu)
     _root.add_child(_menu_btn)
+    _gem_ad_btn = GemAdButton.new()       # redondo, À ESQUERDA do MENU: anúncio premiado por gemas
+    _gem_ad_btn.anchor_left = 1.0
+    _gem_ad_btn.anchor_right = 1.0
+    _gem_ad_btn.offset_left = -288.0
+    _gem_ad_btn.offset_right = -208.0
+    _gem_ad_btn.offset_top = 10.0
+    _gem_ad_btn.offset_bottom = 112.0
+    _gem_ad_btn.pressed.connect(_on_gem_ad)
+    _root.add_child(_gem_ad_btn)
+    _root.move_child(_gem_ad_btn, _menu.get_index())   # ATRÁS do painel do menu: menu aberto fica por cima dele
     _stages_btn = UiButton.new()          # logo ABAIXO do botão MENU: abre o mapa das 300 fases
     _stages_btn.configure("FASES", "stages")
     _stages_btn.font_scale = 3
@@ -140,6 +151,7 @@ func _make_button(t: String, ic: String, r: Rect2, cb: Callable) -> UiButton:
 ## Garantia extra: a pausa SEMPRE acompanha o perfil aberto, mesmo que o sinal de visibilidade não dispare.
 ## (No smoke do CI não: lá a pausa é desfeita logo após conferir, para a cena continuar contando frames.)
 func _process(_delta: float) -> void:
+    _gem_ad_btn.visible = not _menu.visible    # menu aberto: o menu fica acima de tudo, sem o botão de gemas aparecendo na borda
     if _smoke:
         return
     if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible, _weekly.visible):
@@ -164,6 +176,31 @@ func _on_speed() -> void:
 func _on_next() -> void:
     if not get_tree().paused:
         Events.request_next_stage.emit()
+
+## Botão redondo de gemas: 500 no primeiro anúncio do dia, depois 100 a cada 30 min (GemAdLogic).
+func _on_gem_ad() -> void:
+    _gem_ad_btn.refresh()
+    if _gem_ad_btn.waiting:
+        return
+    if not _gem_ad_btn.ready_to_watch():
+        _top.show_banner("PRÓXIMO ANÚNCIO EM %s" % GemAdLogic.format_left(_gem_ad_btn.seconds_left), "+%d gemas" % _gem_ad_btn.reward, "stage")
+        return
+    if not AdsManager.is_available():
+        _top.show_banner("ANÚNCIOS SÓ NO CELULAR", "Indisponível neste aparelho", "stage")
+        return
+    if not AdsManager.watch_rewarded(_on_gem_ad_done):
+        _top.show_banner("CARREGANDO ANÚNCIO", "Tente de novo em instantes", "stage")
+        return
+    _gem_ad_btn.waiting = true
+    _gem_ad_btn.queue_redraw()
+
+func _on_gem_ad_done(earned: bool) -> void:
+    _gem_ad_btn.waiting = false
+    if earned:
+        var gems: int = GameState.gem_ad_claim()
+        if gems > 0:
+            _top.show_banner("+%d GEMAS" % gems, "Obrigado por assistir!", "stage")
+    _gem_ad_btn.refresh()
 
 func _toggle_menu() -> void:
     _map.close()

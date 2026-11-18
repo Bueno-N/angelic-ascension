@@ -17,7 +17,6 @@ var _origin := Vector2.ZERO
 var _here_stage := 1
 var _ad_used := false            # já tentou o anúncio nesta morte
 var _ad_wait := false            # anúncio na tela, esperando o resultado
-var _ad_earned := false
 var _btn := Rect2()
 
 func _ready() -> void:
@@ -41,7 +40,6 @@ func start(world_pos: Vector2, to_stage: int, here_stage: int = 0, allow_ad: boo
     _here_stage = here_stage if here_stage > 0 else to_stage
     _ad_used = not allow_ad
     _ad_wait = false
-    _ad_earned = false
     _btn = Rect2()
     _origin = world_pos - global_position
     _angel.set_look(int(GameState.state["wings_level"]), int(GameState.state["glow_tier"]), GameState.state["equipped"])
@@ -70,40 +68,12 @@ func ad_offer() -> bool:
 
 func _watch_ad() -> void:
     _ad_used = true
-    _ad_wait = true
-    _ad_earned = false
-    _connect_ads(true)
-    if not AdsManager.show_rewarded():
-        _ad_end()
+    _ad_wait = AdsManager.watch_rewarded(_on_ad_done)
     queue_redraw()
 
-func _connect_ads(on: bool) -> void:
-    var pairs: Array = [[AdsManager.rewarded_earned, _on_ad_earned], [AdsManager.rewarded_dismissed, _on_ad_closed],
-        [AdsManager.rewarded_show_failed, _on_ad_failed]]
-    for pr in pairs:
-        var sig: Signal = pr[0]
-        var cb: Callable = pr[1]
-        if on and not sig.is_connected(cb):
-            sig.connect(cb)
-        elif not on and sig.is_connected(cb):
-            sig.disconnect(cb)
-
-func _on_ad_earned(_amount: int, _kind: String) -> void:
-    _ad_earned = true
-
-func _on_ad_closed() -> void:
-    # em alguns aparelhos o "ganhou" chega logo DEPOIS do "fechou": espera um instante antes de decidir
-    get_tree().create_timer(0.4, true, false, true).timeout.connect(_ad_end)
-
-func _on_ad_failed(_message: String) -> void:
-    _ad_end()
-
-func _ad_end() -> void:
-    if not _ad_wait:
-        return
+func _on_ad_done(earned: bool) -> void:
     _ad_wait = false
-    _connect_ads(false)
-    if _ad_earned and _active:
+    if earned and _active:
         _close()
         ad_revived.emit()
     else:

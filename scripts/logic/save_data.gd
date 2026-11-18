@@ -40,6 +40,7 @@ static func default_state() -> Dictionary:
         "music_on": true, "music_vol": OptionsLogic.DEFAULT_MUSIC_VOL, "sfx_vol": OptionsLogic.DEFAULT_SFX_VOL},
         "profile": {"name": ProfileLogic.DEFAULT_NAME, "avatar": 0},
         "weekly": WeeklyBoss.default_weekly(),
+        "ad_gems": GemAdLogic.default_state(),
     }
 
 static func to_json(state: Dictionary) -> String:
@@ -104,6 +105,7 @@ static func sanitize(raw: Dictionary) -> Dictionary:
                 s["skills_equipped"].append(id)
 
     s["weekly"] = WeeklyBoss.sanitize(raw.get("weekly"))
+    s["ad_gems"] = GemAdLogic.sanitize(raw.get("ad_gems"))
 
     if raw.get("profile") is Dictionary:
         var rp: Dictionary = raw["profile"]
