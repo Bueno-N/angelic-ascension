@@ -1,6 +1,6 @@
 class_name MenuPanel
 extends Control
-## Menu em duas etapas: 1) grade de ícones (Atributos, Habilidades, Asas, Equipamentos, Opções [+ Teste]);
+## Menu em duas etapas: 1) grade de ícones (Loja, Atributos, Habilidades, Asas, Equipamentos, Opções [+ Teste]);
 ## 2) ao tocar num ícone, abre a lista daquela aba para comprar/evoluir. Tudo por toque próprio (multitoque):
 ## dá para andar com o anjo (joystick) e fazer upgrades ao mesmo tempo.
 
@@ -54,6 +54,7 @@ func _ready() -> void:
     add_child(_angel)
     resized.connect(_apply_layout)
     Events.state_changed.connect(func(): _dirty = true)
+    ShopManager.shop_changed.connect(func(): _dirty = true)
     _apply_layout()
 
 ## Só para o smoke do CI: abre uma aba / volta à grade.
@@ -125,7 +126,8 @@ func _cooldowns() -> Dictionary:
     return d
 
 func _rebuild() -> void:
-    var rows := MenuModel.rows(_mode, GameState.state, GameState.stats, {"cooldowns": _cooldowns(), "reset_armed": _reset_armed})
+    var rows := MenuModel.rows(_mode, GameState.state, GameState.stats, {"cooldowns": _cooldowns(), "reset_armed": _reset_armed,
+        "shop": ShopManager.menu_ctx() if _mode == "shop" else {}})
     if rows != _last_rows:
         _last_rows = rows
         _list.set_rows(rows)
@@ -133,6 +135,12 @@ func _rebuild() -> void:
         _angel.set_look(int(GameState.state["wings_level"]), int(GameState.state["glow_tier"]), GameState.state["equipped"])
 
 func _on_action(id: String) -> void:
+    if id.begins_with("iap|"):          # loja paga: quem cobra é o Google (ShopManager), não o MenuModel
+        AudioHub.play("ui_click")
+        ShopManager.buy(id.substr(4))
+        _last_rows = []
+        _rebuild()
+        return
     if id == "debug|reset|0" and not _reset_armed:
         _reset_armed = true          # reset exige dois toques
         _rebuild()

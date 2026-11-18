@@ -294,10 +294,43 @@ def lucifer_icon():
     c.ell(12, 3, 6, 1.6, GOLD_L); c.ell(12, 3, 3.5, 0.6, None)
     return c.finish(OUT)
 
+def shop():
+    """Loja: baú aberto transbordando moedas, com uma gema brilhando no topo."""
+    c = Canvas(24, 24)
+    c.rect(2, 12, 21, 22, BROWN)                      # corpo do baú
+    c.rect(2, 12, 21, 13, BROWN_D); c.rect(2, 21, 21, 22, BROWN_D)
+    c.rect(2, 12, 3, 22, GOLD_D); c.rect(20, 12, 21, 22, GOLD_D)   # cantoneiras
+    c.rect(10, 14, 13, 18, GOLD); c.px(11, 16, BROWN_D)            # fechadura
+    c.poly([(2, 12), (4, 6), (19, 6), (21, 12)], BROWN_D)          # tampa aberta (para trás)
+    c.line(4, 6, 19, 6, GOLD_D)
+    c.ell(7, 11, 3.2, 2.2, GOLD); c.ell(16, 11, 3.2, 2.2, GOLD)    # moedas saindo
+    c.ell(11.5, 10, 3.0, 2.0, GOLD_L)
+    c.poly([(12, 1), (16, 5), (12, 10), (8, 5)], CYAN)             # gema no topo
+    c.poly([(12, 1), (14, 5), (10, 5)], CYAN_L)
+    c.px(4, 3, WHITE); c.px(19, 2, WHITE); c.px(21, 8, GOLD_L)     # brilhos
+    return c.finish(OUT)
+def crown():
+    """Pacote lendário: coroa dourada com joias."""
+    c = Canvas(24, 24)
+    c.poly([(2, 7), (7, 13), (12, 4), (17, 13), (22, 7), (20, 19), (4, 19)], GOLD)
+    c.rect(4, 17, 20, 20, GOLD_D)
+    c.ell(12, 4, 1.8, 1.8, CYAN_L); c.ell(2.5, 7, 1.5, 1.5, RED); c.ell(21.5, 7, 1.5, 1.5, RED)
+    c.ell(12, 14, 2.2, 2.2, CYAN); c.ell(7, 15, 1.4, 1.4, RED); c.ell(17, 15, 1.4, 1.4, RED)
+    c.line(5, 16, 19, 16, GOLD_L)
+    return c.finish(OUT)
+def coins():
+    """Pilha de moedas (pacotes de ouro)."""
+    c = Canvas(24, 24)
+    for (x, y) in [(7, 18), (7, 15), (7, 12), (16, 18), (16, 15), (12, 9)]:
+        c.ell(x, y, 5.5, 2.6, GOLD_D); c.ell(x, y - 1, 5.0, 2.0, GOLD)
+    c.ell(12, 8, 5.0, 2.0, GOLD_L)
+    c.px(20, 4, WHITE); c.px(4, 6, GOLD_L)
+    return c.finish(OUT)
+
 ICONS = [("sword", sword), ("heart", heart), ("shield", shield), ("boot", boot), ("bolt", bolt), ("aura", aura),
          ("coin", coin), ("gem", gem), ("shard", shard), ("skills", skills), ("wings", wings), ("armor", armor),
          ("glove", glove), ("menu", menu), ("user", user), ("glow", glow), ("close", close), ("back", back),
-         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages), ("skull", skull)] + list(zip(SKILL_ICON_NAMES, SKILL_ICON_FNS)) + [("lucifer", lucifer_icon)]
+         ("speed", speed), ("fx", fx), ("next", nxt), ("gear", gear), ("speaker", speaker), ("stages", stages), ("skull", skull)] + list(zip(SKILL_ICON_NAMES, SKILL_ICON_FNS)) + [("lucifer", lucifer_icon), ("shop", shop), ("crown", crown), ("coins", coins)]
 
 # ------------------------------------------------------------------ avatares 32x32
 def av_hood(hood, trim, eye, halo):
@@ -386,7 +419,7 @@ for ch, r in {
  ']': '.###./...#./...#./...#./...#./...#./.###.', "'": '..#../..#../...../...../...../...../.....',
  '"': '.#.#./.#.#./...../...../...../...../.....', '=': '...../...../#####/...../#####/...../.....',
  '>': '#..../.#.../..#../...#./..#../.#.../#....', '<': '....#/...#./..#../.#.../..#../...#./....#',
- '_': '...../...../...../...../...../...../#####', '#': '.#.#./#####/.#.#./.#.#./.#.#./#####/.#.#.',
+ '_': '...../...../...../...../...../...../#####', '$': '..#../.####/#.#../.###./..#.#/####./..#..', '#': '.#.#./#####/.#.#./.#.#./.#.#./#####/.#.#.',
  '|': '..#../..#../..#../..#../..#../..#../..#..', '&': '.##../#..#./#.#../.#.../#.#.#/#..#./.##.#',
  ' ': '...../...../...../...../...../...../.....',
  'a': '...../...../.###./....#/.####/#...#/.####', 'b': '#..../#..../####./#...#/#...#/#...#/####.',

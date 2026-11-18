@@ -39,6 +39,7 @@ var _wk_died_ok := false
 var _wk_entries_ok := false
 var _wk_res: Dictionary = {}
 var _ads_ok := false
+var _shop_ok := false
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -327,6 +328,7 @@ func _process(_delta: float) -> void:
             stage_mgr.to_spawn = 2
     if _frames == 100:
         _ads_ok = AdsManager.smoke_ok()    # anúncios: inerte sem o plugin, só IDs de teste
+        _shop_ok = ShopManager.smoke_ok()  # loja paga: inerte sem o plugin, entrega 1x por compra (simulada em debug)
     _smoke_weekly_steps()
     # interface: menu (todas as abas) e perfil, com o desenho real rodando em frames seguidos
     var last_step: int = MenuModel.tabs(true).size() + 2   # abrir, 1 passo por aba, fechar+perfil, fechar perfil
@@ -341,8 +343,8 @@ func _process(_delta: float) -> void:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d aud=%d sfx=%d wk=%d ads=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d aud=%d sfx=%d wk=%d ads=%d shop=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
             _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
-            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok), int(_aud_ok), AudioHub.played, int(_wk_ok()), int(_ads_ok)])
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok), int(_aud_ok), AudioHub.played, int(_wk_ok()), int(_ads_ok), int(_shop_ok)])
         get_tree().quit(0)

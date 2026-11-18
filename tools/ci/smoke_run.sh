@@ -16,9 +16,9 @@ for k in area_slam charge summon_demons hellfire_projectiles meteor_rain flame_b
 done
 casts=$(grep -o "casts=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 if [ "${casts:-0}" -lt 10 ]; then echo "Habilidades não foram executadas (casts=${casts:-0}, esperado >= 10)"; exit 1; fi
-for k in repeat next speed fx profile pause opt title death goto map aud wk ads; do
+for k in repeat next speed fx profile pause opt title death goto map aud wk ads shop; do
   v=$(grep -o " $k=[0-9]" build/smoke.log | head -1 | cut -d= -f2)
-  if [ "${v:-0}" != "1" ]; then echo "Verificação '$k' falhou no smoke (valor=${v:-ausente}): modo repetir / próxima fase / velocidade 2x / perfil / pausa com o perfil aberto / opções / telas do menu inicial / animação de morte / ir para fase escolhida / mapa das fases / áudio (arquivos de som e música carregam, trilha por fase, música e efeitos nas opções) / boss semanal (bloqueio antes da fase 50, luta, habilidades do Lucifer, tempo esgotado, queda do anjo, 4 entradas por semana) / anúncios (AdsManager inerte sem o plugin, só IDs de teste)"; exit 1; fi
+  if [ "${v:-0}" != "1" ]; then echo "Verificação '$k' falhou no smoke (valor=${v:-ausente}): modo repetir / próxima fase / velocidade 2x / perfil / pausa com o perfil aberto / opções / telas do menu inicial / animação de morte / ir para fase escolhida / mapa das fases / áudio (arquivos de som e música carregam, trilha por fase, música e efeitos nas opções) / boss semanal (bloqueio antes da fase 50, luta, habilidades do Lucifer, tempo esgotado, queda do anjo, 4 entradas por semana) / anúncios (AdsManager inerte sem o plugin, só IDs de teste) / loja paga (ShopManager inerte sem o plugin, entrega única)"; exit 1; fi
 done
 warn=$(grep -o " warn=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)
 mini=$(grep -o " mini=[0-9]*" build/smoke.log | head -1 | cut -d= -f2)

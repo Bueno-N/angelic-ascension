@@ -17,6 +17,7 @@ const DEBUG_ACTIONS := [
 
 static func tabs(debug: bool) -> Array:
     var t: Array = [
+        {"id": "shop", "name": "Loja", "icon": "shop"},
         {"id": "attrs", "name": "Atributos", "icon": "sword"},
         {"id": "skills", "name": "Habilidades", "icon": "skills"},
         {"id": "wings", "name": "Asas", "icon": "wings"},
@@ -30,7 +31,7 @@ static func tabs(debug: bool) -> Array:
 static func tab_has_preview(tab: String) -> bool:
     return tab == "wings" or tab == "equip"
 
-## ctx: {"cooldowns": {id: segundos}, "reset_armed": bool}
+## ctx: {"cooldowns": {id: segundos}, "reset_armed": bool, "shop": contexto da loja paga (ver ShopLogic.rows)}
 static func rows(tab: String, state: Dictionary, stats: Dictionary, ctx: Dictionary) -> Array:
     match tab:
         "attrs":
@@ -45,6 +46,8 @@ static func rows(tab: String, state: Dictionary, stats: Dictionary, ctx: Diction
             return _options(state["settings"], bool(ctx.get("in_game", true)))
         "debug":
             return _debug(bool(ctx.get("reset_armed", false)))
+        "shop":
+            return ShopLogic.rows(ctx.get("shop", {}))   # loja paga: ctx["shop"] vem do ShopManager
     return []
 
 static func _header(text: String) -> Dictionary:

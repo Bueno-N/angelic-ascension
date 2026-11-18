@@ -69,6 +69,7 @@ func _ready() -> void:
     _gem_ad_btn.pressed.connect(_on_gem_ad)
     _root.add_child(_gem_ad_btn)
     _root.move_child(_gem_ad_btn, _menu.get_index())   # ATRÁS do painel do menu: menu aberto fica por cima dele
+    ShopManager.purchase_done.connect(func(t: String): _top.show_banner(t, "Obrigado pela compra!", "stage"))
     _stages_btn = UiButton.new()          # logo ABAIXO do botão MENU: abre o mapa das 300 fases
     _stages_btn.configure("FASES", "stages")
     _stages_btn.font_scale = 3

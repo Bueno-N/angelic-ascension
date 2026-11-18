@@ -195,5 +195,11 @@ func _draw_row(r: Dictionary, L: Dictionary, i: int) -> void:
         var cx: float = br.position.x + (br.size.x - cw) / 2.0
         UiIcons.draw(self, str(r.get("cost_icon", "coin")), Rect2(cx, br.position.y + 28.0, 24.0, 24.0))
         PixelFont.draw(self, Vector2(cx + 28.0, br.position.y + 33.0), ct, 2, UiTheme.RED if bool(r.get("poor", false)) else UiTheme.TEXT)
+    elif str(r.get("price", "")) != "":   # loja paga: "COMPRAR" + preço em dinheiro (vindo do Google Play)
+        var pt: String = str(r["price"])
+        var ps: int = 2 if PixelFont.width(pt, 2) <= int(br.size.x) - 8 else 1
+        PixelFont.draw(self, Vector2(br.position.x + (br.size.x - float(PixelFont.width(label, 2))) / 2.0, br.position.y + 8.0), label, 2, lc)
+        PixelFont.draw(self, Vector2(br.position.x + (br.size.x - float(PixelFont.width(pt, ps))) / 2.0, br.position.y + 33.0), pt, ps,
+            UiTheme.GOLD if en else UiTheme.TEXT_DIM)
     else:
         PixelFont.draw(self, Vector2(br.position.x + (br.size.x - float(PixelFont.width(label, 2))) / 2.0, br.position.y + (br.size.y - 14.0) / 2.0), label, 2, lc)

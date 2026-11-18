@@ -13,7 +13,7 @@ config_version=5
 config/name="Angelic Ascension"
 run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.5", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://assets/icon/icon_512.png"
 
 [autoload]
 
@@ -22,6 +22,7 @@ SaveManager="*res://autoload/save_manager.gd"
 GameState="*res://autoload/game_state.gd"
 AudioHub="*res://autoload/audio_hub.gd"
 AdsManager="*res://autoload/ads_manager.gd"
+ShopManager="*res://autoload/shop_manager.gd"
 
 [display]
 
