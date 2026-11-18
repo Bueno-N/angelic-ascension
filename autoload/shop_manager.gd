@@ -6,7 +6,7 @@ extends Node
 ## Sem o plugin (PC, CI, APK sem billing) este autoload fica inerte. Em build de DEBUG sem a loja do Google, as compras são
 ## SIMULADAS (sem cobrança) para testar a aba Loja. Em release isso nunca acontece.
 ##
-## Fluxo de uma compra (API do plugin conferida na documentação oficial, nunca executada num aparelho — ver docs/LOJA.md):
+## Fluxo de uma compra (API conferida no código do plugin 3.3.0 em addons/GodotGooglePlayBilling; nunca executada num aparelho — ver docs/LOJA.md):
 ##   start_connection -> connected -> query_product_details (preços) + query_purchases (compras não finalizadas)
 ##   purchase(id) -> on_purchase_updated -> entrega (ShopLogic.deliver, grava o livro) -> consume_purchase (consumível)
 ##                                                                                      ou acknowledge_purchase (Pacote Lendário)
@@ -121,9 +121,9 @@ func buy(id: String) -> bool:
     shop_changed.emit()
     return true
 
-## Smoke do CI: inerte sem o plugin; simulação entrega 1x por token; lendário trancado antes da fase 51.
+## Smoke do CI: inerte fora do Android (com ou sem o plugin); simulação entrega 1x por token; lendário trancado antes da fase 51.
 func smoke_ok() -> bool:
-    if plugin_ok or is_available():
+    if is_available() or _client != null:
         return false
     var l := ShopLogic.default_ledger()
     var st := {"gems": 0, "gold": 0}

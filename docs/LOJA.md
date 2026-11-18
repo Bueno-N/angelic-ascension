@@ -31,8 +31,8 @@ O Play Console não tem um campo "consumível": quem decide é o jogo (consome o
 Para mudar preço, mude no Play Console. Se mudar quantidade/ID, mude também `ShopLogic.CATALOG`.
 
 ## Passo a passo
-1. **Plugin**: baixe a última versão em github.com/godot-sdk-integrations/godot-google-play-billing (Releases),
-   copie para `addons/GodotGooglePlayBilling/` e ative em Projeto > Configurações > Plugins.
+1. **Plugin**: ✅ instalado e ativado: `addons/GodotGooglePlayBilling/` (versão oficial 3.3.0, Google Play Billing 9.1.0).
+   Para atualizar: baixe a nova release em github.com/godot-sdk-integrations/godot-google-play-billing e substitua a pasta.
    O export já usa Gradle (`gradle_build/use_gradle_build=true`).
 2. **Conta de comerciante**: Play Console > Configuração > Perfil de pagamentos.
 3. **Build**: exporte o **AAB** de release assinado (preset "Android Release" com `gradle_build/export_format=1`)
@@ -46,6 +46,6 @@ Para mudar preço, mude no Play Console. Se mudar quantidade/ID, mude também `S
 ## Limites conhecidos
 - A validação da compra é feita no aparelho. Com crack é possível burlar; o certo, depois, é validar o token
   num servidor (o projeto já tem o Supabase do ranking) antes de entregar.
-- O formato exato dos "detalhes do produto" do plugin não está documentado: o preço é procurado pelas chaves
-  `formatted_price`/`formattedPrice`. Se aparecer o preço de referência mesmo pela Play Store, essa leitura precisa de ajuste.
+- O preço vem de `one_time_purchase_offer_details_list[].formatted_price` (conferido no código do plugin 3.3.0).
+  Se aparecer o preço de referência mesmo instalando pela Play Store, os produtos não foram ativados ou o app não veio da loja.
 - O ouro é um valor fixo: muito forte no começo, pouco no fim do jogo (o ouro por fase cresce 10% a cada fase).

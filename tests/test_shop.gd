@@ -56,7 +56,9 @@ func test_ledger_sanitize_and_limit() -> void:
 
 func test_prices_come_from_google_details() -> void:
     var details := [
-        {"product_id": "gems_5000", "one_time_purchase_offer_details": {"formatted_price": "R$ 2,99", "price_amount_micros": 2990000}},
+        {"product_id": "gems_5000", "title": "5.000 gemas (Angelic Ascension)", "one_time_purchase_offer_details_list":
+            [{"price_amount_micros": 2990000, "price_currency_code": "BRL", "formatted_price": "R$ 2,99", "offer_id": null}],
+            "subscription_offer_details": null},
         {"productId": "gold_50000", "oneTimePurchaseOfferDetailsList": [{"formattedPrice": "R$ 0,99"}]},
         {"title": "sem id"},
     ]

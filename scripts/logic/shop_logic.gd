@@ -100,7 +100,8 @@ static func delivered_text(result: Dictionary) -> String:
     return "+%s %s" % [UiLogic.fmt_int(int(result.get("amount", 0))), what]
 
 # ---------------------------------------------------------------- dados que vêm do plugin
-## O formato de cada "product_details" do plugin não está documentado: procura as chaves em qualquer nível.
+## Plugin 3.3.0 (Utils.kt): {"product_id", "one_time_purchase_offer_details_list": [{"formatted_price"...}]}.
+## As chaves são procuradas em qualquer nível, para continuar funcionando se o formato mudar numa versão futura.
 static func find_key(d: Variant, keys: Array) -> String:
     if d is Dictionary:
         for k in keys:
