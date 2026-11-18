@@ -18,7 +18,9 @@ while IFS= read -r f; do
     # Em cascata: script A usa classe B que usa um autoload -> o Godot também emite uma linha
     # "Compile Error:" vazia para A. Isso só é tolerado quando há ao menos 1 erro de autoload.
     bare=$(echo "$out" | grep -cE "SCRIPT ERROR: Compile Error: *\$")
-    if [ "$auto" -gt 0 ] && [ "$all" -eq $((auto + bare)) ]; then
+    # Godot 4.5: a cascata vem como "Compile Error: Failed to compile depended scripts." (mesmo falso positivo).
+    casc=$(echo "$out" | grep -cE "SCRIPT ERROR: Compile Error: Failed to compile depended scripts")
+    if [ "$auto" -gt 0 ] && [ "$all" -eq $((auto + bare + casc)) ]; then
       echo "AUTOLOAD (falso positivo, validado no smoke): $f"; skipped=$((skipped+1))
     else
       echo "FALHOU: $f"; echo "$out" | head -20; fail=$((fail+1))
