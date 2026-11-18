@@ -26,6 +26,6 @@ while IFS= read -r f; do
       echo "FALHOU: $f"; echo "$out" | head -20; fail=$((fail+1))
     fi
   fi
-done < <(find . -name '*.gd' -not -path './.godot/*' | sort)
+done < <(find . -name '*.gd' -not -path './.godot/*' -not -path './addons/*' | sort)   # addons = plugins de terceiros (AdMob): não são nossos
 echo "scripts: $total | falhas reais: $fail | puladas por autoload: $skipped"
 [ $fail -eq 0 ]

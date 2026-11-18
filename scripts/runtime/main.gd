@@ -162,6 +162,15 @@ func _prepare_smoke() -> void:
     GameState.recalc()
 
 ## Opções de som (mesmo caminho do menu): música liga/desliga e volume dos efeitos até o mudo; volta ao normal no fim.
+## Só no smoke: traz o chefe da fase para perto do anjo e o deixa resistente, para as habilidades de curto alcance
+## (sopro flamejante do Ignarr) sempre saírem dentro da janela de teste.
+func _smoke_pull_boss() -> void:
+    for e in stage_mgr.container.get_children():
+        if e is Enemy and e.is_boss:
+            e.position = player.position + Vector2(200.0, 0.0)
+            e.max_hp = 1.0e9
+            e.hp = 1.0e9
+
 func _smoke_audio_options() -> bool:
     var cfg: Dictionary = GameState.state["settings"]
     var mbus: int = AudioServer.get_bus_index(AudioLogic.BUS_MUSIC)
@@ -304,6 +313,8 @@ func _process(_delta: float) -> void:
             _aud_ok = _aud_ok and _smoke_audio_options()
         2960:
             stage_mgr.start_stage(30)    # chefe 3 (Ignarr): chuva de meteoros + sopro flamejante
+        3020, 3200, 3380:
+            _smoke_pull_boss()           # o sopro só sai com o anjo a até 360 px: sem isso o teste dependia da sorte
         3560:
             stage_mgr.start_stage(40)    # chefe 4 (Azazel): passo sombrio + orbes de almas
         4160:
