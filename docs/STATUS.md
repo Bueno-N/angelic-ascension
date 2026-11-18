@@ -285,3 +285,13 @@ Atenção: com a progressão mais fácil o ritmo real de fases/hora vai subir; o
 | Android SDK do CI: build-tools **35.0.1** e plataforma **android-35** (exigência do Godot 4.5); `apksigner` do release aponta para 35.0.1 | ⬜ | `setup_android.sh`, `build_release.sh` |
 | Código do jogo **não foi alterado**; pode haver avisos/erros novos do 4.5 no parse (avisos viram erro neste projeto) | ❌ desconhecido | Cole o log do CI e eu corrijo |
 | AdMob | ⬜ **não instalado** | Próximo passo: Android Build Template + build com Gradle + classe `Ads` |
+
+## Rodada 22 — AdMob: integração técnica (⬜ escrita, **nunca executada**; plugin **não instalado no repositório**)
+
+| Item | Estado | Observação |
+|---|---|---|
+| `AdsManager` (autoload), `AdsLogic`, `AdsConfig`; IDs de TESTE; sem referência ao plugin em compilação | ⬜ | `autoload/ads_manager.gd`, `scripts/logic/ads_logic.gd`, `data/ads_config.gd` |
+| Testes `test_ads.gd` e chave `ads=` no smoke (inerte sem plugin) | ⬜ | Só a lógica pura; o SDK nativo não é testável no CI |
+| Workflow manual `admob.yml` + `tools/ci/setup_admob.sh` (baixa o plugin v5.1.0, habilita, Build Template, Gradle) | ⬜ **nunca rodou** | Pode precisar de ajuste na 1ª execução |
+| Plugin dentro do repo, App ID, export validado, anúncio no celular | ❌ pendente | Ver `docs/ADMOB.md` |
+| Mecânicas (reviver, 100 gemas/30 min, 500 gemas/dia) | ❌ propositalmente não feitas | |

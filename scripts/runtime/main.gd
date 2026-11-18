@@ -26,6 +26,7 @@ var _opt_ok := false
 var _dead := false
 var _before_death := 1
 var _death_ok := false
+var _ad_revive_used := false     # já reviveu por anúncio nesta fase (libera de novo quando a fase muda/recomeça)
 var _goto_ok := false
 var _map_ok := true
 var _aud_ok := true
@@ -37,6 +38,7 @@ var _wk_timeout_ok := false
 var _wk_died_ok := false
 var _wk_entries_ok := false
 var _wk_res: Dictionary = {}
+var _ads_ok := false
 
 func _ready() -> void:
     _smoke = OS.get_cmdline_user_args().has("--smoke")
@@ -67,9 +69,11 @@ func _ready() -> void:
     stage_mgr.setup(player, enemies)
     Events.player_died.connect(_on_player_died)
     hud.death_dismissed.connect(_revive)
+    hud.death_ad_revived.connect(_revive_here)
     Events.goto_stage_requested.connect(func(s: int): stage_mgr.goto_stage(s))
     Events.state_changed.connect(_apply_fx)
     Events.stage_changed.connect(backdrop.set_stage)
+    Events.stage_changed.connect(func(_s: int): _ad_revive_used = false)
     Events.enemy_died.connect(_on_enemy_died_fx)
     Events.request_next_stage.connect(func(): stage_mgr.request_next())
     Events.debug_goto_stage.connect(func(s: int): stage_mgr.set_repeat(false); stage_mgr.start_stage(s))
@@ -99,7 +103,7 @@ func _on_player_died() -> void:
     _before_death = stage_mgr.stage
     AudioHub.play("die", 1.0, 0.0)
     player.visible = false          # quem cai é o anjo desenhado pela tela de morte
-    hud.show_death(player.global_position, maxi(1, stage_mgr.stage - 1))
+    hud.show_death(player.global_position, maxi(1, stage_mgr.stage - 1), stage_mgr.stage, not _ad_revive_used)
 
 func _revive() -> void:
     _dead = false
@@ -109,6 +113,16 @@ func _revive() -> void:
     var back: int = maxi(1, stage_mgr.stage - 1)
     stage_mgr.set_repeat(back < stage_mgr.stage)
     stage_mgr.start_stage(back)
+
+## Assistiu ao anúncio premiado na tela de morte: revive NO MESMO PONTO. A fase NÃO reinicia: inimigos, chefe
+## (com a vida que tinha), progresso e tempo continuam como estavam. O anjo volta com vida cheia e fica
+## alguns segundos invulnerável para não morrer de novo no mesmo instante.
+func _revive_here() -> void:
+    _dead = false
+    _ad_revive_used = true       # morrer de novo nesta mesma fase não oferece outro anúncio
+    player.visible = true
+    player.refresh_stats(true)
+    player.start_invulnerable(Player.REVIVE_INVULN_SECONDS)
 
 ## Explosão de partículas ao derrotar um inimigo (limitada para poupar aparelhos intermediários).
 func _on_enemy_died_fx(pos: Vector2, def: Dictionary, is_boss: bool, _gold: int) -> void:
@@ -300,6 +314,8 @@ func _process(_delta: float) -> void:
         4540:
             stage_mgr.start_stage(15)    # mini-chefe 2 (Cérbero das Cinzas)
             stage_mgr.to_spawn = 2
+    if _frames == 100:
+        _ads_ok = AdsManager.smoke_ok()    # anúncios: inerte sem o plugin, só IDs de teste
     _smoke_weekly_steps()
     # interface: menu (todas as abas) e perfil, com o desenho real rodando em frames seguidos
     var last_step: int = MenuModel.tabs(true).size() + 2   # abrir, 1 passo por aba, fechar+perfil, fechar perfil
@@ -314,8 +330,8 @@ func _process(_delta: float) -> void:
         var s: Dictionary = GameState.state
         var kinds: Array = _ability_kinds.keys()
         kinds.sort()
-        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d aud=%d sfx=%d wk=%d" % [
+        print("SMOKE_RESULT stage=%d gold=%d gems=%d hp=%.1f alive=%d casts=%d cleared=%d abilities=%d kinds=%s repeat=%d next=%d speed=%d fx=%d warn=%d mini=%d profile=%d pause=%d opt=%d title=%d death=%d goto=%d map=%d aud=%d sfx=%d wk=%d ads=%d" % [
             int(s["stage"]), int(s["gold"]), int(s["gems"]), player.hp, stage_mgr.alive, caster.casts, _cleared,
             _ability_count, ",".join(kinds), int(_repeat_ok), int(_next_ok), int(_speed_ok), int(_fx_ok), _warn_count, _mini_count, int(_profile_ok),
-            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok), int(_aud_ok), AudioHub.played, int(_wk_ok())])
+            int(hud.pause_checks >= 1 and hud.pause_errors == 0), int(_opt_ok), int(GameState.title_ok), int(_death_ok), int(_goto_ok), int(_map_ok), int(_aud_ok), AudioHub.played, int(_wk_ok()), int(_ads_ok)])
         get_tree().quit(0)

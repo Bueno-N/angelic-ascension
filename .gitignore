@@ -7,3 +7,6 @@ build/*.json
 export_credentials.cfg
 *.keystore
 __pycache__/
+
+# Modelo de build Android (gerado por "Projeto > Instalar modelo de build Android" e pelo CI; ~1 GB com o cache do Gradle)
+/android/

@@ -1,0 +1,70 @@
+name: AdMob (APK de teste com anúncios)
+
+# Roda SÓ manualmente (Actions > "AdMob (APK de teste com anúncios)" > Run workflow). Não afeta o fluxo normal (build.yml).
+# Instala o plugin no workspace, ativa o Gradle e exporta um APK debug com anúncios de TESTE.
+# NUNCA foi executado pelo autor (sem rede lá): a 1ª execução pode precisar de ajustes; mande o log.
+on:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.5"
+  GODOT_CHANNEL: stable
+
+jobs:
+  build-admob:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Instalar Godot
+        run: bash tools/ci/setup_godot.sh
+
+      - name: Instalar export templates
+        run: bash tools/ci/setup_templates.sh
+
+      - name: Configurar Android (SDK, keystore debug, Editor Settings)
+        run: bash tools/ci/setup_android.sh
+
+      - name: Instalar plugin AdMob + Android Build Template + Gradle
+        run: bash tools/ci/setup_admob.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Importar projeto (com o plugin)
+        run: bash tools/ci/import_project.sh
+
+      - name: Testes de lógica (inclui test_ads)
+        run: bash tools/ci/run_tests.sh
+
+      - name: Smoke run (AdsManager com o plugin presente, mas headless = inerte)
+        run: bash tools/ci/smoke_run.sh
+
+      - name: Exportar APK debug (Gradle)
+        run: bash tools/ci/build_apk.sh
+
+      - name: Conferir que o AdMob entrou no APK
+        run: |
+          unzip -l build/AngelicAscension-debug.apk | grep -iE "admob|ads" | head -20 || echo "nenhuma referência a admob/ads no APK (verifique o log)"
+          unzip -p build/AngelicAscension-debug.apk AndroidManifest.xml | strings | grep -iE "APPLICATION_ID|admob|permission.INTERNET|AD_ID" | head || true
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AngelicAscension-debug-admob-apk
+          path: build/AngelicAscension-debug.apk
+          if-no-files-found: error
+
+      - name: Enviar logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-admob
+          path: |
+            build/*.log
+            build/admob/*.json
+          if-no-files-found: warn

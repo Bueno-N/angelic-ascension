@@ -4,6 +4,8 @@ extends Node2D
 
 var hp: float = 100.0
 var max_hp: float = 100.0
+const REVIVE_INVULN_SECONDS := 2.5
+var invuln_t := 0.0              # > 0: não recebe dano (usado ao reviver pelo anúncio)
 var joystick: VirtualJoystick
 var fx_layer: Node2D
 var buffs := BuffState.new()
@@ -70,7 +72,12 @@ func heal(amount: float) -> void:
     hp = minf(max_hp, hp + amount)
     Events.player_hp_changed.emit(hp, max_hp)
 
+func start_invulnerable(seconds: float) -> void:
+    invuln_t = maxf(invuln_t, seconds)
+
 func take_damage(raw: float) -> void:
+    if invuln_t > 0.0:
+        return
     var after_shield: float = raw * (1.0 - buffs.absorb())
     hp -= StatsCalc.damage_after_armor(after_shield, get_stat("armor"))
     _hurt = 0.12
@@ -116,6 +123,9 @@ func _update_sparks() -> void:
 
 func _process(delta: float) -> void:
     buffs.tick(delta)
+    if invuln_t > 0.0:
+        invuln_t = maxf(0.0, invuln_t - delta)
+        visual.modulate.a = 1.0 if invuln_t <= 0.0 else (0.45 if int(invuln_t * 10.0) % 2 == 0 else 1.0)   # pisca enquanto invulnerável
     var dir := Vector2.ZERO
     if joystick != null:
         dir = joystick.output

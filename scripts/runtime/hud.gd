@@ -20,6 +20,7 @@ var _menu: MenuPanel
 var _profile: ProfilePanel
 var _death: DeathOverlay
 signal death_dismissed
+signal death_ad_revived       # assistiu ao anúncio premiado: revive onde parou (a fase não reinicia)
 var _smoke := false
 var pause_checks := 0      # smoke: quantas vezes o jogo entrou em pausa ao abrir o perfil
 var pause_errors := 0      # smoke: divergências entre "perfil aberto" e "jogo pausado"
@@ -87,6 +88,7 @@ func _ready() -> void:
     _death = DeathOverlay.new()      # por cima de tudo
     _root.add_child(_death)
     _death.dismissed.connect(_on_death_dismissed)
+    _death.ad_revived.connect(_on_death_ad_revived)
     _profile.visibility_changed.connect(_update_pause)
     _weekly = WeeklyPanel.new()      # tela cheia, por cima de tudo menos da morte
     _root.add_child(_weekly)
@@ -227,18 +229,22 @@ func _on_stage_changed(stg: int) -> void:
     _top.show_banner("FASE %d" % stg, "Dificuldade: %s" % StageLogic.tier_name(stg), "stage")
 
 ## Morte: congela o jogo e mostra a animação; o jogador toca na tela para voltar (ver Main).
-func show_death(world_pos: Vector2, to_stage: int) -> void:
+func show_death(world_pos: Vector2, to_stage: int, here_stage: int = 0, allow_ad: bool = true) -> void:
     _menu.close()
     _weekly.close()
     _map.close()
     if _profile.visible:
         _profile.close()
-    _death.start(world_pos, to_stage)
+    _death.start(world_pos, to_stage, here_stage, allow_ad)
     _update_pause()
 
 func _on_death_dismissed() -> void:
     _update_pause()
     death_dismissed.emit()
+
+func _on_death_ad_revived() -> void:
+    _update_pause()
+    death_ad_revived.emit()
 
 ## Só para o smoke do CI: 0 = painel semanal fechado/aberto com a fase 50 ainda não concluída; 1 = abre e entra na luta.
 func debug_weekly_step(step: int) -> bool:
