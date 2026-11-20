@@ -43,7 +43,7 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
     var boss_scale := 0.0
     if boss:
         var b := EnemiesDB.boss_for(st)
-        def = {"id": b["id"], "special": false}
+        def = {"id": b["id"], "special": false, "sprite": str(b["sprite"])}
         max_hp = StageLogic.boss_hp(st)
         dmg = StageLogic.boss_dmg(st)
         gold = StageLogic.boss_gold(st)
@@ -86,7 +86,10 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
 ## Sprite, habilidades e vida cheia (comum a todos os tipos de inimigo).
 func _build(sprite_name: String, sprite_scale: float, ability_ids: Array) -> void:
     _sprite_name = sprite_name
-    if MobArt.has(sprite_name) and not is_boss:
+    if BossArt.has(sprite_name):
+        _spr = BossArt.make(sprite_name, sprite_scale)    # arte nova dos chefes (andar, golpes das habilidades, morte)
+        _spr.animation_finished.connect(_on_anim_finished)
+    elif MobArt.has(sprite_name) and not is_boss:
         _spr = MobArt.make(sprite_name, sprite_scale)     # arte nova dos mobs (andar/atacar/conjurar/morrer)
         _spr.animation_finished.connect(_on_anim_finished)
     else:
@@ -202,8 +205,8 @@ func _play_attack() -> void:
         _spr.frame = 0
 
 func _on_anim_finished() -> void:
-    if _cast_id == "" and _spr.animation == "attack":
-        _spr.play("walk")
+    if _cast_id == "" and _dash_t <= 0.0 and _spr.animation != "walk" and _spr.animation != "die":
+        _spr.play("walk")   # golpe (ou golpe de habilidade do chefe) terminou: volta a andar
 
 ## Golpe corpo a corpo: cada tipo de mob tem o seu som; chefe e mini-chefe usam o grunhido pesado, mais grave.
 func _play_melee_sound() -> void:
@@ -229,7 +232,8 @@ func _start_cast(id: String, to: Vector2) -> void:
     abilities.start(id, EnemiesDB.ABILITIES)
     if is_boss or is_mini:
         AudioHub.play("warn", 1.0, 0.0)   # alerta sonoro junto com o aviso visual
-    _play("cast")   # pose de conjuração durante o aviso
+    var wind: String = BossArt.ability_anim(_sprite_name, id, 0)
+    _play(wind if wind != "" else "cast")   # pose de conjuração (ou preparação do golpe do chefe) durante o aviso
 
 ## Alvos escolhidos NO INÍCIO do aviso (o jogador vê onde vai cair e pode sair do lugar).
 func _plan_targets(id: String) -> Array:
@@ -254,7 +258,11 @@ func _execute_ability() -> void:
     var id := _cast_id
     var cfg: Dictionary = EnemiesDB.ABILITIES[id]
     _cast_id = ""
-    _play("walk")
+    var hit_anim: String = BossArt.ability_anim(_sprite_name, id, 1)
+    if hit_anim != "":
+        _play(hit_anim)   # chefe com arte nova: anima o golpe (volta a andar sozinho ao terminar)
+    else:
+        _play("walk")
     Events.ability_cast.emit(id)
     match id:
         "area_slam":
@@ -340,6 +348,8 @@ func _process_dash(delta: float) -> void:
     if not _dash_hit and player.global_position.distance_to(global_position) <= radius + float(cfg["width"]):
         _dash_hit = true
         player.take_damage(dmg * float(cfg["dmg_mult"]))
+    if _dash_t <= 0.0:
+        _play("walk")   # fim da investida
 
 func _burst(r: float, col: Color) -> void:
     _burst_at(global_position, r, col)
