@@ -86,7 +86,11 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
 ## Sprite, habilidades e vida cheia (comum a todos os tipos de inimigo).
 func _build(sprite_name: String, sprite_scale: float, ability_ids: Array) -> void:
     _sprite_name = sprite_name
-    _spr = SpriteLib.make(sprite_name, "walk", sprite_scale)
+    if MobArt.has(sprite_name) and not is_boss:
+        _spr = MobArt.make(sprite_name, sprite_scale)     # arte nova dos mobs (andar/atacar/conjurar/morrer)
+        _spr.animation_finished.connect(_on_anim_finished)
+    else:
+        _spr = SpriteLib.make(sprite_name, "walk", sprite_scale)   # chefes: folhas antigas
     _spr.modulate = _base_mod
     _spr.speed_scale = clampf(speed / 70.0, 0.6, 1.5)
     add_child(_spr)
@@ -136,6 +140,8 @@ func take_damage(amount: float) -> void:
     if is_boss or is_mini:
         Events.boss_hp_changed.emit(maxf(hp, 0.0), max_hp)
     if hp <= 0.0:
+        if _spr != null:
+            def["_flip"] = _spr.flip_h   # a animação de morte olha para o mesmo lado
         Events.enemy_died.emit(global_position, def, is_boss, gold)
         queue_free()
 
@@ -187,6 +193,17 @@ func _think(delta: float) -> void:
             player.take_damage(dmg)
             _atk_cd = 1.0
             _play_melee_sound()
+            _play_attack()
+
+## Animação de golpe (só a arte nova tem "attack"); ao terminar volta a andar.
+func _play_attack() -> void:
+    if _spr != null and _spr.sprite_frames != null and _spr.sprite_frames.has_animation("attack") and _cast_id == "":
+        _spr.play("attack")
+        _spr.frame = 0
+
+func _on_anim_finished() -> void:
+    if _cast_id == "" and _spr.animation == "attack":
+        _spr.play("walk")
 
 ## Golpe corpo a corpo: cada tipo de mob tem o seu som; chefe e mini-chefe usam o grunhido pesado, mais grave.
 func _play_melee_sound() -> void:

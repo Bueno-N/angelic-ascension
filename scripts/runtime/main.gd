@@ -128,6 +128,8 @@ func _revive_here() -> void:
 ## Explosão de partículas ao derrotar um inimigo (limitada para poupar aparelhos intermediários).
 func _on_enemy_died_fx(pos: Vector2, def: Dictionary, is_boss: bool, _gold: int) -> void:
     var settings: Dictionary = GameState.state["settings"]
+    if not is_boss and fx_layer.get_child_count() <= UiLogic.fx_cap(settings) * 2:
+        MobArt.spawn_death(fx_layer, pos, def)   # animação de morte do mob (arte nova)
     if fx_layer.get_child_count() > UiLogic.fx_cap(settings):
         return
     if not UiLogic.fx_enabled(settings) and not is_boss:
