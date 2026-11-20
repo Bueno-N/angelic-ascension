@@ -12,8 +12,9 @@ aparece como "MODO OFFLINE" e a recompensa semanal é só a de participação.
   + **invoca 1 chefe a cada 20 s** (até 4 vivos). Vida = 8x a do chefe da fase 300; dano = 1,2x.
 - Acabou o tempo: aparece **"O SEU TEMPO ACABOU"** e volta a partida normal. Se o anjo cai, a luta também acaba (sem a tela de morte comum).
 - **Pontuação** = dano causado ao Lucifer (se matar: vida dele + até 25% de bônus pelo tempo que sobrou). Vale o melhor da semana.
-- **Prêmios** (resgatados na semana seguinte, pela posição final): ver `WeeklyBoss.REWARD_RANKS` (1º = 600 gemas + 25 fragmentos ... top 500 = 40 gemas + 2;
-  depois top 10% = 30 gemas, top 50% = 20, participação = 10). Valores são PALPITE — ajuste em `scripts/logic/weekly_boss.gd`.
+- **Prêmio por luta** (pago na hora, em cada uma das 4 lutas): ouro + gemas pela % da vida do Lucifer tirada
+  (1/10/25/50/75%) e o maior ao derrotá-lo, escalado pela fase máxima do jogador (`WeeklyBoss.ATTEMPT_TIERS`).
+  O ranking mundial é só placar: **não há prêmio por posição**.
 
 ## Ligando o ranking (Supabase, grátis)
 1. Crie uma conta e um projeto em supabase.com (plano Free).

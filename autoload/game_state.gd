@@ -271,16 +271,6 @@ func weekly_attempt_reward(pct: float, killed: bool) -> Dictionary:
         save()
     return r
 
-## Resgata a recompensa da semana passada (gemas e fragmentos). Devolve a recompensa ({} se não havia).
-func weekly_claim(rank: int, total: int) -> Dictionary:
-    var r: Dictionary = WeeklyBoss.claim(state["weekly"], rank, total)
-    if not r.is_empty():
-        state["gems"] = int(state["gems"]) + int(r["gems"])
-        state["shards"] = int(state["shards"]) + int(r["shards"])
-        save()
-        Events.state_changed.emit()
-    return r
-
 # ---------------------------------------------------------------- gemas por anúncio (lógica em GemAdLogic)
 func _gem_ad_now() -> Array:
     var now: int = int(Time.get_unix_time_from_system())
@@ -311,7 +301,7 @@ func set_stage(stage: int) -> void:
 
 func _on_enemy_died(_pos: Vector2, def: Dictionary, is_boss: bool, gold: int) -> void:
     if def.get("summon", false) or def.get("weekly", false):
-        return   # invocações de chefes e o Lucifer não dão recompensa de fase (a recompensa do semanal vem do ranking)
+        return   # invocações de chefes e o Lucifer não dão recompensa de fase (o semanal paga o prêmio por luta: weekly_attempt_reward)
     var stage: int = int(state["stage"])
     state["gold"] = int(state["gold"]) + gold
     if is_boss:

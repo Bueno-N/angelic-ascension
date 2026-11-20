@@ -35,35 +35,18 @@ func test_four_entries_per_week_and_reset() -> void:
     WeeklyBoss.sync(w, 101)
     check(WeeklyBoss.entries_left(w) == 4 and int(w["week"]) == 101, "nova semana: 4 entradas de novo")
 
-func test_best_score_and_previous_week_kept_for_reward() -> void:
+func test_best_score_and_previous_week_kept() -> void:
     var w := WeeklyBoss.default_weekly()
     WeeklyBoss.sync(w, 10)
     check(WeeklyBoss.record(w, 500.0) and not WeeklyBoss.record(w, 400.0) and WeeklyBoss.record(w, 900.0), "só o melhor vale")
     check(float(w["best"]) == 900.0, "melhor = 900")
-    check(not WeeklyBoss.claimable(w), "nada a resgatar na mesma semana")
     WeeklyBoss.sync(w, 11)
     check(int(w["prev_week"]) == 10 and float(w["prev_best"]) == 900.0 and float(w["best"]) == 0.0, "a semana que acabou vira 'anterior'")
-    check(WeeklyBoss.claimable(w), "há prêmio da semana passada")
-    var r: Dictionary = WeeklyBoss.claim(w, 1, 50)
-    check(int(r["gems"]) == 600 and int(w["claimed"]) == 10, "1º lugar resgatado")
-    check(not WeeklyBoss.claimable(w) and WeeklyBoss.claim(w, 1, 50).is_empty(), "não resgata duas vezes")
-    var w2 := WeeklyBoss.default_weekly()
-    WeeklyBoss.sync(w2, 10)
-    WeeklyBoss.sync(w2, 11)
-    check(not WeeklyBoss.claimable(w2), "quem não jogou não tem prêmio")
 
-func test_rewards_by_rank() -> void:
-    var prev_gems := 1.0e9
-    for rk in [1, 2, 3, 5, 10, 30, 50, 80, 100, 300, 500]:
-        var g: int = int(WeeklyBoss.reward_for(rk, 100000)["gems"])
-        check(g > 0 and float(g) <= prev_gems, "prêmio nunca aumenta com a posição (#%d)" % rk)
-        prev_gems = float(g)
-    check(WeeklyBoss.reward_for(1, 10000)["label"] == "1O LUGAR" and int(WeeklyBoss.reward_for(1, 10000)["shards"]) > int(WeeklyBoss.reward_for(2, 10000)["shards"]), "1º ganha mais que o 2º")
-    check(WeeklyBoss.reward_for(900, 10000)["label"] == "TOP 10%", "posição 900 de 10000 = top 10%")
-    check(WeeklyBoss.reward_for(4000, 10000)["label"] == "TOP 50%", "4000 de 10000 = top 50%")
-    check(WeeklyBoss.reward_for(9000, 10000)["label"] == "PARTICIPACAO", "o resto recebe participação")
-    check(WeeklyBoss.reward_for(0, 0)["label"] == "PARTICIPACAO" and int(WeeklyBoss.reward_for(0, 0)["gems"]) > 0, "offline: participação")
-    check(int(WeeklyBoss.REWARD_RANKS[0]["gems"]) <= 1000, "prêmio máximo moderado perto da economia (~6,5 mil gemas até a fase 300)")
+func test_no_ranking_reward_anymore() -> void:
+    for n in ["REWARD_RANKS", "REWARD_PERCENTILES", "REWARD_PARTICIPATION"]:
+        check(not (load("res://scripts/logic/weekly_boss.gd") as Script).get_script_constant_map().has(n), "sem prêmio por ranking: " + n)
+    check(not (load("res://autoload/game_state.gd") as Script).get_script_method_list().any(func(m): return m["name"] == "weekly_claim"), "sem resgate do ranking")
 
 func test_score() -> void:
     var hp: float = WeeklyBoss.lucifer_hp()
@@ -146,11 +129,11 @@ func test_parse_server_overview() -> void:
 func test_offline_by_default_and_texts_fit_the_font() -> void:
     check(not OnlineConfig.enabled() or (OnlineConfig.URL.begins_with("https://") and OnlineConfig.ANON_KEY.length() > 20), "sem servidor = offline; com servidor = https e chave")
     var texts := ["BOSS", "SEMANAL", "BOSS SEMANAL: LUCIFER", "BLOQUEADO: conclua a fase ", "ENTRADAS: ", "Nova semana em: ", "Tempo da luta: ", "Seu melhor: ",
-        "Lucifer invoca 1 chefe a cada ", " s", "PREMIOS (ranking da semana)", " gemas, ", " frag.", "Demais: top 10% e participacao", "RANKING MUNDIAL",
+        "Lucifer invoca 1 chefe a cada ", " s", "PRÊMIO POR LUTA (% da vida tirada)", " ouro, ", " gemas", "Valores para a sua fase máxima (", "RANKING MUNDIAL",
         "MODO OFFLINE", "Servidor nao configurado", "(veja docs/ONLINE.md)", "Sua pontuacao fica salva aqui", "Carregando...", "SEM CONEXAO",
-        "Ninguem pontuou ainda", "VOCE: ", " de ", "ENTRAR", "RESGATAR PREMIO", "ATUALIZAR", "SEM ENTRADAS NESTA SEMANA", "SEM CONEXAO: nao foi possivel entrar",
-        "Conectando...", "O SEU TEMPO ACABOU", "LUCIFER DERROTADO!", "VOCE CAIU", "Pontos: ", "TEMPO ", "Conclua a fase ", " para liberar", "GEMAS", "FRAGMENTOS",
-        "1O LUGAR", "2O LUGAR", "3O LUGAR", "TOP 10", "TOP 50", "TOP 100", "TOP 500", "TOP 10%", "TOP 50%", "PARTICIPACAO", "TEMPO", "Lucifer, o Caído"]
+        "Ninguem pontuou ainda", "VOCE: ", " de ", "ENTRAR", "ATUALIZAR", "SEM ENTRADAS NESTA SEMANA", "SEM CONEXAO: nao foi possivel entrar",
+        "Conectando...", "O SEU TEMPO ACABOU", "LUCIFER DERROTADO!", "VOCE CAIU", "% da vida", "  |  +", " ouro  +", " gemas",
+        "  |  sem prêmio (tire 1%)", "TEMPO ", "Conclua a fase ", " para liberar", "TEMPO", "Lucifer, o Caído"]
     for t in texts:
         for i in range(t.length()):
             check(SpriteManifest.FONT_CHARS.contains(t[i]), "caractere '%s' de \"%s\" existe na fonte pixel" % [t[i], t])

@@ -1,28 +1,14 @@
 class_name WeeklyBoss
 extends RefCounted
-## Boss semanal (Lucifer): LÓGICA PURA (não usa autoloads; testável). Semana, entradas, pontuação, recompensas por posição.
+## Boss semanal (Lucifer): LÓGICA PURA (não usa autoloads; testável). Semana, entradas, pontuação e prêmio por luta.
 ## A semana começa na SEGUNDA 00:00 UTC (a época Unix, 1970-01-01, foi uma quinta: segunda = +4 dias).
-## Estado por conta em state["weekly"]: {pid, week, entries, best, prev_week, prev_best, claimed}.
+## Estado por conta em state["weekly"]: {pid, week, entries, best, prev_week, prev_best, claimed}
+## (prev_week/prev_best/claimed sobraram do antigo prêmio por ranking; ficam só para compatibilidade dos saves).
 
 const WEEK_SECONDS := 604800
 const MONDAY_OFFSET := 4 * 86400
 
-# Recompensas por posição no ranking mundial da semana ANTERIOR (valores são PALPITE; ver docs/ONLINE.md).
-# Faixas por posição absoluta, depois por percentil, depois participação.
-const REWARD_RANKS := [
-    {"max_rank": 1, "gems": 600, "shards": 25, "label": "1O LUGAR"},
-    {"max_rank": 2, "gems": 400, "shards": 18, "label": "2O LUGAR"},
-    {"max_rank": 3, "gems": 300, "shards": 14, "label": "3O LUGAR"},
-    {"max_rank": 10, "gems": 180, "shards": 8, "label": "TOP 10"},
-    {"max_rank": 50, "gems": 100, "shards": 4, "label": "TOP 50"},
-    {"max_rank": 100, "gems": 70, "shards": 3, "label": "TOP 100"},
-    {"max_rank": 500, "gems": 40, "shards": 2, "label": "TOP 500"},
-]
-const REWARD_PERCENTILES := [
-    {"max_pct": 0.10, "gems": 30, "shards": 1, "label": "TOP 10%"},
-    {"max_pct": 0.50, "gems": 20, "shards": 0, "label": "TOP 50%"},
-]
-const REWARD_PARTICIPATION := {"gems": 10, "shards": 0, "label": "PARTICIPACAO"}
+# Prêmio: só POR LUTA (ATTEMPT_TIERS, abaixo). O ranking mundial é apenas placar, sem prêmio por posição.
 
 # ---------------------------------------------------------------- semana
 static func week_id(unix: int) -> int:
@@ -93,7 +79,7 @@ static func make_pid(rng: RandomNumberGenerator) -> String:
             out += hex[rng.randi_range(0, 15)]
     return out
 
-## Muda de semana: guarda a pontuação da semana que acabou (para a recompensa) e zera entradas/melhor.
+## Muda de semana: guarda a pontuação da semana que acabou e zera entradas/melhor.
 static func sync(w: Dictionary, week: int) -> void:
     if int(w["week"]) == week:
         return
@@ -200,31 +186,6 @@ static func attempt_reward(pct: float, killed: bool, max_stage: int) -> Dictiona
     var r := tier_reward(attempt_tier(clampf(pct, 0.0, 1.0), killed), max_stage)
     r["pct"] = 1.0 if killed else clampf(pct, 0.0, 1.0)
     return r
-
-# ---------------------------------------------------------------- recompensas do RANKING (semana anterior)
-## rank <= 0 = sem ranking online (modo offline): só participação.
-static func reward_for(rank: int, total: int) -> Dictionary:
-    if rank > 0:
-        for r in REWARD_RANKS:
-            if rank <= int(r["max_rank"]):
-                return {"gems": int(r["gems"]), "shards": int(r["shards"]), "label": str(r["label"])}
-        if total > 0:
-            var pct: float = float(rank) / float(total)
-            for p in REWARD_PERCENTILES:
-                if pct <= float(p["max_pct"]):
-                    return {"gems": int(p["gems"]), "shards": int(p["shards"]), "label": str(p["label"])}
-    return REWARD_PARTICIPATION.duplicate()
-
-## Há recompensa da semana passada para resgatar?
-static func claimable(w: Dictionary) -> bool:
-    return int(w["prev_week"]) > 0 and float(w["prev_best"]) > 0.0 and int(w["prev_week"]) > int(w["claimed"])
-
-## Marca como resgatada e devolve a recompensa ({} se não havia).
-static func claim(w: Dictionary, rank: int, total: int) -> Dictionary:
-    if not claimable(w):
-        return {}
-    w["claimed"] = int(w["prev_week"])
-    return reward_for(rank, total)
 
 # ---------------------------------------------------------------- textos (só caracteres da fonte pixel)
 static func fmt_clock(secs: float) -> String:
