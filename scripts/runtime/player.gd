@@ -133,7 +133,7 @@ func _process(delta: float) -> void:
     if dir.x != 0.0:
         visual.face(dir.x)
     visual.set_speed(get_stat("attack_speed"))
-    visual.set_hell(buffs.is_active("death_of_hell"))   # A MORTE DO INFERNO: anjo envolto em fogo e ataque enfeitado
+    visual.set_hell(buffs.is_active("death_of_hell"))   # A MORTE DO INFERNO: transformação, forma de poder e raio
 
     if hp > 0.0 and hp < max_hp:
         hp = minf(max_hp, hp + StatsCalc.regen_amount(max_hp, delta))
@@ -199,8 +199,7 @@ func _attack(target: Node2D) -> void:
             SpriteFx.spawn(fx_layer, "fx_hit", at, 2.0, Color(1.0, 0.75, 0.3))
         else:
             AngelShot.muzzle(fx_layer, hand, at)
-            AngelShot.bolt(fx_layer, hand, at)
-            SpriteFx.spawn(fx_layer, "fx_hit", at, 1.4, Color(1.0, 0.9, 0.5))
+            AngelShot.bolt(fx_layer, hand, at)   # o cometa estoura em luz ao chegar no alvo
 
 func _nearest_enemy(max_dist: float) -> Node2D:
     var best: Node2D = null

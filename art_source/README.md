@@ -5,7 +5,9 @@ Esta pasta tem `.gdignore`: o Godot NÃO importa nem exporta nada daqui (não pe
 | Arquivo | O que é | Uso |
 |---|---|---|
 | `fire_props_sheet.png` | Folha de tochas, braseiros, pilares, lanternas, fogueiras, fumaça e efeitos de fogo (com transparência) | Recortada em `assets/env/` (brazier, torch_wall, torch_pillar, lantern, ground_fire_0..4) |
-| `angel_sheet.jpg` | Arte do anjo (11 poses, fundo branco) | Recortada em `assets/angel/` com fundo removido; âncoras (peito) em `AngelSprite.ANCHORS`. Poses `hell_*` só com a habilidade A MORTE DO INFERNO; `folded` (asas fechadas) guardada sem uso |
+| `angel_sheet.jpg` | Arte ANTERIOR do anjo (11 poses, fundo branco) | **Sem uso** (substituída pela v2). Só o raio `hell_beam.png` continua vindo dela |
+| `angel_v2_b.webp` | Anjo v2: parado (7), ataque de raio, Power Surge e voo, fundo branco | Recortada em `assets/angel/`: `idle_0..6`, `atk_charge/release/follow`, `comet`, `orb`, `surge_0..4`, `power`, `swirl`. Âncora = centro do rosto (`AngelSprite.ANCHORS`), mão em `AngelSprite.HANDS`. **Sem uso por enquanto:** a linha de voo (Flying) |
+| `angel_v2_c.webp`, `angel_v2_ultra.webp` | Mesmas poses redesenhadas (asas iguais); a `ultra` tem a fase Ultra-Power com céu/chão desenhados atrás | Guardadas. As da `ultra` com cenário não dão para recortar sem refazer o fundo |
 | `mobs_sheet.webp` | Mobs (gosma, guerreiro de escudo, espectro, golem de lava, diabinho, demônio roxo, aranha) e 4 anjos | Recortada em `assets/mobs/` (dados em `MobArt.SHEETS`). **Sem uso por enquanto:** aranha e os 4 anjos |
 | `world_props_sheet.png` | Objetos do **mundo aberto** (portal, arcos, muralhas, estandartes, ilhas flutuantes, chão de lava) | **Guardada para depois.** Atenção: o fundo xadrez está DESENHADO na imagem (não é transparência de verdade); antes de usar, precisa remover o xadrez ou pedir a folha com fundo transparente |
 

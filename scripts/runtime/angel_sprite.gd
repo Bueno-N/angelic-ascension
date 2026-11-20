@@ -1,56 +1,51 @@
 class_name AngelSprite
 extends Node2D
-## Anjo com a arte nova (assets/angel/*.png, recortada de art_source/angel_sheet.jpg): uma imagem por POSE.
-## Todas as poses ficam alinhadas pelo peito do anjo (ANCHORS), então trocar de pose não faz o anjo "pular".
+## Anjo com a arte nova (assets/angel/*.png, recortada de art_source/angel_v2_b.webp): um quadro por imagem.
+## Todos os quadros ficam alinhados pelo ROSTO do capuz (ANCHORS), então trocar de quadro não faz o anjo "pular".
 ##
-## Poses normais: idle (parado), cast (conjurando), attack_1_body -> attack_2_body (braço estendido; o disparo é um AngelShot).
-## Brilho das asas (glow_tier): idle vira glow_1 (tiers 1-3) ou glow_2 (tiers 4+).
-## MODO INFERNO (só enquanto a habilidade "A MORTE DO INFERNO" está ativa, ver set_hell):
-##   parado = hell_1 <-> hell_2 (fogo em volta), ataque = hell_attack_body + RAIO (AngelShot.beam), conjuração = hell_cast.
-## A arte é fixa: asas e equipamentos não mudam mais o desenho do anjo (continuam valendo nos atributos).
+## Normal:  parado = idle_0..6 em laço (asas batendo); ataque = atk_release -> atk_follow (o disparo é um AngelShot);
+##          conjuração = atk_charge -> surge_0.
+## Brilho das asas (glow_tier): um contorno dourado aditivo atrás do anjo, mais forte a cada tier.
+## A MORTE DO INFERNO (set_hell): ao ligar, transformação surge_0..surge_3 (esfera de luz e chamas douradas) e depois
+##          a forma de poder (power); ataque = surge_4 (punho erguido) + RAIO (AngelShot.beam); conjuração = surge_2.
+## A arte é fixa: o nível das asas e os equipamentos não mudam o desenho (continuam valendo nos atributos).
 
 const DIR := "res://assets/angel/"
-const SPRITE_SCALE := 0.5          # imagens em alta resolução (~250 px) -> ~125 px na tela (como o anjo antigo)
-const CHEST_Y := -6.0              # onde o peito fica em relação à posição do nó
-## Ponto do peito em cada imagem (gerado pelo recorte; ver art_source/README.md).
+const SPRITE_SCALE := 0.9          # quadros com ~135 px de altura -> ~122 px na tela
+const CHEST_Y := -18.0             # onde o rosto fica em relação à posição do nó (o corpo fica centrado no nó)
+## Centro do rosto em cada imagem (gerado pelo recorte; ver art_source/README.md).
 const ANCHORS := {
-    "idle": Vector2(122.8, 121.2),
-    "cast": Vector2(135.4, 144.0),
-    "attack_1": Vector2(137.3, 120.1),
-    "attack_2": Vector2(120.9, 120.6),
-    "glow_1": Vector2(141.2, 111.9),
-    "glow_2": Vector2(148.1, 123.6),
-    "hell_1": Vector2(132.8, 213.9),
-    "hell_2": Vector2(149.6, 190.3),
-    "hell_attack": Vector2(127.7, 166.8),
-    "attack_1_body": Vector2(137.3, 120.1),       # mesmas âncoras: o corpo foi recortado da mesma imagem (x desde 0)
-    "attack_2_body": Vector2(120.9, 120.6),
-    "hell_attack_body": Vector2(127.7, 166.8),
-    "hell_cast": Vector2(131.3, 120.3),
-    "folded": Vector2(116.5, 126.8),
+    "idle_0": Vector2(65.3, 48.2), "idle_1": Vector2(77.8, 46.7), "idle_2": Vector2(68.0, 42.3),
+    "idle_3": Vector2(71.6, 39.0), "idle_4": Vector2(71.6, 38.7), "idle_5": Vector2(68.9, 36.1), "idle_6": Vector2(72.8, 39.3),
+    "atk_charge": Vector2(76.8, 50.0), "atk_release": Vector2(75.5, 48.6), "atk_follow": Vector2(68.4, 52.8),
+    "surge_0": Vector2(73.8, 51.5), "surge_1": Vector2(73.5, 53.7), "surge_2": Vector2(89.4, 73.2),
+    "surge_3": Vector2(72.1, 121.9), "surge_4": Vector2(90.8, 112.1), "power": Vector2(79.3, 74.7),
 }
-## Mão de onde sai o disparo (pixels da imagem), nas poses de ataque. O disparo em si é um AngelShot separado,
-## que mira no inimigo; por isso as poses de ataque usam só o CORPO (*_body), sem o efeito desenhado na imagem.
+## Mão de onde sai o disparo (pixels da imagem), nas poses de ataque.
 const HANDS := {
-    "attack_1_body": Vector2(200.0, 125.0),
-    "attack_2_body": Vector2(200.0, 126.0),
-    "hell_attack_body": Vector2(228.0, 128.0),
+    "atk_release": Vector2(117.0, 59.0),
+    "atk_follow": Vector2(109.0, 54.0),
+    "surge_4": Vector2(114.0, 50.0),
 }
+const IDLE_FRAMES := ["idle_0", "idle_1", "idle_2", "idle_3", "idle_4", "idle_5", "idle_6"]
+const IDLE_FPS := 7.0
+const TRANSFORM_FRAMES := ["surge_0", "surge_1", "surge_2", "surge_3"]
+const TRANSFORM_FRAME := 0.09      # segundos por quadro da transformação
 const ATTACK_FRAME := 0.11         # segundos por quadro do ataque (dividido pela velocidade)
 const CAST_TIME := 0.45
-const HELL_FPS := 6.0
 
 static var _tex: Dictionary = {}
 
+var _glow: Sprite2D                # contorno dourado (brilho das asas / poder)
 var _spr: Sprite2D
 var _cur := "idle"
-var _idle_pose := "idle"
+var _glow_tier := 0
 var _hell := false
 var _speed := 1.0
 var _t := 0.0                      # tempo na animação atual
-var _bob := 0.0
+var _clock := 0.0                  # relógio contínuo (laço do idle, flutuar, pulsar)
 
-## Estágio das asas (0..3) a partir do nível (0..10). Mantido para a lógica/testes (a arte nova não muda com ele).
+## Estágio das asas (0..3) a partir do nível (0..10). Mantido para a lógica/testes (a arte não muda com ele).
 static func wings_stage(level: int) -> int:
     return clampi(floori(float(level) / 3.0), 0, 3)
 
@@ -60,27 +55,28 @@ static func pose_texture(pose: String) -> Texture2D:
         _tex[pose] = load(path) if ResourceLoader.exists(path) else null
     return _tex[pose]
 
-## Pose de parado conforme o brilho das asas.
-static func idle_pose_for(glow_tier: int) -> String:
-    if glow_tier >= 4:
-        return "glow_2"
-    if glow_tier >= 1:
-        return "glow_1"
-    return "idle"
+## Intensidade (0..1) do contorno dourado para o brilho das asas.
+static func glow_alpha(glow_tier: int) -> float:
+    return 0.0 if glow_tier <= 0 else minf(0.75, 0.2 + 0.09 * float(glow_tier))
 
-## Pose mostrada para uma animação/tempo (lógica pura, testável).
-static func pose_for(anim: String, t: float, hell: bool, idle_pose: String, speed: float) -> String:
+## Quadro mostrado para uma animação/tempo (lógica pura, testável).
+## `clock` é o relógio contínuo (só usado no laço do idle).
+static func pose_for(anim: String, t: float, hell: bool, speed: float, clock: float = 0.0) -> String:
     var fdur: float = ATTACK_FRAME / clampf(speed, 0.8, 3.0)
     match anim:
+        "transform":
+            return TRANSFORM_FRAMES[clampi(int(t / TRANSFORM_FRAME), 0, TRANSFORM_FRAMES.size() - 1)]
         "attack":
             if hell:
-                return "hell_attack_body"
-            return "attack_1_body" if t < fdur else "attack_2_body"
+                return "surge_4"
+            return "atk_release" if t < fdur else "atk_follow"
         "cast":
-            return "hell_cast" if hell else "cast"
+            if hell:
+                return "surge_2"
+            return "atk_charge" if t < CAST_TIME * 0.45 else "surge_0"
     if hell:
-        return "hell_1" if int(t * HELL_FPS) % 2 == 0 else "hell_2"
-    return idle_pose
+        return "power"
+    return IDLE_FRAMES[int(clock * IDLE_FPS) % IDLE_FRAMES.size()]
 
 ## Duração de uma animação que volta sozinha para o idle (0 = em laço).
 static func anim_length(anim: String, hell: bool, speed: float) -> float:
@@ -90,25 +86,40 @@ static func anim_length(anim: String, hell: bool, speed: float) -> float:
             return fdur * (2.6 if hell else 2.0)
         "cast":
             return CAST_TIME
+        "transform":
+            return TRANSFORM_FRAME * float(TRANSFORM_FRAMES.size())
     return 0.0
 
 func _init() -> void:
-    _spr = Sprite2D.new()
-    _spr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-    _spr.centered = false
-    _spr.scale = Vector2(SPRITE_SCALE, SPRITE_SCALE)
-    add_child(_spr)
-    _show(_idle_pose)
+    _glow = _make_layer()
+    _glow.material = SpriteLib.additive()
+    _glow.visible = false
+    _spr = _make_layer()
+    _show(current_pose())
+
+func _make_layer() -> Sprite2D:
+    var s := Sprite2D.new()
+    s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+    s.centered = false
+    s.scale = Vector2(SPRITE_SCALE, SPRITE_SCALE)
+    add_child(s)
+    return s
 
 func set_look(_wings_level: int, glow_tier: int, _equipped: Dictionary) -> void:
-    _idle_pose = idle_pose_for(glow_tier)
+    _glow_tier = glow_tier
     _refresh()
 
-## Liga/desliga o visual da MORTE DO INFERNO (fogo em volta e ataque enfeitado).
+## Liga/desliga A MORTE DO INFERNO: ao ligar, toca a transformação (esfera de luz) e um redemoinho de luz.
 func set_hell(on: bool) -> void:
-    if on != _hell:
-        _hell = on
-        _refresh()
+    if on == _hell:
+        return
+    _hell = on
+    if on:
+        play_anim("transform")
+        AngelShot.burst(self, Vector2(0.0, CHEST_Y + 14.0))
+    elif _cur == "transform" or _cur == "attack" or _cur == "cast":
+        play_anim("idle")
+    _refresh()
 
 func is_hell() -> bool:
     return _hell
@@ -138,17 +149,17 @@ func current_anim() -> String:
 
 ## Ponto da mão (coordenadas locais deste nó, já com o espelhamento do face()) no 1º quadro do ataque.
 func hand_local() -> Vector2:
-    var pose: String = "hell_attack_body" if _hell else "attack_1_body"
+    var pose: String = "surge_4" if _hell else "atk_release"
     var h: Vector2 = HANDS[pose]
     var a: Vector2 = ANCHORS[pose]
     return Vector2((h.x - a.x) * SPRITE_SCALE, (h.y - a.y) * SPRITE_SCALE + CHEST_Y)
 
 func current_pose() -> String:
-    return pose_for(_cur, _t, _hell, _idle_pose, _speed)
+    return pose_for(_cur, _t, _hell, _speed, _clock)
 
 func _process(delta: float) -> void:
     _t += delta
-    _bob += delta
+    _clock += delta
     var len: float = anim_length(_cur, _hell, _speed)
     if len > 0.0 and _t >= len:
         _cur = "idle"
@@ -162,8 +173,20 @@ func _show(pose: String) -> void:
     var tex: Texture2D = pose_texture(pose)
     if tex == null:
         return
-    if _spr.texture != tex:
-        _spr.texture = tex
     var a: Vector2 = ANCHORS.get(pose, Vector2(tex.get_width() / 2.0, tex.get_height() / 2.0))
-    var bob: float = sin(_bob * 2.4) * 2.5 if _cur == "idle" else 0.0   # flutua de leve quando parado
-    _spr.position = Vector2(-a.x * SPRITE_SCALE, -a.y * SPRITE_SCALE + CHEST_Y + bob)
+    var bob: float = sin(_clock * 2.4) * 2.5 if _cur == "idle" else 0.0   # flutua de leve quando parado
+    var pos := Vector2(0.0, CHEST_Y + bob)
+    for s in [_spr, _glow]:
+        if s.texture != tex:
+            s.texture = tex
+        s.offset = -a
+        s.position = pos
+    # contorno dourado: brilho das asas; na Morte do Inferno pulsa mais forte
+    var ga: float = glow_alpha(_glow_tier)
+    var gs: float = 1.06
+    if _hell:
+        ga = 0.45 + 0.2 * sin(_clock * 6.0)
+        gs = 1.08 + 0.02 * sin(_clock * 6.0)
+    _glow.visible = ga > 0.0
+    _glow.modulate = Color(1.0, 0.85, 0.45, ga)
+    _glow.scale = Vector2(SPRITE_SCALE, SPRITE_SCALE) * gs
