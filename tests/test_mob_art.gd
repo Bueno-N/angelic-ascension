@@ -18,7 +18,7 @@ func test_every_mob_type_has_new_art() -> void:
 func test_mob_size_on_screen() -> void:
     for sp in MobArt.SHEETS:
         var h: float = float(MobArt.SHEETS[sp]["walk_h"]) * MobArt.scale_for(sp, EnemiesDB.SPRITE_SCALE)
-        check(h > 50.0 and h < 95.0, "%s: altura na tela razoável (%d px)" % [sp, int(h)])
+        check(h > 40.0 and h < 80.0, "%s: altura na tela razoável (%d px)" % [sp, int(h)])
         var hm: float = float(MobArt.SHEETS[sp]["walk_h"]) * MobArt.scale_for(sp, Balance.MINI_SCALE)
         check(hm > h * 1.3, "%s: mini-chefe maior que o mob comum" % sp)
 

@@ -16,8 +16,8 @@ const SHEETS := {
     "caster": {"cell": Vector2i(156, 106), "walk_h": 86, "anims": {"cast":[5,6],"die":[7,8],"walk":[0,1,2,3,4]}},
     "leech": {"cell": Vector2i(108, 98), "walk_h": 81, "anims": {"attack":[5],"cast":[6],"die":[7],"walk":[0,1,2,3,4]}},
 }
-const BASE_HEIGHT := 66.0          # altura na tela andando, na escala normal de mob (EnemiesDB.SPRITE_SCALE)
-const HEIGHT_MULT := {"imp": 1.0, "warrior": 1.12, "shadow": 1.0, "hound": 1.3, "caster": 1.05, "leech": 0.9}
+const BASE_HEIGHT := 56.0          # altura na tela andando, na escala normal de mob (EnemiesDB.SPRITE_SCALE)
+const HEIGHT_MULT := {"imp": 1.0, "warrior": 1.12, "shadow": 1.0, "hound": 1.2, "caster": 1.05, "leech": 0.9}
 const FPS := {"walk": 8.0, "attack": 12.0, "cast": 6.0, "die": 9.0}
 const LOOP := {"walk": true, "attack": false, "cast": true, "die": false}
 const DEATH_FADE := 0.45           # segundos parado no chão sumindo, depois da animação de morte
