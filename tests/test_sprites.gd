@@ -111,7 +111,7 @@ func test_new_angel_art_poses() -> void:
         if t != null:
             var an: Vector2 = AngelSprite.ANCHORS[pose]
             check(an.x > 0.0 and an.y > 0.0 and an.x < t.get_width() and an.y < t.get_height(), "âncora de %s dentro da imagem" % pose)
-    for f in AngelSprite.IDLE_FRAMES + AngelSprite.TRANSFORM_FRAMES:
+    for f in AngelSprite.IDLE_FRAMES + AngelSprite.FLY_FRAMES:
         check(AngelSprite.ANCHORS.has(f), "quadro %s tem âncora" % f)
     check(AngelSprite.glow_alpha(0) == 0.0 and AngelSprite.glow_alpha(2) > 0.0 and AngelSprite.glow_alpha(6) > AngelSprite.glow_alpha(2), "brilho das asas: contorno mais forte a cada tier")
 
@@ -121,33 +121,30 @@ func test_idle_loops_all_frames() -> void:
         seen[AngelSprite.pose_for("idle", 0.0, false, 1.0, float(i) * 0.05)] = true
     check(seen.size() == AngelSprite.IDLE_FRAMES.size(), "parado: passa pelos %d quadros (asas batendo)" % AngelSprite.IDLE_FRAMES.size())
 
-func test_power_frames_only_with_death_of_hell() -> void:
-    var normal: Array = []
-    for anim in ["idle", "attack", "cast"]:
-        for t in [0.0, 0.05, 0.12, 0.2, 0.4, 0.9]:
-            normal.append(AngelSprite.pose_for(anim, t, false, 1.0, t))
-    for p in normal:
-        check(not (str(p) in ["power", "surge_2", "surge_3", "surge_4"]), "sem a Morte do Inferno nunca usa quadro de poder (%s)" % p)
-    check(AngelSprite.pose_for("attack", 0.0, false, 1.0) == "atk_release" and AngelSprite.pose_for("attack", 0.15, false, 1.0) == "atk_follow", "ataque normal: soltar -> acompanhar")
-    check(AngelSprite.pose_for("attack", 0.0, true, 1.0) == "surge_4", "Morte do Inferno: pose do raio")
-    check(AngelSprite.pose_for("idle", 0.3, true, 1.0) == "power", "Morte do Inferno: forma de poder")
-    check(AngelSprite.pose_for("cast", 0.0, true, 1.0) == "surge_2", "Morte do Inferno: conjuração na esfera")
-    var tr: Array = []
-    for i in range(AngelSprite.TRANSFORM_FRAMES.size()):
-        tr.append(AngelSprite.pose_for("transform", (float(i) + 0.5) * AngelSprite.TRANSFORM_FRAME, true, 1.0))
-    check(tr == AngelSprite.TRANSFORM_FRAMES, "transformação toca os quadros em ordem")
+func test_flying_frames_when_moving() -> void:
+    var seen := {}
+    for i in range(20):
+        seen[AngelSprite.pose_for("idle", 0.0, true, 1.0, float(i) * 0.05)] = true
+    check(seen.size() == AngelSprite.FLY_FRAMES.size(), "andando: passa pelos quadros de voo")
+    for p in seen.keys():
+        check(str(p).begins_with("fly_"), "andando usa só quadros de voo (%s)" % p)
+    check(AngelSprite.pose_for("attack", 0.0, true, 1.0) == "atk_release", "ataque tem prioridade sobre o voo")
     var a := AngelSprite.new()
+    a.set_moving(true)
+    check(a.is_moving() and a.current_pose().begins_with("fly_"), "sprite voando ao andar")
+    a.set_moving(false)
+    check(a.current_pose().begins_with("idle_"), "parou: volta ao idle")
+    a.free()
+
+func test_death_of_hell_keeps_body_changes_only_attack() -> void:
+    var a := AngelSprite.new()
+    var before: String = a.current_pose()
     a.set_hell(true)
-    check(a.current_anim() == "transform", "ligar a Morte do Inferno toca a transformação")
-    check(a.get_child_count() >= 3, "redemoinho de luz ao transformar")
+    check(a.is_hell() and a.current_anim() == "idle" and a.current_pose() == before, "Morte do Inferno não muda o corpo (sem transformação)")
     a.attack()
-    check(a.is_hell() and a.current_pose() == "surge_4", "sprite no modo inferno")
-    var hh: Vector2 = a.hand_local()
-    a.set_hell(false)
-    check(a.current_anim() == "idle" and a.current_pose().begins_with("idle_"), "acabou a habilidade: volta ao normal")
-    a.attack()
+    check(a.current_pose() == "atk_release", "mesma pose de ataque")
     var hn: Vector2 = a.hand_local()
-    check(hn.x > 20.0 and hh.x > 10.0 and absf(hn.y) < 40.0, "a mão fica à frente do corpo (o disparo sai dela)")
+    check(hn.x > 20.0 and absf(hn.y) < 40.0, "a mão fica à frente do corpo (o disparo sai dela)")
     a.free()
 
 func test_attack_shots() -> void:
@@ -158,11 +155,15 @@ func test_attack_shots() -> void:
     var parent := Node2D.new()
     var b := AngelShot.bolt(parent, Vector2.ZERO, Vector2(0.0, 300.0))
     check(absf(b.rotation - PI / 2.0) < 0.01, "cometa mira para baixo quando o inimigo está embaixo")
-    var bm := AngelShot.beam(parent, Vector2.ZERO, Vector2(-200.0, 0.0))
-    check(absf(absf(bm.rotation) - PI) < 0.01, "raio mira para a esquerda")
+    var sp := AngelShot.sphere(parent, Vector2.ZERO, Vector2(-200.0, 0.0))
+    check(sp.kind == "sphere" and absf(absf(sp.rotation) - PI) < 0.01, "esfera de poder vai para a esquerda")
     check(parent.get_child_count() == 2, "um disparo por ataque em cada modo")
     b._process(10.0)
-    check(parent.get_child_count() == 3 and (parent.get_child(2) as AngelShot).kind == "pop", "cometa estoura em luz ao chegar")
+    sp._process(10.0)
+    var kinds: Array = []
+    for c in parent.get_children():
+        kinds.append((c as AngelShot).kind)
+    check(kinds.has("pop") and kinds.has("blast"), "cometa estoura em luz e a esfera explode ao chegar")
     parent.free()
 
 func test_art_license_notice_exists() -> void:

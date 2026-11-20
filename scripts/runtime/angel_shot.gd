@@ -2,20 +2,20 @@ class_name AngelShot
 extends Node2D
 ## Disparos do anjo, separados do corpo (assets/angel/), para MIRAR no inimigo em qualquer direção:
 ##   muzzle = esfera de luz que acende na mão;  bolt = cometa de luz que voa até o alvo e estoura (pop) ao chegar;
-##   beam   = o RAIO da A MORTE DO INFERNO, saindo da mão e esticado até o alvo (substitui o cometa);
-##   burst  = redemoinho de luz da transformação da Morte do Inferno.
+##   sphere = a ESFERA DE PODER da A MORTE DO INFERNO (redemoinho dourado do Power Surge): sai da mão girando,
+##            voa até o alvo e explode (blast) ao chegar. Substitui o cometa enquanto a habilidade está ativa.
 ## Só visual: o dano continua sendo aplicado pelo Player no momento do ataque.
 
 const DIR := "res://assets/angel/"
 ## ponto de referência de cada imagem: a cabeça do cometa, o centro da esfera, a origem do raio
-const PIVOTS := {"orb": Vector2(31.0, 24.0), "comet": Vector2(68.0, 25.0), "hell_beam": Vector2(6.0, 124.0), "swirl": Vector2(70.5, 67.0)}
+const PIVOTS := {"orb": Vector2(31.0, 24.0), "comet": Vector2(68.0, 25.0), "swirl": Vector2(70.5, 67.0)}
 const BOLT_SPEED := 1500.0
 const BOLT_SCALE := 0.85
-const BEAM_SCALE := 0.5
-const BEAM_TIME := 0.28
+const SPHERE_SPEED := 900.0
+const SPHERE_SCALE := 0.42         # redemoinho de ~140 px -> ~60 px voando
+const BLAST_TIME := 0.32
 const MUZZLE_TIME := 0.12
 const POP_TIME := 0.16
-const BURST_TIME := 0.55
 
 static var _tex: Dictionary = {}
 
@@ -67,18 +67,13 @@ static func bolt(parent: Node, from: Vector2, to: Vector2) -> AngelShot:
 static func pop(parent: Node, at: Vector2) -> AngelShot:
     return _make(parent, "pop", "orb", at, at, POP_TIME, Vector2(0.6, 0.6))
 
-## Raio da Morte do Inferno: sai da mão e estica até o alvo (um pouco além), some rápido.
-static func beam(parent: Node, from: Vector2, to: Vector2) -> AngelShot:
-    var t: Texture2D = tex("hell_beam")
-    var native: float = float(t.get_width()) * BEAM_SCALE if t != null else 230.0
-    var stretch: float = clampf((from.distance_to(to) + 40.0) / native, 0.55, 1.6)
-    return _make(parent, "beam", "hell_beam", from, to, BEAM_TIME, Vector2(BEAM_SCALE * stretch, BEAM_SCALE * 0.85))
+## Esfera de poder da Morte do Inferno: sai da mão girando e voa até o alvo; explode ao chegar.
+static func sphere(parent: Node, from: Vector2, to: Vector2) -> AngelShot:
+    return _make(parent, "sphere", "swirl", from, to, maxf(0.08, from.distance_to(to) / SPHERE_SPEED), Vector2(SPHERE_SCALE, SPHERE_SCALE))
 
-## Redemoinho de luz (transformação da Morte do Inferno).
-static func burst(parent: Node, at: Vector2) -> AngelShot:
-    var s := _make(parent, "burst", "swirl", at, at, BURST_TIME, Vector2(0.5, 0.5))
-    s.z_index = -1
-    return s
+## Explosão da esfera de poder no alvo.
+static func blast(parent: Node, at: Vector2) -> AngelShot:
+    return _make(parent, "blast", "swirl", at, at, BLAST_TIME, Vector2(0.5, 0.5))
 
 ## Quanto falta (0..1) — usado nos testes.
 func progress() -> float:
@@ -91,19 +86,20 @@ func _process(delta: float) -> void:
         "bolt":
             position = _from.lerp(_to, k)
             _spr.scale = _base_scale * (0.75 + 0.25 * minf(1.0, k * 4.0))   # o cometa "estica" ao sair da mão
-        "beam":
-            # abre rápido, segura, e afina sumindo
-            var open: float = minf(1.0, k / 0.15)
-            _spr.scale = Vector2(_base_scale.x * (0.7 + 0.3 * open), _base_scale.y * (1.0 - 0.45 * k))
-            _spr.modulate.a = 1.0 if k < 0.45 else 1.0 - (k - 0.45) / 0.55
-        "burst":
-            rotation += delta * 5.0
-            _spr.scale = _base_scale * (0.6 + 1.6 * k)
-            _spr.modulate.a = 1.0 if k < 0.35 else 1.0 - (k - 0.35) / 0.65
+        "sphere":
+            position = _from.lerp(_to, k)
+            _spr.rotation += delta * 9.0                                     # gira enquanto voa
+            _spr.scale = _base_scale * (0.6 + 0.4 * minf(1.0, k * 5.0)) * (1.0 + 0.06 * sin(_t * 30.0))
+        "blast":
+            _spr.rotation += delta * 6.0
+            _spr.scale = _base_scale * (0.8 + 1.2 * k)
+            _spr.modulate.a = 1.0 if k < 0.3 else 1.0 - (k - 0.3) / 0.7
         _:   # muzzle / pop: cresce e some
             _spr.scale = _base_scale * (1.0 + 0.8 * k)
             _spr.modulate.a = 1.0 - k
     if _t >= _dur:
         if kind == "bolt" and get_parent() != null:
             AngelShot.pop(get_parent(), _to)
+        elif kind == "sphere" and get_parent() != null:
+            AngelShot.blast(get_parent(), _to)
         queue_free()
