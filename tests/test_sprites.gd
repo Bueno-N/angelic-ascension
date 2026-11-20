@@ -140,9 +140,10 @@ func test_death_of_hell_power_form() -> void:
     for anim in ["idle", "attack", "cast"]:
         for t in [0.0, 0.05, 0.2, 0.5]:
             var p: String = AngelSprite.pose_for(anim, t, false, false, 1.0, t)
-            check(not (p in ["power", "surge_1", "surge_2", "surge_3", "surge_4"]), "sem a Morte do Inferno nunca usa quadro de poder (%s)" % p)
-            if anim != "attack":
-                check(AngelSprite.pose_for(anim, t, true, true, 1.0, t) == "power", "Morte do Inferno: forma de poder parada em %s (sem voar)" % anim)
+            check(not (p in ["surge_1", "surge_2", "surge_3"]) and not p.begins_with("power_"), "sem a Morte do Inferno nunca usa quadro de poder (%s)" % p)
+            if anim == "idle":
+                check(AngelSprite.pose_for(anim, t, true, false, 1.0, t).begins_with("power_idle_"), "Morte do Inferno parado: forma de poder animada")
+                check(AngelSprite.pose_for(anim, t, true, true, 1.0, t).begins_with("power_fly_"), "Morte do Inferno andando: voo da forma de poder")
     var tr: Array = []
     for i in range(AngelSprite.TRANSFORM_FRAMES.size()):
         tr.append(AngelSprite.pose_for("transform", (float(i) + 0.5) * AngelSprite.TRANSFORM_FRAME, true, false, 1.0))
@@ -153,19 +154,14 @@ func test_death_of_hell_power_form() -> void:
     a.attack()
     check(a.current_anim() == "transform", "ataque não corta a transformação")
     a._process(1.0)
-    check(a.current_pose() == "power", "depois da transformação: forma de poder")
+    check(a.current_pose().begins_with("power_idle_"), "depois da transformação: forma de poder")
     a.attack()
-    check(a.current_pose() == "surge_3", "golpe do Power Surge começa com as chamas")
+    check(a.current_pose() == "power_atk_1", "golpe na forma de poder: braço estendido")
     a._process(AngelSprite.ATTACK_FRAME * 1.5)
-    check(a.current_pose() == "surge_4", "e termina com o punho erguido na esfera")
+    check(a.current_pose() == "power_atk_2", "golpe continua")
     a._process(1.0)
-    check(a.current_pose() == "power", "volta para a forma de poder")
-    var heads: Array = []
-    for pose in ["power", "surge_3", "surge_4"]:
-        var an: Vector2 = AngelSprite.ANCHORS[pose]
-        var t: Texture2D = AngelSprite.pose_texture(pose)
-        heads.append(an.y / float(t.get_height()))
-    check(heads.max() - heads.min() < 0.25, "âncoras do rosto coerentes (o anjo não pula ao golpear)")
+    check(a.current_pose().begins_with("power_idle_"), "volta para a forma de poder")
+    check(is_equal_approx(AngelSprite.scale_of("power_idle_0"), AngelSprite.SPRITE_SCALE * AngelSprite.POWER_SCALE) and AngelSprite.scale_of("idle_0") == AngelSprite.SPRITE_SCALE, "forma de poder desenhada no mesmo tamanho do anjo")
     var hh: Vector2 = a.hand_local()
     a.set_hell(false)
     check(a.current_anim() == "idle" and a.current_pose().begins_with("idle_"), "acabou a habilidade: volta ao normal")
@@ -193,7 +189,7 @@ func test_two_wings_until_level_7() -> void:
     check(AngelSprite.uses_two_wings(0) and AngelSprite.uses_two_wings(6), "níveis 0-6: 2 asas")
     check(not AngelSprite.uses_two_wings(7) and not AngelSprite.uses_two_wings(WingsDB.MAX_LEVEL), "nível 7+: 4 asas")
     # toda pose usada tem a versão de 2 asas (com imagem e âncora)
-    var poses: Array = AngelSprite.IDLE_FRAMES + AngelSprite.FLY_FRAMES + AngelSprite.TRANSFORM_FRAMES + AngelSprite.HELL_ATTACK + ["atk_release", "atk_follow", "atk_charge", "power"]
+    var poses: Array = AngelSprite.IDLE_FRAMES + AngelSprite.FLY_FRAMES + AngelSprite.TRANSFORM_FRAMES + AngelSprite.HELL_ATTACK + AngelSprite.POWER_IDLE + AngelSprite.POWER_FLY + ["atk_release", "atk_follow", "atk_charge"]
     for pose in poses:
         var f: String = AngelSprite.file_for(pose, true)
         check(f.ends_with("_2w") and AngelSprite.ANCHORS_2W.has(f) and AngelSprite.pose_texture(f) != null, "2 asas: %s -> %s" % [pose, f])
@@ -214,7 +210,7 @@ func test_two_wings_until_level_7() -> void:
     a.set_look(6, 0, {})
     a.set_hell(true)
     a._process(1.0)
-    check(a.current_file() == "power_2w", "Morte do Inferno também respeita as 2 asas")
+    check(a.current_file().begins_with("power_idle_") and a.current_file().ends_with("_2w"), "Morte do Inferno também respeita as 2 asas")
     a.free()
 
 func test_art_license_notice_exists() -> void:

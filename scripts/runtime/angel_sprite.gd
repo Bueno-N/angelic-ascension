@@ -7,9 +7,9 @@ extends Node2D
 ##          ataque = atk_release -> atk_follow (o disparo é um AngelShot); conjuração = atk_charge -> surge_0.
 ## Brilho das asas (glow_tier): um contorno dourado aditivo atrás do anjo, mais forte a cada tier.
 ## A MORTE DO INFERNO (set_hell): ao ligar, transformação do Power Surge (surge_0..3: brilho, esfera de luz, chamas)
-##          e depois a FORMA DE PODER (power), que fica parada (não voa ao andar) durante toda a habilidade.
-##          Ataque = golpe do Power Surge: surge_3 (chamas, braço erguido) -> surge_4 (esfera, punho erguido) -> power,
-##          disparando o RAIO (AngelShot.beam) do punho. Todos alinhados pelo rosto: o anjo não sai do lugar.
+##          e depois a FORMA DE PODER, animada (art_source/angel_power_*.jpg): parado = power_idle_0..4, andando =
+##          power_fly_0..4, golpe = power_atk_1..4 (braço estendido), disparando o RAIO (AngelShot.beam) da mão.
+##          Esses quadros foram desenhados maiores: POWER_SCALE iguala o tamanho do rosto aos demais.
 ## ASAS: até o nível 6 o anjo usa a versão com 2 asas (arquivos *_2w, de art_source/angel_v2_2wings.webp);
 ## a partir do nível 7 (WINGS_FULL_LEVEL) troca para as 4 asas. Equipamentos não mudam o desenho.
 
@@ -23,14 +23,20 @@ const ANCHORS := {
     "atk_charge": Vector2(76.8, 50.0), "atk_release": Vector2(75.5, 48.6), "atk_follow": Vector2(68.4, 52.8),
     "fly_1": Vector2(80.4, 55.2), "fly_2": Vector2(96.8, 58.3), "fly_3": Vector2(93.4, 54.3), "fly_4": Vector2(96.4, 60.1),
     "surge_0": Vector2(73.8, 51.5), "surge_1": Vector2(73.5, 53.7), "surge_2": Vector2(89.4, 73.2),
-    "surge_3": Vector2(80.0, 64.0), "surge_4": Vector2(83.0, 52.0), "power": Vector2(79.3, 74.7),
+    "surge_3": Vector2(80.0, 64.0),
+    "power_idle_0": Vector2(98.8, 90.4), "power_idle_1": Vector2(96.0, 90.5), "power_idle_2": Vector2(103.8, 89.5),
+    "power_idle_3": Vector2(105.6, 91.2), "power_idle_4": Vector2(103.2, 91.4),
+    "power_fly_0": Vector2(122.2, 90.3), "power_fly_1": Vector2(132.1, 94.2), "power_fly_2": Vector2(143.3, 87.4),
+    "power_fly_3": Vector2(141.6, 89.0), "power_fly_4": Vector2(132.4, 85.2),
+    "power_atk_1": Vector2(132.8, 93.9), "power_atk_2": Vector2(137.0, 96.0), "power_atk_3": Vector2(133.6, 97.5),
+    "power_atk_4": Vector2(101.1, 99.7),
 }
 ## De onde sai o disparo (pixels da imagem): a mão nas poses de ataque; na forma de poder, à frente do peito.
 const HANDS := {
     "atk_release": Vector2(117.0, 59.0),
     "atk_follow": Vector2(109.0, 54.0),
     "surge_3": Vector2(118.0, 62.0),
-    "surge_4": Vector2(114.0, 50.0),
+    "power_atk_1": Vector2(165.0, 113.0),
 }
 ## Versão com 2 asas (nível de asas < 7): centro do rosto e mão em cada imagem *_2w.
 const WINGS_FULL_LEVEL := 7
@@ -40,12 +46,18 @@ const ANCHORS_2W := {
     "atk_charge_2w": Vector2(76.2, 54.8), "atk_release_2w": Vector2(74.4, 48.5),
     "fly_1_2w": Vector2(80.7, 53.3), "fly_2_2w": Vector2(96.9, 58.2), "fly_3_2w": Vector2(93.6, 52.5), "fly_4_2w": Vector2(96.5, 56.3),
     "surge_0_2w": Vector2(73.8, 51.7), "surge_1_2w": Vector2(73.4, 56.6), "surge_2_2w": Vector2(89.5, 73.0),
-    "surge_3_2w": Vector2(82.0, 66.0), "surge_4_2w": Vector2(85.0, 56.0), "power_2w": Vector2(79.3, 75.6),
+    "surge_3_2w": Vector2(82.0, 66.0),
+    "power_idle_0_2w": Vector2(98.8, 90.5), "power_idle_1_2w": Vector2(95.9, 91.7), "power_idle_2_2w": Vector2(103.9, 90.1),
+    "power_idle_3_2w": Vector2(106.5, 91.2), "power_idle_4_2w": Vector2(103.0, 91.4),
+    "power_fly_0_2w": Vector2(123.6, 90.5), "power_fly_1_2w": Vector2(132.1, 95.2), "power_fly_2_2w": Vector2(143.4, 87.5),
+    "power_fly_3_2w": Vector2(141.6, 88.9), "power_fly_4_2w": Vector2(132.4, 85.2),
+    "power_atk_1_2w": Vector2(149.8, 95.3), "power_atk_2_2w": Vector2(138.6, 96.8), "power_atk_3_2w": Vector2(133.9, 99.8),
+    "power_atk_4_2w": Vector2(101.0, 99.8),
 }
 const HANDS_2W := {
     "atk_release_2w": Vector2(106.0, 60.0),
     "surge_3_2w": Vector2(115.0, 62.0),
-    "surge_4_2w": Vector2(100.0, 50.0),
+    "power_atk_1_2w": Vector2(182.0, 114.4),
 }
 ## Na folha de 2 asas o "acompanhar" do ataque não tem um quadro limpo: usa o de carregar (faísca na mão).
 const ALIAS_2W := {"atk_follow": "atk_charge"}
@@ -56,7 +68,10 @@ const FLY_FPS := 10.0
 const TRANSFORM_FRAMES := ["surge_0", "surge_1", "surge_2", "surge_3"]
 const TRANSFORM_FRAME := 0.1       # segundos por quadro da transformação
 const ATTACK_FRAME := 0.11         # segundos por quadro do ataque (dividido pela velocidade)
-const HELL_ATTACK := ["surge_3", "surge_4", "surge_4"]   # golpe do Power Surge (um quadro por ATTACK_FRAME)
+const HELL_ATTACK := ["power_atk_1", "power_atk_2", "power_atk_3", "power_atk_4"]   # golpe na forma de poder (um quadro por ATTACK_FRAME)
+const POWER_IDLE := ["power_idle_0", "power_idle_1", "power_idle_2", "power_idle_3", "power_idle_4"]
+const POWER_FLY := ["power_fly_0", "power_fly_1", "power_fly_2", "power_fly_3", "power_fly_4"]
+const POWER_SCALE := 0.7           # quadros power_* desenhados maiores (rosto 26 px vs 18 px)
 const CAST_TIME := 0.45
 
 static var _tex: Dictionary = {}
@@ -84,6 +99,10 @@ static func uses_two_wings(wings_level: int) -> bool:
 static func file_for(pose: String, two_wings: bool) -> String:
     return (ALIAS_2W.get(pose, pose) + "_2w") if two_wings else pose
 
+## Escala de desenho de um arquivo (os power_* são desenhados maiores).
+static func scale_of(file: String) -> float:
+    return SPRITE_SCALE * (POWER_SCALE if file.begins_with("power_") else 1.0)
+
 static func anchor_of(file: String) -> Vector2:
     return ANCHORS_2W[file] if ANCHORS_2W.has(file) else ANCHORS[file]
 
@@ -105,7 +124,9 @@ static func pose_for(anim: String, t: float, hell: bool, moving: bool, speed: fl
     if hell:
         if anim == "attack":
             return HELL_ATTACK[clampi(int(t / fdur), 0, HELL_ATTACK.size() - 1)]
-        return "power"             # forma de poder parada: conjura e anda sem trocar de pose
+        if moving and anim != "cast":
+            return POWER_FLY[int(clock * FLY_FPS) % POWER_FLY.size()]
+        return POWER_IDLE[int(clock * IDLE_FPS) % POWER_IDLE.size()]
     match anim:
         "attack":
             return "atk_release" if t < fdur else "atk_follow"
@@ -200,10 +221,11 @@ func current_anim() -> String:
 
 ## Ponto de onde sai o disparo (coordenadas locais deste nó, já com o espelhamento do face()).
 func hand_local() -> Vector2:
-    var file: String = file_for("surge_4" if _hell else "atk_release", _two_wings)
+    var file: String = file_for("power_atk_1" if _hell else "atk_release", _two_wings)
     var h: Vector2 = HANDS_2W[file] if _two_wings else HANDS[file]
     var a: Vector2 = anchor_of(file)
-    return Vector2((h.x - a.x) * SPRITE_SCALE, (h.y - a.y) * SPRITE_SCALE + CHEST_Y)
+    var k: float = scale_of(file)
+    return Vector2((h.x - a.x) * k, (h.y - a.y) * k + CHEST_Y)
 
 func has_two_wings() -> bool:
     return _two_wings
@@ -233,7 +255,8 @@ func _show(pose: String) -> void:
     if tex == null:
         return
     var a: Vector2 = anchor_of(file)
-    var floating: bool = _cur == "idle" and (_hell or not _moving)
+    var k: float = scale_of(file)
+    var floating: bool = _cur == "idle" and not _moving
     var bob: float = sin(_clock * 2.4) * 2.5 if floating else 0.0   # flutua de leve quando parado
     var pos := Vector2(0.0, CHEST_Y + bob)
     for s in [_spr, _glow]:
@@ -241,6 +264,7 @@ func _show(pose: String) -> void:
             s.texture = tex
         s.offset = -a
         s.position = pos
+    _spr.scale = Vector2(k, k)
     # contorno dourado: brilho das asas; na forma de poder pulsa, e dá um clarão a cada golpe
     var ga: float = glow_alpha(_glow_tier)
     var gs: float = 1.06
@@ -248,9 +272,9 @@ func _show(pose: String) -> void:
         ga = 0.4 + 0.15 * sin(_clock * 6.0)
         gs = 1.07 + 0.02 * sin(_clock * 6.0)
         if _cur == "attack":
-            var k: float = 1.0 - clampf(_t / anim_length("attack", true, _speed), 0.0, 1.0)
-            ga += 0.45 * k
-            gs += 0.05 * k
+            var f: float = 1.0 - clampf(_t / anim_length("attack", true, _speed), 0.0, 1.0)
+            ga += 0.45 * f
+            gs += 0.05 * f
     _glow.visible = ga > 0.0
     _glow.modulate = Color(1.0, 0.85, 0.45, minf(1.0, ga))
-    _glow.scale = Vector2(SPRITE_SCALE, SPRITE_SCALE) * gs
+    _glow.scale = Vector2(k, k) * gs
