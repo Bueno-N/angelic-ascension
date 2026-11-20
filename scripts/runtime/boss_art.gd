@@ -12,7 +12,7 @@ const SHEETS := {
     "boss_baal": {"dir": "baal", "cell": Vector2i(380, 232), "feet": Vector2(190.0, 216.0), "walk_h": 206.0,
         "anims": {
             "walk": ["walk_0", "walk_1", "walk_2", "walk_3", "walk_4", "walk_5"],
-            "attack": ["lunge", "walk_0"],
+            "attack": ["melee_0", "melee_1", "melee_2", "melee_3", "melee_4"],   # golpe corpo a corpo: ergue e gira a maça
             "slam_wind": ["slam_0", "slam_1"],          # Pancada em área: ergue a maça (aviso)
             "slam_hit": ["slam_2", "slam_3"],           # esmaga o chão (onda vermelha) e se recompõe
             "charge_wind": ["prep_0", "prep_1"],        # Investida: se prepara agachado (aviso)
@@ -24,7 +24,7 @@ const SHEETS := {
 const ABILITY_ANIMS := {
     "boss_baal": {"area_slam": ["slam_wind", "slam_hit"], "charge": ["charge_wind", "dash"]},
 }
-const FPS := {"walk": 8.0, "attack": 5.0, "slam_wind": 3.0, "slam_hit": 5.0, "charge_wind": 3.0, "dash": 14.0, "die": 6.0}
+const FPS := {"walk": 8.0, "attack": 10.0, "slam_wind": 3.0, "slam_hit": 5.0, "charge_wind": 3.0, "dash": 14.0, "die": 6.0}
 const LOOP := {"walk": true, "dash": true}
 const BASE_HEIGHT := 150.0         # altura do chefe andando na tela, na escala normal (EnemiesDB.SPRITE_SCALE)
 const DEATH_HOLD := 0.6            # segundos caído no chão antes de sumir
