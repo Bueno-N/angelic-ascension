@@ -7,8 +7,9 @@ extends Node2D
 ##          ataque = atk_release -> atk_follow (o disparo é um AngelShot); conjuração = atk_charge -> surge_0.
 ## Brilho das asas (glow_tier): um contorno dourado aditivo atrás do anjo, mais forte a cada tier.
 ## A MORTE DO INFERNO (set_hell): ao ligar, transformação do Power Surge (surge_0..3: brilho, esfera de luz, chamas)
-##          e depois a FORMA DE PODER (power), que fica parada (não voa nem pula) durante toda a habilidade.
-##          O ataque mantém a forma de poder (só um clarão no contorno) e dispara o RAIO (AngelShot.beam).
+##          e depois a FORMA DE PODER (power), que fica parada (não voa ao andar) durante toda a habilidade.
+##          Ataque = golpe do Power Surge: surge_3 (chamas, braço erguido) -> surge_4 (esfera, punho erguido) -> power,
+##          disparando o RAIO (AngelShot.beam) do punho. Todos alinhados pelo rosto: o anjo não sai do lugar.
 ## A arte é fixa: o nível das asas e os equipamentos não mudam o desenho (continuam valendo nos atributos).
 
 const DIR := "res://assets/angel/"
@@ -21,13 +22,14 @@ const ANCHORS := {
     "atk_charge": Vector2(76.8, 50.0), "atk_release": Vector2(75.5, 48.6), "atk_follow": Vector2(68.4, 52.8),
     "fly_1": Vector2(80.4, 55.2), "fly_2": Vector2(96.8, 58.3), "fly_3": Vector2(93.4, 54.3), "fly_4": Vector2(96.4, 60.1),
     "surge_0": Vector2(73.8, 51.5), "surge_1": Vector2(73.5, 53.7), "surge_2": Vector2(89.4, 73.2),
-    "surge_3": Vector2(72.1, 121.9), "power": Vector2(79.3, 74.7),
+    "surge_3": Vector2(80.0, 64.0), "surge_4": Vector2(83.0, 52.0), "power": Vector2(79.3, 74.7),
 }
 ## De onde sai o disparo (pixels da imagem): a mão nas poses de ataque; na forma de poder, à frente do peito.
 const HANDS := {
     "atk_release": Vector2(117.0, 59.0),
     "atk_follow": Vector2(109.0, 54.0),
-    "power": Vector2(100.0, 92.0),
+    "surge_3": Vector2(118.0, 62.0),
+    "surge_4": Vector2(114.0, 50.0),
 }
 const IDLE_FRAMES := ["idle_0", "idle_1", "idle_2", "idle_3", "idle_4", "idle_5", "idle_6"]
 const IDLE_FPS := 7.0
@@ -36,6 +38,7 @@ const FLY_FPS := 10.0
 const TRANSFORM_FRAMES := ["surge_0", "surge_1", "surge_2", "surge_3"]
 const TRANSFORM_FRAME := 0.1       # segundos por quadro da transformação
 const ATTACK_FRAME := 0.11         # segundos por quadro do ataque (dividido pela velocidade)
+const HELL_ATTACK := ["surge_3", "surge_4", "surge_4"]   # golpe do Power Surge (um quadro por ATTACK_FRAME)
 const CAST_TIME := 0.45
 
 static var _tex: Dictionary = {}
@@ -70,7 +73,9 @@ static func pose_for(anim: String, t: float, hell: bool, moving: bool, speed: fl
     if anim == "transform":
         return TRANSFORM_FRAMES[clampi(int(t / TRANSFORM_FRAME), 0, TRANSFORM_FRAMES.size() - 1)]
     if hell:
-        return "power"             # forma de poder parada: ataca, conjura e anda sem trocar de pose
+        if anim == "attack":
+            return HELL_ATTACK[clampi(int(t / fdur), 0, HELL_ATTACK.size() - 1)]
+        return "power"             # forma de poder parada: conjura e anda sem trocar de pose
     match anim:
         "attack":
             return "atk_release" if t < fdur else "atk_follow"
@@ -85,7 +90,7 @@ static func anim_length(anim: String, hell: bool, speed: float) -> float:
     var fdur: float = ATTACK_FRAME / clampf(speed, 0.8, 3.0)
     match anim:
         "attack":
-            return fdur * (2.6 if hell else 2.0)
+            return fdur * (float(HELL_ATTACK.size()) if hell else 2.0)
         "cast":
             return CAST_TIME
         "transform":
@@ -164,7 +169,7 @@ func current_anim() -> String:
 
 ## Ponto de onde sai o disparo (coordenadas locais deste nó, já com o espelhamento do face()).
 func hand_local() -> Vector2:
-    var pose: String = "power" if _hell else "atk_release"
+    var pose: String = "surge_4" if _hell else "atk_release"
     var h: Vector2 = HANDS[pose]
     var a: Vector2 = ANCHORS[pose]
     return Vector2((h.x - a.x) * SPRITE_SCALE, (h.y - a.y) * SPRITE_SCALE + CHEST_Y)
@@ -197,7 +202,7 @@ func _show(pose: String) -> void:
             s.texture = tex
         s.offset = -a
         s.position = pos
-    # contorno dourado: brilho das asas; na forma de poder pulsa, e dá um clarão a cada ataque
+    # contorno dourado: brilho das asas; na forma de poder pulsa, e dá um clarão a cada golpe
     var ga: float = glow_alpha(_glow_tier)
     var gs: float = 1.06
     if _hell:

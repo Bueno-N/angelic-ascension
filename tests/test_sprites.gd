@@ -140,8 +140,9 @@ func test_death_of_hell_power_form() -> void:
     for anim in ["idle", "attack", "cast"]:
         for t in [0.0, 0.05, 0.2, 0.5]:
             var p: String = AngelSprite.pose_for(anim, t, false, false, 1.0, t)
-            check(not (p in ["power", "surge_1", "surge_2", "surge_3"]), "sem a Morte do Inferno nunca usa quadro de poder (%s)" % p)
-            check(AngelSprite.pose_for(anim, t, true, true, 1.0, t) == "power", "Morte do Inferno: forma de poder parada em %s (sem pular nem voar)" % anim)
+            check(not (p in ["power", "surge_1", "surge_2", "surge_3", "surge_4"]), "sem a Morte do Inferno nunca usa quadro de poder (%s)" % p)
+            if anim != "attack":
+                check(AngelSprite.pose_for(anim, t, true, true, 1.0, t) == "power", "Morte do Inferno: forma de poder parada em %s (sem voar)" % anim)
     var tr: Array = []
     for i in range(AngelSprite.TRANSFORM_FRAMES.size()):
         tr.append(AngelSprite.pose_for("transform", (float(i) + 0.5) * AngelSprite.TRANSFORM_FRAME, true, false, 1.0))
@@ -152,8 +153,19 @@ func test_death_of_hell_power_form() -> void:
     a.attack()
     check(a.current_anim() == "transform", "ataque não corta a transformação")
     a._process(1.0)
+    check(a.current_pose() == "power", "depois da transformação: forma de poder")
     a.attack()
-    check(a.current_pose() == "power", "ataque mantém a forma de poder")
+    check(a.current_pose() == "surge_3", "golpe do Power Surge começa com as chamas")
+    a._process(AngelSprite.ATTACK_FRAME * 1.5)
+    check(a.current_pose() == "surge_4", "e termina com o punho erguido na esfera")
+    a._process(1.0)
+    check(a.current_pose() == "power", "volta para a forma de poder")
+    var heads: Array = []
+    for pose in ["power", "surge_3", "surge_4"]:
+        var an: Vector2 = AngelSprite.ANCHORS[pose]
+        var t: Texture2D = AngelSprite.pose_texture(pose)
+        heads.append(an.y / float(t.get_height()))
+    check(heads.max() - heads.min() < 0.25, "âncoras do rosto coerentes (o anjo não pula ao golpear)")
     var hh: Vector2 = a.hand_local()
     a.set_hell(false)
     check(a.current_anim() == "idle" and a.current_pose().begins_with("idle_"), "acabou a habilidade: volta ao normal")
