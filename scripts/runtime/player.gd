@@ -1,6 +1,6 @@
 class_name Player
 extends Node2D
-## O anjo: sprite animado em camadas (AngelSprite), aura rúnica giratória, golpe com arco de luz e faíscas.
+## O anjo: sprite com a arte nova por pose (AngelSprite), aura rúnica giratória, golpe com arco de luz e faíscas.
 
 var hp: float = 100.0
 var max_hp: float = 100.0
@@ -136,6 +136,7 @@ func _process(delta: float) -> void:
     if dir.x != 0.0:
         visual.face(dir.x)
     visual.set_speed(get_stat("attack_speed"))
+    visual.set_hell(buffs.is_active("death_of_hell"))   # A MORTE DO INFERNO: anjo envolto em fogo e ataque enfeitado
 
     if hp > 0.0 and hp < max_hp:
         hp = minf(max_hp, hp + StatsCalc.regen_amount(max_hp, delta))

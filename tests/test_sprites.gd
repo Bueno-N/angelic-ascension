@@ -105,5 +105,36 @@ func test_angel_sprite_can_be_built_and_animated() -> void:
     a.set_look(0, 0, {})
     a.free()
 
+func test_new_angel_art_poses() -> void:
+    for pose in AngelSprite.ANCHORS:
+        var t: Texture2D = AngelSprite.pose_texture(pose)
+        check(t != null, "pose %s carrega" % pose)
+        if t != null:
+            var an: Vector2 = AngelSprite.ANCHORS[pose]
+            check(an.x > 0.0 and an.y > 0.0 and an.x < t.get_width() and an.y < t.get_height(), "âncora de %s dentro da imagem" % pose)
+    check(AngelSprite.idle_pose_for(0) == "idle" and AngelSprite.idle_pose_for(2) == "glow_1" and AngelSprite.idle_pose_for(6) == "glow_2", "brilho das asas muda a pose parada")
+
+func test_fire_frames_only_with_death_of_hell() -> void:
+    var normal: Array = []
+    for anim in ["idle", "attack", "cast"]:
+        for t in [0.0, 0.05, 0.12, 0.2, 0.4, 0.9]:
+            normal.append(AngelSprite.pose_for(anim, t, false, "glow_2", 1.0))
+    for p in normal:
+        check(not str(p).begins_with("hell"), "sem a Morte do Inferno nunca usa quadro de fogo (%s)" % p)
+    check(AngelSprite.pose_for("attack", 0.0, false, "idle", 1.0) == "attack_1" and AngelSprite.pose_for("attack", 0.15, false, "idle", 1.0) == "attack_2", "ataque normal: 2 quadros")
+    check(AngelSprite.pose_for("attack", 0.0, true, "idle", 1.0) == "hell_attack", "Morte do Inferno: ataque enfeitado")
+    var idle_hell := {}
+    for t in [0.0, 0.1, 0.2, 0.3]:
+        idle_hell[AngelSprite.pose_for("idle", t, true, "idle", 1.0)] = true
+    check(idle_hell.has("hell_1") and idle_hell.has("hell_2") and idle_hell.size() == 2, "Morte do Inferno: parado alterna os 2 quadros com fogo")
+    check(AngelSprite.pose_for("cast", 0.0, true, "idle", 1.0) == "hell_cast", "Morte do Inferno: conjuração com fogo")
+    var a := AngelSprite.new()
+    a.set_hell(true)
+    a.attack()
+    check(a.is_hell() and a.current_pose() == "hell_attack", "sprite no modo inferno")
+    a.set_hell(false)
+    check(a.current_pose() == "attack_1", "acabou a habilidade: volta ao normal")
+    a.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")
