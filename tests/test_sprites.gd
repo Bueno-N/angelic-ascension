@@ -178,11 +178,23 @@ func test_attack_shots() -> void:
     var parent := Node2D.new()
     var b := AngelShot.bolt(parent, Vector2.ZERO, Vector2(0.0, 300.0))
     check(absf(b.rotation - PI / 2.0) < 0.01, "cometa mira para baixo quando o inimigo está embaixo")
-    var bm := AngelShot.beam(parent, Vector2.ZERO, Vector2(-200.0, 0.0))
-    check(absf(absf(bm.rotation) - PI) < 0.01, "raio mira para a esquerda")
-    check(parent.get_child_count() == 2, "um disparo por ataque em cada modo")
+    check(parent.get_child_count() == 1, "ataque normal: um cometa")
     b._process(10.0)
-    check(parent.get_child_count() == 3 and (parent.get_child(2) as AngelShot).kind == "pop", "cometa estoura em luz ao chegar")
+    check(parent.get_child_count() == 2 and (parent.get_child(1) as AngelShot).kind == "pop", "cometa estoura em luz ao chegar")
+    var h := AngelShot.hell_shot(parent, Vector2.ZERO, Vector2(-400.0, 0.0))
+    check(h.kind == "hbolt" and absf(absf(h.rotation) - PI) < 0.01, "projétil da Morte do Inferno mira para a esquerda")
+    check(parent.get_child_count() == 5, "Morte do Inferno: esfera + estrela na mão + projétil")
+    check(h.current_frame() == "hp_bolt_0", "projétil começa no 1º quadro")
+    h._process(h._dur * 0.5)
+    check(h.current_frame() == "hp_bolt_1", "muda de quadro enquanto voa")
+    h._process(h._dur * 0.45)
+    check(h.current_frame() == "hp_bolt_2", "chega com o quadro de pontas")
+    h._process(10.0)
+    var kinds: Array = []
+    for c in parent.get_children():
+        kinds.append((c as AngelShot).kind)
+    check(kinds.has("hfade"), "o golpe se desfaz em penas no alvo")
+    check(AngelShot.hbolt_frame(0.0) == "hp_bolt_0" and AngelShot.hbolt_frame(1.0) == "hp_bolt_2", "quadros do projétil em ordem")
     parent.free()
 
 func test_two_wings_until_level_7() -> void:

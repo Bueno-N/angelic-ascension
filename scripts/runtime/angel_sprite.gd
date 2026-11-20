@@ -8,7 +8,7 @@ extends Node2D
 ## Brilho das asas (glow_tier): um contorno dourado aditivo atrás do anjo, mais forte a cada tier.
 ## A MORTE DO INFERNO (set_hell): ao ligar, transformação do Power Surge (surge_0..3: brilho, esfera de luz, chamas)
 ##          e depois a FORMA DE PODER, animada (art_source/angel_power_*.jpg): parado = power_idle_0..4, andando =
-##          power_fly_0..4, golpe = power_atk_1..4 (braço estendido), disparando o RAIO (AngelShot.beam) da mão.
+##          power_fly_0..4, golpe = power_atk_1..4 (braço estendido), disparando o projétil de penas e luz (AngelShot.hell_shot) da mão.
 ##          Esses quadros foram desenhados maiores: POWER_SCALE iguala o tamanho do rosto aos demais.
 ## ASAS: até o nível 6 o anjo usa a versão com 2 asas (arquivos *_2w, de art_source/angel_v2_2wings.webp);
 ## a partir do nível 7 (WINGS_FULL_LEVEL) troca para as 4 asas. Equipamentos não mudam o desenho.
