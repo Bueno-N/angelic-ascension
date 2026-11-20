@@ -1,7 +1,7 @@
 class_name Backdrop
 extends Node2D
-## Cenário: arena infernal (assets/env/arena_bg.png), braseiros animados nas laterais, brasas subindo e vinheta.
-## A cada 10 fases o tom da arena muda levemente; nas fases de chefe acendem fogueiras no chão e um brilho vermelho pulsa.
+## Cenário: arena infernal (assets/env/arena_bg.png), brasas subindo e vinheta.
+## A cada 10 fases o tom da arena muda levemente; nas fases de chefe um brilho vermelho pulsa na tela.
 
 const PALETTES := [
     [Color(0.07, 0.03, 0.12), Color(0.16, 0.05, 0.18)],   # roxo sombrio
@@ -12,44 +12,20 @@ const PALETTES := [
 var _stage := 1
 var _embers: CPUParticles2D
 var _bg: Texture2D
-var _torches: Array = []
-var _flames: Array = []
 var _glow: ColorRect
 var _boss_mode := false
 var _t := 0.0
 var _pulse := 0.0
 
-# fogueiras das fases de chefe: na borda de baixo da arena (base da chama no ponto)
-const FLAME_POS := [Vector2(0.10, 1.0), Vector2(0.30, 1.0), Vector2(0.70, 1.0), Vector2(0.90, 1.0)]
-const FLAME_HEIGHT := 92.0
 # tom da arena por bloco de 10 fases (multiplica a imagem; branco = original)
 const TINTS := [Color(1.0, 1.0, 1.0), Color(1.0, 0.82, 0.78), Color(0.78, 0.92, 1.0), Color(0.9, 0.88, 0.86)]
 const TINT_STRENGTH := 0.55
-# braseiros nas laterais (base do braseiro no ponto)
-const TORCH_POS := [Vector2(0.035, 0.44), Vector2(0.965, 0.44), Vector2(0.035, 0.90), Vector2(0.965, 0.90)]
-const TORCH_HEIGHT := 100.0
 
 func _ready() -> void:
     z_index = -100
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _bg = EnvArt.background()
     var area := get_viewport_rect().size
-    for tp in TORCH_POS:
-        var t := EnvArt.make("brazier", TORCH_HEIGHT)
-        t.position = Vector2(area.x * tp.x, area.y * tp.y)
-        t.z_index = 1
-        add_child(t)
-        _torches.append(t)
-    # Arena de chefe: fogueiras no chão (cada uma uma variação, tremulando) + brilho vermelho pulsante
-    for i in range(FLAME_POS.size()):
-        var fp: Vector2 = FLAME_POS[i]
-        var f := EnvArt.make_fire(i + 1, FLAME_HEIGHT)
-        f.position = Vector2(area.x * fp.x, area.y * fp.y)
-        f.z_index = 2
-        f.visible = false
-        f.set_meta("base_scale", f.scale)
-        add_child(f)
-        _flames.append(f)
     _glow = ColorRect.new()
     _glow.size = area
     _glow.color = Color(0.9, 0.1, 0.02, 0.0)
@@ -86,8 +62,6 @@ func set_fx(on: bool) -> void:
 
 func _set_boss_mode(on: bool) -> void:
     _boss_mode = on
-    for f in _flames:
-        f.visible = on
     _glow.visible = on
     _embers.amount = 110 if on else 36
 
@@ -99,13 +73,6 @@ func _process(delta: float) -> void:
     _glow.visible = _boss_mode or _pulse > 0.0
     var base: float = 0.07 + 0.05 * sin(_t * 3.0) if _boss_mode else 0.0
     _glow.color.a = base + _pulse * 0.28
-    if _boss_mode:   # fogueiras tremulam (altura e brilho), cada uma num ritmo
-        for i in range(_flames.size()):
-            var f: Sprite2D = _flames[i]
-            var b: Vector2 = f.get_meta("base_scale")
-            var w: float = sin(_t * (7.0 + float(i) * 1.3) + float(i) * 2.0)
-            f.scale = Vector2(b.x * (1.0 - 0.04 * w), b.y * (1.0 + 0.08 * w))
-            f.modulate = Color(1.0, 1.0, 1.0, 0.88 + 0.12 * w)
 
 func set_stage(s: int) -> void:
     if s != _stage:
@@ -125,13 +92,7 @@ func _draw() -> void:
         draw_texture_rect(_bg, Rect2(Vector2.ZERO, area), false, tint)
     else:
         draw_rect(Rect2(Vector2.ZERO, area), Color(0.09, 0.04, 0.1))
-    # 2) luz quente dos braseiros
-    for tp in TORCH_POS:
-        var c := Vector2(area.x * tp.x, area.y * tp.y - TORCH_HEIGHT * 0.75)
-        draw_circle(c, 120.0, Color(1.0, 0.5, 0.15, 0.04))
-        draw_circle(c, 76.0, Color(1.0, 0.55, 0.2, 0.05))
-        draw_circle(c, 40.0, Color(1.0, 0.65, 0.25, 0.06))
-    # 3) vinheta leve: bordas escurecidas (a arte já tem moldura de pedra e lava)
+    # 2) vinheta leve: bordas escurecidas (a arte já tem moldura de pedra e lava)
     for k in range(5):
         var w: float = 26.0 * float(k + 1)
         var v := Color(0, 0, 0, 0.045)
