@@ -42,6 +42,7 @@ jobs:
       - run: bash tools/ci/setup_godot.sh
       - run: bash tools/ci/setup_templates.sh
       - run: bash tools/ci/setup_android.sh
+      - run: bash tools/ci/setup_build_template.sh
 
       - name: Restaurar keystore de release (secrets)
         env:

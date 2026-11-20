@@ -46,13 +46,7 @@ print("habilitado:", cfg)
 PY
 
 # Android Build Template (equivale a Project > Install Android Build Template)
-TPL="$HOME/.local/share/godot/export_templates/${V}.${CH}/android_source.zip"
-test -f "$TPL" || { echo "ERRO: $TPL não existe (rode tools/ci/setup_templates.sh antes)"; exit 1; }
-mkdir -p android/build
-unzip -q -o "$TPL" -d android/build
-echo "${V}.${CH}" > android/.build_version
-touch android/build/.gdignore
-echo "Build template instalado em android/build"
+bash tools/ci/setup_build_template.sh
 
 # export com Gradle apenas neste workspace
 python3 - <<'PY'

@@ -103,6 +103,9 @@ jobs:
       - name: Configurar Android (SDK, keystore debug, Editor Settings)
         run: bash tools/ci/setup_android.sh
 
+      - name: Instalar Android Build Template (export com Gradle)
+        run: bash tools/ci/setup_build_template.sh
+
       - name: Importar projeto
         run: bash tools/ci/import_project.sh
 
