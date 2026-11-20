@@ -53,8 +53,9 @@ static func gfx_label(settings: Dictionary) -> String:
 
 ## O jogo fica em pausa com o PERFIL (ícone do jogador), o MAPA das fases (tela cheia) ou a tela de MORTE abertos.
 ## O menu NÃO pausa.
-static func should_pause(profile_open: bool, dead: bool = false, map_open: bool = false, weekly_open: bool = false) -> bool:
-    return profile_open or dead or map_open or weekly_open
+static func should_pause(profile_open: bool, dead: bool = false, map_open: bool = false, weekly_open: bool = false,
+        menu_open: bool = false) -> bool:
+    return profile_open or dead or map_open or weekly_open or menu_open
 
 ## Aplica uma ação "opt|..." nas configurações. Devolve true se algo mudou.
 static func apply(settings: Dictionary, parts: PackedStringArray) -> bool:

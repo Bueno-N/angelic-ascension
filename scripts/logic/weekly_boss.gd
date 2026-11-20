@@ -149,7 +149,59 @@ static func compute_score(dealt: float, max_hp: float, killed: bool, secs_left: 
         s = max_hp + max_hp * 0.25 * clampf(secs_left / Balance.WEEKLY_TIME_LIMIT, 0.0, 1.0)
     return s
 
-# ---------------------------------------------------------------- recompensas
+# ---------------------------------------------------------------- recompensa POR LUTA (% da vida do Lucifer tirada)
+# Paga ao fim de CADA luta (4 por semana), na hora. Escala com a FASE MÁXIMA do jogador, porque o ouro por fase cresce 10%
+# a cada fase (um valor fixo seria enorme na fase 50 e nada na 250):
+#   ouro  = "fases de ouro" x o ouro de uma fase inteira na fase máxima do jogador
+#   gemas = "chefes" x as gemas médias de um chefe na fase máxima do jogador
+# A melhor faixa é MATAR o Lucifer (bem acima de 75%+, para valer o esforço). Abaixo de 1% não há prêmio.
+const ATTEMPT_TIERS := [
+    {"min_pct": 1.00, "killed": true, "gold_stages": 6.0, "boss_gems": 12.0, "label": "LUCIFER DERROTADO"},
+    {"min_pct": 0.75, "gold_stages": 4.0, "boss_gems": 7.0, "label": "75% OU MAIS"},
+    {"min_pct": 0.50, "gold_stages": 3.0, "boss_gems": 5.0, "label": "50% OU MAIS"},
+    {"min_pct": 0.25, "gold_stages": 2.0, "boss_gems": 3.0, "label": "25% OU MAIS"},
+    {"min_pct": 0.10, "gold_stages": 1.0, "boss_gems": 2.0, "label": "10% OU MAIS"},
+    {"min_pct": 0.01, "gold_stages": 0.5, "boss_gems": 1.0, "label": "1% OU MAIS"},
+]
+const ATTEMPT_MIN_GEMS := 10        # piso de gemas por faixa (fase máxima baixa)
+const MOB_GOLD_AVG := 3.0           # ouro base médio de um mob comum (mistura dos 4 tipos), para estimar o ouro de uma fase
+
+## Ouro de uma fase inteira (mobs) nesta fase: referência para o prêmio.
+static func stage_gold(stage: int) -> int:
+    var st: int = clampi(stage, 1, Balance.MAX_STAGE)
+    return StageLogic.enemy_gold(MOB_GOLD_AVG, st) * StageLogic.enemy_count(st)
+
+## Gemas médias do chefe da fase (média da faixa [min, max]).
+static func boss_gems_avg(stage: int) -> float:
+    var r: Array = StageLogic.boss_gem_range(clampi(stage, 1, Balance.MAX_STAGE))
+    return (float(r[0]) + float(r[1])) / 2.0
+
+## Faixa atingida ({} = nenhuma). pct = fração da vida do Lucifer tirada (0..1).
+static func attempt_tier(pct: float, killed: bool) -> Dictionary:
+    for t in ATTEMPT_TIERS:
+        if bool(t.get("killed", false)):
+            if killed:
+                return t
+            continue
+        if pct >= float(t["min_pct"]):
+            return t
+    return {}
+
+## Prêmio de uma faixa na fase máxima do jogador: {"gold", "gems", "label"}.
+static func tier_reward(t: Dictionary, max_stage: int) -> Dictionary:
+    if t.is_empty():
+        return {"gold": 0, "gems": 0, "label": ""}
+    var gold: int = int(round(float(stage_gold(max_stage)) * float(t["gold_stages"])))
+    var gems: int = maxi(ATTEMPT_MIN_GEMS, int(round(boss_gems_avg(max_stage) * float(t["boss_gems"]))))
+    return {"gold": gold, "gems": gems, "label": str(t["label"])}
+
+## Prêmio de uma luta: pct = dano causado / vida máxima do Lucifer.
+static func attempt_reward(pct: float, killed: bool, max_stage: int) -> Dictionary:
+    var r := tier_reward(attempt_tier(clampf(pct, 0.0, 1.0), killed), max_stage)
+    r["pct"] = 1.0 if killed else clampf(pct, 0.0, 1.0)
+    return r
+
+# ---------------------------------------------------------------- recompensas do RANKING (semana anterior)
 ## rank <= 0 = sem ranking online (modo offline): só participação.
 static func reward_for(rank: int, total: int) -> Dictionary:
     if rank > 0:

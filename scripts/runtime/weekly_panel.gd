@@ -238,12 +238,16 @@ func _draw() -> void:
     y += 38.0
     PixelFont.draw(self, Vector2(x, y), "Lucifer invoca 1 chefe a cada %d s" % int(Balance.WEEKLY_SUMMON_EVERY), 2, UiTheme.TEXT_DIM)
     y += 30.0
-    PixelFont.draw(self, Vector2(x, y), "PREMIOS (ranking da semana)", 2, UiTheme.GOLD)
+    PixelFont.draw(self, Vector2(x, y), "PRÊMIO POR LUTA (% da vida tirada)", 2, UiTheme.GOLD)
     y += 24.0
-    for row in WeeklyBoss.REWARD_RANKS:
-        PixelFont.draw(self, Vector2(x, y), "%s: %d gemas, %d frag." % [str(row["label"]), int(row["gems"]), int(row["shards"])], 2, UiTheme.TEXT_DIM)
+    var ms: int = int(GameState.state["max_stage"])
+    for t in WeeklyBoss.ATTEMPT_TIERS:
+        var rw: Dictionary = WeeklyBoss.tier_reward(t, ms)
+        var killed_row: bool = bool(t.get("killed", false))
+        PixelFont.draw(self, Vector2(x, y), "%s: %s ouro, %s gemas" % [str(rw["label"]), UiLogic.fmt_short(float(rw["gold"])),
+            UiLogic.fmt_int(int(rw["gems"]))], 2, UiTheme.GOLD if killed_row else UiTheme.TEXT_DIM)
         y += 22.0
-    PixelFont.draw(self, Vector2(x, y), "Demais: top 10% e participacao", 2, UiTheme.TEXT_DIM)
+    PixelFont.draw(self, Vector2(x, y), "Valores da sua fase máxima (%d). + bônus do ranking" % ms, 2, UiTheme.TEXT_DIM)
     # ---- ranking mundial (lado direito) ----
     var rx: float = r.position.x + r.size.x * 0.52
     var ry: float = r.position.y + 92.0

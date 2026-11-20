@@ -63,7 +63,8 @@ func test_save_roundtrip_and_junk() -> void:
     check(SaveData.sanitize({"gold": 5})["settings"]["volume"] == OptionsLogic.DEFAULT_VOLUME, "save antigo sem volume = padrão")
 
 func test_pause_rule() -> void:
-    check(not OptionsLogic.should_pause(false), "perfil fechado: o jogo roda (inclusive com o menu aberto)")
+    check(not OptionsLogic.should_pause(false), "nada aberto: o jogo roda")
+    check(OptionsLogic.should_pause(false, false, false, false, true), "menu aberto: pausa")
     check(OptionsLogic.should_pause(true), "perfil aberto: pausa")
     check(OptionsLogic.should_pause(false, true), "tela de morte: pausa")
     check(OptionsLogic.should_pause(false, false, true), "mapa das fases aberto: pausa")

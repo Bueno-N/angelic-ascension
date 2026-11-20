@@ -102,6 +102,8 @@ func _ready() -> void:
     _death.dismissed.connect(_on_death_dismissed)
     _death.ad_revived.connect(_on_death_ad_revived)
     _profile.visibility_changed.connect(_update_pause)
+    _profile.visibility_changed.connect(_refresh)     # perfil aberto trava MENU / FASES / BOSS SEMANAL
+    _menu.visibility_changed.connect(_update_pause)   # menu aberto pausa o jogo
     _weekly = WeeklyPanel.new()      # tela cheia, por cima de tudo menos da morte
     _root.add_child(_weekly)
     _root.move_child(_weekly, _root.get_child_count() - 2)
@@ -120,7 +122,7 @@ func _ready() -> void:
     Events.boss_warning.connect(_on_boss_warning)
     _refresh()
 
-## Só para o smoke do CI (o menu NÃO pausa; só o perfil): passo 0 abre o menu; 1..N percorre as abas; depois abre/fecha o perfil.
+## Só para o smoke do CI (menu e perfil pausam): passo 0 abre o menu; 1..N percorre as abas; depois abre/fecha o perfil.
 func debug_ui_step(step: int) -> void:
     var tabs: Array = MenuModel.tabs(true)
     if step == 0:
@@ -149,18 +151,18 @@ func _make_button(t: String, ic: String, r: Rect2, cb: Callable) -> UiButton:
     _root.add_child(b)
     return b
 
-## Garantia extra: a pausa SEMPRE acompanha o perfil aberto, mesmo que o sinal de visibilidade não dispare.
+## Garantia extra: a pausa SEMPRE acompanha o menu/perfil aberto, mesmo que o sinal de visibilidade não dispare.
 ## (No smoke do CI não: lá a pausa é desfeita logo após conferir, para a cena continuar contando frames.)
 func _process(_delta: float) -> void:
     _gem_ad_btn.visible = not _menu.visible    # menu aberto: o menu fica acima de tudo, sem o botão de gemas aparecendo na borda
     if _smoke:
         return
-    if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible, _weekly.visible):
+    if get_tree().paused != OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible, _weekly.visible, _menu.visible):
         _update_pause()
 
-## Pausa o jogo enquanto o perfil estiver aberto (o menu não pausa); solta o joystick para não "grudar" a direção.
+## Pausa o jogo enquanto menu, perfil, mapa, boss semanal ou morte estiverem na tela; solta o joystick para não "grudar" a direção.
 func _update_pause() -> void:
-    var want: bool = OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible, _weekly.visible)
+    var want: bool = OptionsLogic.should_pause(_profile.visible, _death.is_active(), _map.visible, _weekly.visible, _menu.visible)
     get_tree().paused = want
     if want:
         pause_checks += 1
@@ -203,13 +205,22 @@ func _on_gem_ad_done(earned: bool) -> void:
             _top.show_banner("+%d GEMAS" % gems, "Obrigado por assistir!", "stage")
     _gem_ad_btn.refresh()
 
+## Perfil aberto: MENU, FASES e BOSS SEMANAL ficam travados até o jogador fechar o perfil.
+func _profile_blocks() -> bool:
+    if _profile.visible:
+        _top.show_banner("FECHE O PERFIL", "Toque em FECHAR para usar o menu", "stage")
+        return true
+    return false
+
 func _toggle_menu() -> void:
+    if _profile_blocks():
+        return
     _map.close()
     _weekly.close()
     _menu.toggle()
 
 func _toggle_map() -> void:
-    if _fight:
+    if _fight or _profile_blocks():
         return    # durante a luta semanal o mapa fica fechado
     _menu.close()
     _weekly.close()
@@ -229,7 +240,7 @@ func debug_map_step(step: int) -> bool:
             return not _map.is_open()
 
 func _toggle_weekly() -> void:
-    if _fight:
+    if _fight or _profile_blocks():
         return
     _menu.close()
     _map.close()
@@ -245,7 +256,12 @@ func _on_weekly_started() -> void:
 ## Fim da luta: aviso grande na tela (tempo esgotado, derrota ou vitória) e volta à partida normal.
 func _on_weekly_finished(res: Dictionary) -> void:
     _fight = false
-    var score_txt: String = "Pontos: %s" % WeeklyBoss.fmt_score(float(res.get("score", 0.0)))
+    var score_txt: String = "%d%% da vida" % int(floor(float(res.get("pct", 0.0)) * 100.0))
+    var rw: Dictionary = res.get("reward", {})
+    if int(rw.get("gems", 0)) > 0:
+        score_txt += "  |  +%s ouro  +%s gemas" % [UiLogic.fmt_short(float(rw["gold"])), UiLogic.fmt_int(int(rw["gems"]))]
+    else:
+        score_txt += "  |  sem prêmio (tire 1%)"
     match str(res.get("reason", "")):
         "timeout":
             _top.show_banner("O SEU TEMPO ACABOU", score_txt, "boss")
@@ -332,5 +348,8 @@ func _refresh() -> void:
     _next_btn.set_text("PRÓX. FASE %d" % mini(stg + 1, Balance.MAX_STAGE))
     _next_btn.set_enabled(StageLogic.can_skip_to_next(stg, int(s["max_stage"])))
     _speed_btn.set_text("VEL. %dX" % int(UiLogic.time_scale(s["settings"])))
-    _weekly_btn.set_enabled(WeeklyBoss.is_unlocked(int(s["max_stage"])) and not _fight)   # bloqueado até concluir a fase 50
+    var free: bool = not _profile.visible
+    _menu_btn.set_enabled(free)
+    _stages_btn.set_enabled(free and not _fight)
+    _weekly_btn.set_enabled(WeeklyBoss.is_unlocked(int(s["max_stage"])) and not _fight and free)   # bloqueado até concluir a fase 50
     _top.queue_redraw()

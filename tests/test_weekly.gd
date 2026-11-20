@@ -198,3 +198,39 @@ func test_speed_upgrades_capped_at_50() -> void:
             found = true
             check(r["button"] == "MÁXIMO" and not r["enabled"], "linha da velocidade mostra MÁXIMO e fica desligada")
     check(found, "linha da velocidade existe")
+
+func test_reward_per_fight_by_percent_of_life() -> void:
+    var ms := 100
+    check(WeeklyBoss.attempt_reward(0.005, false, ms)["gems"] == 0 and WeeklyBoss.attempt_reward(0.005, false, ms)["gold"] == 0, "menos de 1%: sem prêmio")
+    var prev_gold := 0
+    var prev_gems := 0
+    for pct in [0.01, 0.10, 0.25, 0.50, 0.75]:
+        var r: Dictionary = WeeklyBoss.attempt_reward(pct, false, ms)
+        check(int(r["gold"]) > prev_gold and int(r["gems"]) > prev_gems, "faixa %d%% paga mais que a anterior" % int(pct * 100.0))
+        prev_gold = int(r["gold"])
+        prev_gems = int(r["gems"])
+    var kill: Dictionary = WeeklyBoss.attempt_reward(1.0, true, ms)
+    check(int(kill["gold"]) > prev_gold and int(kill["gems"]) > prev_gems, "matar o Lucifer é o melhor prêmio")
+    check(int(kill["gems"]) >= prev_gems * 3 / 2, "matar vale bem mais que 75%")
+    check(kill["label"] == "LUCIFER DERROTADO" and float(kill["pct"]) == 1.0, "faixa de vitória")
+    check(WeeklyBoss.attempt_reward(0.99, false, ms)["label"] == "75% OU MAIS", "99% sem matar não é vitória")
+    check(WeeklyBoss.attempt_reward(0.30, false, ms)["label"] == "25% OU MAIS", "30% cai na faixa de 25%")
+
+func test_reward_per_fight_scales_with_max_stage() -> void:
+    var low: Dictionary = WeeklyBoss.attempt_reward(1.0, true, 51)
+    var high: Dictionary = WeeklyBoss.attempt_reward(1.0, true, 250)
+    check(int(high["gold"]) > int(low["gold"]) * 100 and int(high["gems"]) > int(low["gems"]), "fase máxima maior: prêmio maior")
+    check(int(low["gold"]) == WeeklyBoss.stage_gold(51) * 6, "vitória = ouro de 6 fases da fase máxima")
+    check(int(WeeklyBoss.attempt_reward(0.01, false, 51)["gems"]) >= WeeklyBoss.ATTEMPT_MIN_GEMS, "piso de gemas")
+    var top: Dictionary = WeeklyBoss.attempt_reward(1.0, true, Balance.MAX_STAGE)
+    check(int(top["gold"]) > 0 and int(top["gold"]) < 9000000000000000000, "fase 300: ouro sem estourar o inteiro")
+    check(int(top["gems"]) < 20000, "fase 300: gemas da vitória continuam razoáveis (%d)" % int(top["gems"]))
+    for t in WeeklyBoss.ATTEMPT_TIERS:
+        for ch in str(t["label"]):
+            check(SpriteManifest.FONT_CHARS.contains(ch), "fonte desenha '%s'" % ch)
+
+func test_attempt_reward_goes_to_the_save() -> void:
+    var st := SaveData.default_state()
+    st["max_stage"] = 80
+    var r: Dictionary = WeeklyBoss.attempt_reward(0.5, false, int(st["max_stage"]))
+    check(int(r["gems"]) == maxi(WeeklyBoss.ATTEMPT_MIN_GEMS, int(round(WeeklyBoss.boss_gems_avg(80) * 5.0))), "50%: 5 chefes de gemas")

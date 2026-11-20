@@ -261,6 +261,16 @@ func weekly_record(score: float) -> bool:
     save()
     return is_best
 
+## Prêmio de UMA luta contra o Lucifer (pela % da vida tirada; o melhor é matá-lo). Soma ouro e gemas e salva.
+func weekly_attempt_reward(pct: float, killed: bool) -> Dictionary:
+    var r: Dictionary = WeeklyBoss.attempt_reward(pct, killed, int(state["max_stage"]))
+    if int(r["gold"]) > 0 or int(r["gems"]) > 0:
+        state["gold"] = int(state["gold"]) + int(r["gold"])
+        state["gems"] = int(state["gems"]) + int(r["gems"])
+        recalc()
+        save()
+    return r
+
 ## Resgata a recompensa da semana passada (gemas e fragmentos). Devolve a recompensa ({} se não havia).
 func weekly_claim(rank: int, total: int) -> Dictionary:
     var r: Dictionary = WeeklyBoss.claim(state["weekly"], rank, total)

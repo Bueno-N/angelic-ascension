@@ -212,7 +212,9 @@ func finish_weekly(reason: String) -> void:
     player.heal(player.max_hp)
     Events.boss_hp_changed.emit(0.0, 0.0)
     start_stage(_w_return_stage)
-    Events.weekly_finished.emit({"score": score, "killed": killed_it, "reason": reason})
+    var pct: float = clampf(_w_dealt / maxf(_w_max_hp, 1.0), 0.0, 1.0)
+    var reward: Dictionary = GameState.weekly_attempt_reward(pct, killed_it)   # prêmio da luta, pago na hora
+    Events.weekly_finished.emit({"score": score, "killed": killed_it, "reason": reason, "pct": pct, "reward": reward})
 
 ## Só para o smoke do CI: esgota o tempo da luta semanal.
 func debug_weekly_timeout() -> void:

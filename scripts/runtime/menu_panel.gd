@@ -1,8 +1,7 @@
 class_name MenuPanel
 extends Control
 ## Menu em duas etapas: 1) grade de ícones (Loja, Atributos, Habilidades, Asas, Equipamentos, Opções [+ Teste]);
-## 2) ao tocar num ícone, abre a lista daquela aba para comprar/evoluir. Tudo por toque próprio (multitoque):
-## dá para andar com o anjo (joystick) e fazer upgrades ao mesmo tempo.
+## 2) ao tocar num ícone, abre a lista daquela aba para comprar/evoluir. Com o menu aberto o JOGO PAUSA (o HUD cuida disso).
 
 const HEAD := 92.0
 const PREVIEW_W := 300.0     # prévia do anjo (asas/equipamentos) numa coluna à esquerda; a lista usa o resto da largura
