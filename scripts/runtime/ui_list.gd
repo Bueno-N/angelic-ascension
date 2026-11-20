@@ -3,6 +3,8 @@ extends Control
 ## Lista rolável desenhada por código (ícones, fonte pixel, botões com custo). Cada dedo é rastreado pelo seu
 ## índice: arrastar rola a lista; um toque curto num botão dispara `action`. Como usa ScreenTouch/Drag, o dedo
 ## no joystick e outro nesta lista funcionam juntos (multitoque).
+## Linhas com "repeat": true (upgrades de atributo): SEGURAR o botão repete a ação, cada vez mais rápido,
+## até soltar, arrastar ou o botão ficar desativado (acabou o ouro / nível máximo).
 
 signal action(id: String)
 const PAD := 8.0
@@ -15,6 +17,17 @@ var _content_h := 0.0
 var _scroll := 0.0
 var _touches := {}
 var _press_row := -1
+const HOLD_DELAY := 0.35        # segurar por este tempo começa a repetir
+var _hold_row := -1
+var _hold_idx := -1
+var _hold_t := 0.0
+var _hold_next := 0.0
+var _hold_count := 0
+var repeats_fired := 0          # testes/smoke: quantas compras saíram por segurar
+
+## Intervalo entre repetições: começa em 0,14 s e acelera até 0,035 s (~28 upgrades/s).
+static func repeat_interval(n: int) -> float:
+    return maxf(0.035, 0.14 * pow(0.85, float(n)))
 
 func _ready() -> void:
     clip_contents = true
@@ -78,6 +91,10 @@ func _gui_input(event: InputEvent) -> void:
         if event.pressed:
             _touches[event.index] = {"start": event.position, "scroll": false}
             _press_row = _hit_button(event.position + Vector2(0.0, _scroll))
+            _stop_hold()
+            if _press_row >= 0 and bool(_rows[_press_row].get("repeat", false)):
+                _hold_row = _press_row
+                _hold_idx = event.index
             queue_redraw()
             accept_event()
         elif _touches.has(event.index):
@@ -85,7 +102,10 @@ func _gui_input(event: InputEvent) -> void:
             _touches.erase(event.index)
             var was: int = _press_row
             _press_row = -1
-            if not bool(t["scroll"]):
+            var held: bool = event.index == _hold_idx and _hold_count > 0
+            if event.index == _hold_idx:
+                _stop_hold()
+            if not bool(t["scroll"]) and not held:   # depois de segurar, soltar não compra mais uma
                 var hit: int = _hit_button(event.position + Vector2(0.0, _scroll))
                 if hit >= 0 and hit == was:
                     _fire(hit)
@@ -96,10 +116,52 @@ func _gui_input(event: InputEvent) -> void:
         if not bool(t2["scroll"]) and (event.position - t2["start"]).length() > 14.0:
             t2["scroll"] = true
             _press_row = -1
+            if event.index == _hold_idx:
+                _stop_hold()
         if bool(t2["scroll"]):
             _scroll = clampf(_scroll - event.relative.y, 0.0, _max_scroll())
             queue_redraw()
         accept_event()
+
+func _stop_hold() -> void:
+    _hold_row = -1
+    _hold_idx = -1
+    _hold_t = 0.0
+    _hold_next = 0.0
+    _hold_count = 0
+
+func _process(delta: float) -> void:
+    if _hold_row < 0:
+        return
+    if (is_inside_tree() and not is_visible_in_tree()) or _hold_row >= _rows.size():   # menu fechou: para
+        _stop_hold()
+        return
+    _hold_t += delta
+    if _hold_t < HOLD_DELAY or _hold_t < _hold_next:
+        return
+    var r: Dictionary = _rows[_hold_row]
+    if not bool(r.get("enabled", true)) or str(r.get("action", "")) == "" or not bool(r.get("repeat", false)):
+        _stop_hold()          # acabou o ouro ou chegou no nível máximo
+        _press_row = -1
+        queue_redraw()
+        return
+    _fire(_hold_row)
+    _hold_count += 1
+    repeats_fired += 1
+    _hold_next = _hold_t + repeat_interval(_hold_count)
+
+## Só para testes: simula segurar o dedo na linha i por `seconds`.
+func debug_hold(i: int, seconds: float, step: float = 1.0 / 60.0) -> int:
+    var before: int = repeats_fired
+    _stop_hold()
+    _hold_row = i
+    _hold_idx = 0
+    var t := 0.0
+    while t < seconds:
+        _process(step)
+        t += step
+    _stop_hold()
+    return repeats_fired - before
 
 func _fire(i: int) -> void:
     var r: Dictionary = _rows[i]

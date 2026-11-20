@@ -134,3 +134,30 @@ func test_debug_rows_and_reset_confirmation() -> void:
             check(str(r["action"]).begins_with("debug|"), "ações do teste")
             acts += 1
     check(acts >= 10, "várias ações de teste")
+
+func test_hold_to_repeat_attribute_upgrade() -> void:
+    var st := SaveData.default_state()
+    st["gold"] = 1000
+    var rows := MenuModel.rows("attrs", st, StatsCalc.compute(st), {})
+    var idx := -1
+    for i in rows.size():
+        if str(rows[i].get("action", "")) == "attr|attack":
+            idx = i
+    check(idx >= 0 and bool(rows[idx].get("repeat", false)), "upgrade de atributo pode ser repetido segurando")
+    for r in MenuModel.rows("equip", _rich_state(), StatsCalc.compute(_rich_state()), {}):
+        check(not bool(r.get("repeat", false)), "compras únicas (equipamentos) não repetem")
+    var list := UiList.new()
+    list.size = Vector2(800, 600)
+    list.set_rows(rows)
+    var buys := [0]
+    list.action.connect(func(id: String):
+        if MenuModel.perform(st, id):
+            buys[0] += 1
+        list.set_rows(MenuModel.rows("attrs", st, StatsCalc.compute(st), {})))
+    check(list.debug_hold(idx, 0.2) == 0, "toque curto (antes de 0,35 s) não repete")
+    var fired: int = list.debug_hold(idx, 3.0)
+    check(fired > 10 and buys[0] == fired, "segurando: várias compras seguidas (%d)" % fired)
+    check(int(st["gold"]) < StatsCalc.upgrade_cost("attack", Shop.upgrade_level(st, "attack")), "para sozinho quando acaba o ouro")
+    check(list.debug_hold(idx, 1.0) == 0, "sem ouro: segurar não faz nada")
+    check(UiList.repeat_interval(0) > UiList.repeat_interval(10) and UiList.repeat_interval(100) >= 0.035, "acelera até um limite")
+    list.free()

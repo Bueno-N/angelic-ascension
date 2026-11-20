@@ -63,7 +63,7 @@ static func _item(icon: String, title: String, sub: String, button: String, cost
 
 # ---------------------------------------------------------------- atributos (ouro)
 static func _attrs(state: Dictionary, stats: Dictionary) -> Array:
-    var out: Array = [_header("Melhorias com ouro")]
+    var out: Array = [_header("Melhorias com ouro"), _info("Toque e SEGURE em UPAR para melhorar várias vezes seguidas.")]
     for attr in Balance.ATTRIBUTE_ORDER:
         var d: Dictionary = Balance.ATTRIBUTES[attr]
         var lvl: int = Shop.upgrade_level(state, attr)
@@ -76,9 +76,11 @@ static func _attrs(state: Dictionary, stats: Dictionary) -> Array:
                 "Atual %s  |  nível máximo" % cur_txt, "MÁXIMO", 0, "", "", "active", false))
             continue
         var lvl_txt: String = "%d" % lvl if StatsCalc.max_level(attr) > 100000 else "%d/%d" % [lvl, StatsCalc.max_level(attr)]
-        out.append(_item(ATTR_ICONS[attr], "%s  Nv %s" % [d["name"], lvl_txt],
+        var row := _item(ATTR_ICONS[attr], "%s  Nv %s" % [d["name"], lvl_txt],
             "Atual %s  |  +%s por nível" % [cur_txt, str(d["per_level"])], "UPAR", cost, "coin", "attr|" + str(attr),
-            "buy", afford, not afford))
+            "buy", afford, not afford)
+        row["repeat"] = true   # segurar o botão repete a compra enquanto houver ouro (UiList)
+        out.append(row)
     return out
 
 # ---------------------------------------------------------------- habilidades (gemas)
