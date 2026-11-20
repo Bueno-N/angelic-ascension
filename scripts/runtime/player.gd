@@ -1,6 +1,6 @@
 class_name Player
 extends Node2D
-## O anjo: sprite com a arte nova por pose (AngelSprite), aura rúnica giratória, golpe com arco de luz e faíscas.
+## O anjo: sprite com a arte nova por pose (AngelSprite), aura rúnica giratória, disparo de luz que mira (AngelShot) e faíscas.
 
 var hp: float = 100.0
 var max_hp: float = 100.0
@@ -18,9 +18,6 @@ var _aura_timer := 0.0
 var _aura_pulse := 0.0
 var _aura_scale := 2.0
 var _hurt := 0.0
-var _flash := 0.0
-var _last_flash := false
-var _flash_target := Vector2.ZERO
 var _hp_emit := 0.0
 var _sparks: CPUParticles2D
 var _sparks_tier := -1
@@ -167,11 +164,6 @@ func _process(delta: float) -> void:
         _hurt -= delta
         if _hurt <= 0.0:
             visual.modulate = Color.WHITE
-    _flash = maxf(0.0, _flash - delta)
-    var flashing: bool = _flash > 0.0
-    if flashing or _last_flash:
-        queue_redraw()
-    _last_flash = flashing
 
 ## Aura: intensidade cresce com o nível de Aura; muda de cor/tamanho com Fúria e Morte do Inferno.
 func _update_aura(delta: float) -> void:
@@ -198,12 +190,17 @@ func _attack(target: Node2D) -> void:
     AudioHub.play("atk", 1.0, 0.07)
     AudioHub.play("mob_hit", 1.0, 0.12)
     target.take_damage(get_stat("attack"))
-    _flash = 0.1
-    _flash_target = target.global_position
     if fx_layer != null:
-        var d: Vector2 = to_t.normalized()
-        SpriteFx.spawn(fx_layer, "fx_slash", global_position + d * 46.0, 2.0, Color(1.0, 0.95, 0.75), d.angle())
-        SpriteFx.spawn(fx_layer, "fx_hit", target.global_position, 1.6, Color(1.0, 0.9, 0.5))
+        # o disparo sai da MÃO e mira no inimigo (a pose só mostra o braço estendido)
+        var hand: Vector2 = visual.to_global(visual.hand_local())
+        var at: Vector2 = target.global_position
+        if visual.is_hell():
+            AngelShot.beam(fx_layer, hand, at)        # A MORTE DO INFERNO: só o raio, sem o projétil básico
+            SpriteFx.spawn(fx_layer, "fx_hit", at, 2.0, Color(1.0, 0.75, 0.3))
+        else:
+            AngelShot.muzzle(fx_layer, hand, at)
+            AngelShot.bolt(fx_layer, hand, at)
+            SpriteFx.spawn(fx_layer, "fx_hit", at, 1.4, Color(1.0, 0.9, 0.5))
 
 func _nearest_enemy(max_dist: float) -> Node2D:
     var best: Node2D = null
@@ -215,6 +212,3 @@ func _nearest_enemy(max_dist: float) -> Node2D:
             best = e
     return best
 
-func _draw() -> void:
-    if _flash > 0.0:
-        draw_line(Vector2.ZERO, _flash_target - global_position, Color(1.0, 1.0, 0.7, 0.5), 2.0)

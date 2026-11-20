@@ -3,10 +3,10 @@ extends Node2D
 ## Anjo com a arte nova (assets/angel/*.png, recortada de art_source/angel_sheet.jpg): uma imagem por POSE.
 ## Todas as poses ficam alinhadas pelo peito do anjo (ANCHORS), então trocar de pose não faz o anjo "pular".
 ##
-## Poses normais: idle (parado), cast (conjurando), attack_1 -> attack_2 (disparo de luz).
+## Poses normais: idle (parado), cast (conjurando), attack_1_body -> attack_2_body (braço estendido; o disparo é um AngelShot).
 ## Brilho das asas (glow_tier): idle vira glow_1 (tiers 1-3) ou glow_2 (tiers 4+).
 ## MODO INFERNO (só enquanto a habilidade "A MORTE DO INFERNO" está ativa, ver set_hell):
-##   parado = hell_1 <-> hell_2 (fogo em volta), ataque = hell_attack (raio enfeitado), conjuração = hell_cast.
+##   parado = hell_1 <-> hell_2 (fogo em volta), ataque = hell_attack_body + RAIO (AngelShot.beam), conjuração = hell_cast.
 ## A arte é fixa: asas e equipamentos não mudam mais o desenho do anjo (continuam valendo nos atributos).
 
 const DIR := "res://assets/angel/"
@@ -23,8 +23,18 @@ const ANCHORS := {
     "hell_1": Vector2(132.8, 213.9),
     "hell_2": Vector2(149.6, 190.3),
     "hell_attack": Vector2(127.7, 166.8),
+    "attack_1_body": Vector2(137.3, 120.1),       # mesmas âncoras: o corpo foi recortado da mesma imagem (x desde 0)
+    "attack_2_body": Vector2(120.9, 120.6),
+    "hell_attack_body": Vector2(127.7, 166.8),
     "hell_cast": Vector2(131.3, 120.3),
     "folded": Vector2(116.5, 126.8),
+}
+## Mão de onde sai o disparo (pixels da imagem), nas poses de ataque. O disparo em si é um AngelShot separado,
+## que mira no inimigo; por isso as poses de ataque usam só o CORPO (*_body), sem o efeito desenhado na imagem.
+const HANDS := {
+    "attack_1_body": Vector2(200.0, 125.0),
+    "attack_2_body": Vector2(200.0, 126.0),
+    "hell_attack_body": Vector2(228.0, 128.0),
 }
 const ATTACK_FRAME := 0.11         # segundos por quadro do ataque (dividido pela velocidade)
 const CAST_TIME := 0.45
@@ -64,8 +74,8 @@ static func pose_for(anim: String, t: float, hell: bool, idle_pose: String, spee
     match anim:
         "attack":
             if hell:
-                return "hell_attack"
-            return "attack_1" if t < fdur else "attack_2"
+                return "hell_attack_body"
+            return "attack_1_body" if t < fdur else "attack_2_body"
         "cast":
             return "hell_cast" if hell else "cast"
     if hell:
@@ -125,6 +135,13 @@ func face(dir_x: float) -> void:
 
 func current_anim() -> String:
     return _cur
+
+## Ponto da mão (coordenadas locais deste nó, já com o espelhamento do face()) no 1º quadro do ataque.
+func hand_local() -> Vector2:
+    var pose: String = "hell_attack_body" if _hell else "attack_1_body"
+    var h: Vector2 = HANDS[pose]
+    var a: Vector2 = ANCHORS[pose]
+    return Vector2((h.x - a.x) * SPRITE_SCALE, (h.y - a.y) * SPRITE_SCALE + CHEST_Y)
 
 func current_pose() -> String:
     return pose_for(_cur, _t, _hell, _idle_pose, _speed)

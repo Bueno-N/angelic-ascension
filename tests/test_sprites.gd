@@ -121,8 +121,8 @@ func test_fire_frames_only_with_death_of_hell() -> void:
             normal.append(AngelSprite.pose_for(anim, t, false, "glow_2", 1.0))
     for p in normal:
         check(not str(p).begins_with("hell"), "sem a Morte do Inferno nunca usa quadro de fogo (%s)" % p)
-    check(AngelSprite.pose_for("attack", 0.0, false, "idle", 1.0) == "attack_1" and AngelSprite.pose_for("attack", 0.15, false, "idle", 1.0) == "attack_2", "ataque normal: 2 quadros")
-    check(AngelSprite.pose_for("attack", 0.0, true, "idle", 1.0) == "hell_attack", "Morte do Inferno: ataque enfeitado")
+    check(AngelSprite.pose_for("attack", 0.0, false, "idle", 1.0) == "attack_1_body" and AngelSprite.pose_for("attack", 0.15, false, "idle", 1.0) == "attack_2_body", "ataque normal: 2 quadros (só o corpo)")
+    check(AngelSprite.pose_for("attack", 0.0, true, "idle", 1.0) == "hell_attack_body", "Morte do Inferno: pose do raio")
     var idle_hell := {}
     for t in [0.0, 0.1, 0.2, 0.3]:
         idle_hell[AngelSprite.pose_for("idle", t, true, "idle", 1.0)] = true
@@ -131,10 +131,26 @@ func test_fire_frames_only_with_death_of_hell() -> void:
     var a := AngelSprite.new()
     a.set_hell(true)
     a.attack()
-    check(a.is_hell() and a.current_pose() == "hell_attack", "sprite no modo inferno")
+    check(a.is_hell() and a.current_pose() == "hell_attack_body", "sprite no modo inferno")
+    var hh: Vector2 = a.hand_local()
     a.set_hell(false)
-    check(a.current_pose() == "attack_1", "acabou a habilidade: volta ao normal")
+    check(a.current_pose() == "attack_1_body", "acabou a habilidade: volta ao normal")
+    var hn: Vector2 = a.hand_local()
+    check(hn.x > 20.0 and hh.x > 20.0 and absf(hn.y) < 30.0, "a mão fica à frente do peito (o disparo sai dela)")
     a.free()
+
+func test_attack_shots() -> void:
+    for n in AngelShot.PIVOTS:
+        check(AngelShot.tex(n) != null, "imagem do disparo %s" % n)
+    for pose in AngelSprite.HANDS:
+        check(AngelSprite.ANCHORS.has(pose) and AngelSprite.pose_texture(pose) != null, "pose de ataque %s" % pose)
+    var parent := Node2D.new()
+    var b := AngelShot.bolt(parent, Vector2.ZERO, Vector2(0.0, 300.0))
+    check(absf(b.rotation - PI / 2.0) < 0.01, "projétil mira para baixo quando o inimigo está embaixo")
+    var bm := AngelShot.beam(parent, Vector2.ZERO, Vector2(-200.0, 0.0))
+    check(absf(absf(bm.rotation) - PI) < 0.01, "raio mira para a esquerda")
+    check(parent.get_child_count() == 2, "um disparo por ataque em cada modo")
+    parent.free()
 
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")
