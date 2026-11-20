@@ -148,11 +148,9 @@ func execute(id: String) -> void:
         "celestial_lance":
             var t := _nearest()
             if t != null:
-                var beam := Fx.make("beam", player.global_position, 0.3, 0.0, Color(1.0, 0.95, 0.6))
-                beam.to = t.global_position - player.global_position
-                _fx(beam)
-                _spark(t.global_position, GOLD)
-                deal_damage(t, id, atk, glow)
+                # a lança surge acima do anjo, carrega e voa até o alvo; o dano entra no impacto
+                var lance := LanceFx.spawn(fx_layer, player.global_position, t)
+                lance.hit.connect(func(_at: Vector2): deal_damage(t, id, atk, glow))
         "holy_shield":
             _ring(player.global_position, float(e["radius"]), BLUE)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)

@@ -225,5 +225,34 @@ func test_two_wings_until_level_7() -> void:
     check(a.current_file().begins_with("power_idle_") and a.current_file().ends_with("_2w"), "Morte do Inferno também respeita as 2 asas")
     a.free()
 
+func test_celestial_lance_animation() -> void:
+    for f in LanceFx.PIVOTS:
+        var t: Texture2D = LanceFx.tex(f)
+        check(t != null, "lança: %s carrega" % f)
+        if t != null:
+            var pv: Vector2 = LanceFx.PIVOTS[f]
+            check(pv.x >= 0.0 and pv.y >= 0.0 and pv.x <= t.get_width() and pv.y <= t.get_height(), "lança: referência de %s dentro da imagem" % f)
+    var parent := Node2D.new()
+    var target := Node2D.new()
+    target.position = Vector2(300.0, 0.0)
+    parent.add_child(target)
+    var l := LanceFx.spawn(parent, Vector2.ZERO, target)
+    var hits: Array = []
+    l.hit.connect(func(at: Vector2): hits.append(at))
+    check(l.phase == "summon" and l.current_frame() == "frame_1", "lança surge (quadro 1)")
+    l._process(LanceFx.T_SUMMON + 0.01)
+    check(l.phase == "charge" and l.current_frame() == "frame_2", "lança carrega (quadro 2)")
+    l._process(LanceFx.T_CHARGE + 0.01)
+    check(l.phase == "flight" and l.current_frame() == "frame_3", "lança dispara (quadro 3)")
+    check(absf(l.rotation - (Vector2(300.0, 0.0) - LanceFx.SUMMON_OFFSET).angle()) < 0.01, "lança mira no alvo")
+    check(hits.is_empty(), "sem dano antes de chegar")
+    l._process(0.1)
+    check(l.current_frame() == "frame_4", "voando (quadro 4)")
+    l._process(1.0)
+    check(hits.size() == 1 and l.phase == "impact" and l.current_frame() == "frame_5", "impacto: dano + quadro 5")
+    l._process(LanceFx.T_IMPACT + 0.01)
+    check(l.phase == "fade" and l.current_frame() == "frame_6", "luz se desfaz (quadro 6)")
+    parent.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")
