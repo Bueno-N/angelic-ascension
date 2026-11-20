@@ -189,5 +189,33 @@ func test_attack_shots() -> void:
     check(parent.get_child_count() == 3 and (parent.get_child(2) as AngelShot).kind == "pop", "cometa estoura em luz ao chegar")
     parent.free()
 
+func test_two_wings_until_level_7() -> void:
+    check(AngelSprite.uses_two_wings(0) and AngelSprite.uses_two_wings(6), "níveis 0-6: 2 asas")
+    check(not AngelSprite.uses_two_wings(7) and not AngelSprite.uses_two_wings(WingsDB.MAX_LEVEL), "nível 7+: 4 asas")
+    # toda pose usada tem a versão de 2 asas (com imagem e âncora)
+    var poses: Array = AngelSprite.IDLE_FRAMES + AngelSprite.FLY_FRAMES + AngelSprite.TRANSFORM_FRAMES + AngelSprite.HELL_ATTACK + ["atk_release", "atk_follow", "atk_charge", "power"]
+    for pose in poses:
+        var f: String = AngelSprite.file_for(pose, true)
+        check(f.ends_with("_2w") and AngelSprite.ANCHORS_2W.has(f) and AngelSprite.pose_texture(f) != null, "2 asas: %s -> %s" % [pose, f])
+        var t: Texture2D = AngelSprite.pose_texture(f)
+        if t != null:
+            var an: Vector2 = AngelSprite.anchor_of(f)
+            check(an.x > 0.0 and an.y > 0.0 and an.x < t.get_width() and an.y < t.get_height(), "âncora de %s dentro da imagem" % f)
+    for f in AngelSprite.HANDS_2W:
+        check(AngelSprite.ANCHORS_2W.has(f), "mão de %s tem âncora" % f)
+    var a := AngelSprite.new()
+    a.set_look(0, 0, {})
+    check(a.has_two_wings() and a.current_file().ends_with("_2w"), "começa com 2 asas")
+    a.attack()
+    var h2: Vector2 = a.hand_local()
+    check(a.current_file() == "atk_release_2w" and h2.x > 20.0, "ataque com 2 asas sai da mão")
+    a.set_look(7, 0, {})
+    check(not a.has_two_wings() and a.current_file() == "atk_release", "asa nv 7: troca para 4 asas")
+    a.set_look(6, 0, {})
+    a.set_hell(true)
+    a._process(1.0)
+    check(a.current_file() == "power_2w", "Morte do Inferno também respeita as 2 asas")
+    a.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")

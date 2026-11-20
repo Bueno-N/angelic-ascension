@@ -10,7 +10,8 @@ extends Node2D
 ##          e depois a FORMA DE PODER (power), que fica parada (não voa ao andar) durante toda a habilidade.
 ##          Ataque = golpe do Power Surge: surge_3 (chamas, braço erguido) -> surge_4 (esfera, punho erguido) -> power,
 ##          disparando o RAIO (AngelShot.beam) do punho. Todos alinhados pelo rosto: o anjo não sai do lugar.
-## A arte é fixa: o nível das asas e os equipamentos não mudam o desenho (continuam valendo nos atributos).
+## ASAS: até o nível 6 o anjo usa a versão com 2 asas (arquivos *_2w, de art_source/angel_v2_2wings.webp);
+## a partir do nível 7 (WINGS_FULL_LEVEL) troca para as 4 asas. Equipamentos não mudam o desenho.
 
 const DIR := "res://assets/angel/"
 const SPRITE_SCALE := 0.9          # quadros com ~135 px de altura -> ~122 px na tela
@@ -31,6 +32,23 @@ const HANDS := {
     "surge_3": Vector2(118.0, 62.0),
     "surge_4": Vector2(114.0, 50.0),
 }
+## Versão com 2 asas (nível de asas < 7): centro do rosto e mão em cada imagem *_2w.
+const WINGS_FULL_LEVEL := 7
+const ANCHORS_2W := {
+    "idle_0_2w": Vector2(64.3, 47.9), "idle_1_2w": Vector2(77.6, 46.7), "idle_2_2w": Vector2(67.8, 42.1),
+    "idle_3_2w": Vector2(71.2, 37.6), "idle_4_2w": Vector2(70.6, 37.7), "idle_5_2w": Vector2(68.8, 35.6), "idle_6_2w": Vector2(73.7, 38.2),
+    "atk_charge_2w": Vector2(76.2, 54.8), "atk_release_2w": Vector2(74.4, 48.5),
+    "fly_1_2w": Vector2(80.7, 53.3), "fly_2_2w": Vector2(96.9, 58.2), "fly_3_2w": Vector2(93.6, 52.5), "fly_4_2w": Vector2(96.5, 56.3),
+    "surge_0_2w": Vector2(73.8, 51.7), "surge_1_2w": Vector2(73.4, 56.6), "surge_2_2w": Vector2(89.5, 73.0),
+    "surge_3_2w": Vector2(82.0, 66.0), "surge_4_2w": Vector2(85.0, 56.0), "power_2w": Vector2(79.3, 75.6),
+}
+const HANDS_2W := {
+    "atk_release_2w": Vector2(106.0, 60.0),
+    "surge_3_2w": Vector2(115.0, 62.0),
+    "surge_4_2w": Vector2(100.0, 50.0),
+}
+## Na folha de 2 asas o "acompanhar" do ataque não tem um quadro limpo: usa o de carregar (faísca na mão).
+const ALIAS_2W := {"atk_follow": "atk_charge"}
 const IDLE_FRAMES := ["idle_0", "idle_1", "idle_2", "idle_3", "idle_4", "idle_5", "idle_6"]
 const IDLE_FPS := 7.0
 const FLY_FRAMES := ["fly_1", "fly_2", "fly_3", "fly_4"]
@@ -47,6 +65,7 @@ var _glow: Sprite2D                # contorno dourado (brilho das asas / poder)
 var _spr: Sprite2D
 var _cur := "idle"
 var _glow_tier := 0
+var _two_wings := true             # começa com 2 asas; 4 asas a partir do nível 7
 var _hell := false
 var _moving := false
 var _speed := 1.0
@@ -56,6 +75,17 @@ var _clock := 0.0                  # relógio contínuo (laços, flutuar, pulsar
 ## Estágio das asas (0..3) a partir do nível (0..10). Mantido para a lógica/testes (a arte não muda com ele).
 static func wings_stage(level: int) -> int:
     return clampi(floori(float(level) / 3.0), 0, 3)
+
+## 2 asas até o nível 6; 4 asas a partir do 7.
+static func uses_two_wings(wings_level: int) -> bool:
+    return wings_level < WINGS_FULL_LEVEL
+
+## Arquivo (sem .png) usado para uma pose, com ou sem a versão de 2 asas.
+static func file_for(pose: String, two_wings: bool) -> String:
+    return (ALIAS_2W.get(pose, pose) + "_2w") if two_wings else pose
+
+static func anchor_of(file: String) -> Vector2:
+    return ANCHORS_2W[file] if ANCHORS_2W.has(file) else ANCHORS[file]
 
 static func pose_texture(pose: String) -> Texture2D:
     if not _tex.has(pose):
@@ -112,8 +142,9 @@ func _make_layer() -> Sprite2D:
     add_child(s)
     return s
 
-func set_look(_wings_level: int, glow_tier: int, _equipped: Dictionary) -> void:
+func set_look(wings_level: int, glow_tier: int, _equipped: Dictionary) -> void:
     _glow_tier = glow_tier
+    _two_wings = uses_two_wings(wings_level)
     _refresh()
 
 ## Liga/desliga A MORTE DO INFERNO: ao ligar, toca a transformação do Power Surge e um redemoinho de luz.
@@ -169,10 +200,17 @@ func current_anim() -> String:
 
 ## Ponto de onde sai o disparo (coordenadas locais deste nó, já com o espelhamento do face()).
 func hand_local() -> Vector2:
-    var pose: String = "surge_4" if _hell else "atk_release"
-    var h: Vector2 = HANDS[pose]
-    var a: Vector2 = ANCHORS[pose]
+    var file: String = file_for("surge_4" if _hell else "atk_release", _two_wings)
+    var h: Vector2 = HANDS_2W[file] if _two_wings else HANDS[file]
+    var a: Vector2 = anchor_of(file)
     return Vector2((h.x - a.x) * SPRITE_SCALE, (h.y - a.y) * SPRITE_SCALE + CHEST_Y)
+
+func has_two_wings() -> bool:
+    return _two_wings
+
+## Arquivo realmente mostrado agora (pose + versão de asas).
+func current_file() -> String:
+    return file_for(current_pose(), _two_wings)
 
 func current_pose() -> String:
     return pose_for(_cur, _t, _hell, _moving, _speed, _clock)
@@ -190,10 +228,11 @@ func _refresh() -> void:
     _show(current_pose())
 
 func _show(pose: String) -> void:
-    var tex: Texture2D = pose_texture(pose)
+    var file: String = file_for(pose, _two_wings)
+    var tex: Texture2D = pose_texture(file)
     if tex == null:
         return
-    var a: Vector2 = ANCHORS.get(pose, Vector2(tex.get_width() / 2.0, tex.get_height() / 2.0))
+    var a: Vector2 = anchor_of(file)
     var floating: bool = _cur == "idle" and (_hell or not _moving)
     var bob: float = sin(_clock * 2.4) * 2.5 if floating else 0.0   # flutua de leve quando parado
     var pos := Vector2(0.0, CHEST_Y + bob)
