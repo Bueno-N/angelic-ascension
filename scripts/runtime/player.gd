@@ -134,7 +134,7 @@ func _process(delta: float) -> void:
         visual.face(dir.x)
     visual.set_moving(dir != Vector2.ZERO)   # andando: quadros de voo
     visual.set_speed(get_stat("attack_speed"))
-    visual.set_hell(buffs.is_active("death_of_hell"))   # A MORTE DO INFERNO: só o disparo muda (esfera de poder)
+    visual.set_hell(buffs.is_active("death_of_hell"))   # A MORTE DO INFERNO: transformação + forma de poder; ataque com o raio
 
     if hp > 0.0 and hp < max_hp:
         hp = minf(max_hp, hp + StatsCalc.regen_amount(max_hp, delta))
@@ -196,7 +196,8 @@ func _attack(target: Node2D) -> void:
         var hand: Vector2 = visual.to_global(visual.hand_local())
         var at: Vector2 = target.global_position
         if visual.is_hell():
-            AngelShot.sphere(fx_layer, hand, at)      # A MORTE DO INFERNO: esfera de poder (explode no alvo), sem o cometa
+            AngelShot.beam(fx_layer, hand, at)        # A MORTE DO INFERNO: o raio, sem o cometa
+            SpriteFx.spawn(fx_layer, "fx_hit", at, 2.0, Color(1.0, 0.75, 0.3))
         else:
             AngelShot.muzzle(fx_layer, hand, at)
             AngelShot.bolt(fx_layer, hand, at)   # o cometa estoura em luz ao chegar no alvo
