@@ -62,7 +62,7 @@ comp = []
 sh = angel.build()
 for i in (0, 1, 5, 6, 9, 10):
     c = Canvas(angel.W, angel.H); c.blit(sh['angel_wings_3'][i]); c.blit(sh['angel_body'][i])
-    for k, t in (('angel_sword', (255, 224, 130)), ('angel_boots', (255, 224, 130)), ('angel_armor', (255, 224, 130)), ('angel_gloves', (255, 224, 130))):
+    for k, t in (('angel_boots', (255, 224, 130)), ('angel_armor', (255, 224, 130)), ('angel_gloves', (255, 224, 130))):
         c.blit(tint(sh[k][i], t))
     comp.append(c)
 rows.append(strip(comp))
@@ -73,7 +73,7 @@ for name in ('boss_baal', 'boss_mordath', 'boss_ignarr', 'boss_azazel'):
     d = enemies.SHEETS[name][0]()
     rows.append(strip([d['walk'][0], d['walk'][2], d['cast'][0]]))
 fxrow = []
-for name in ('fx_aura', 'fx_slash', 'fx_hit', 'fx_burst', 'fx_shield', 'fx_poof', 'fx_fireball', 'ally', 'torch'):
+for name in ('fx_aura', 'fx_hit', 'fx_burst', 'fx_shield', 'fx_poof', 'fx_fireball', 'ally', 'torch'):
     fr = dict(fx.SHEETS)[name][0]() if name in dict(fx.SHEETS) else None
     fxrow.append(fr[len(fr) // 2])
 fxs = []

@@ -1,10 +1,10 @@
 extends TestCase
 ## Arte: manifesto, PNGs, animações e montagem dos SpriteFrames / camadas do anjo.
 
-const FX_SHEETS := ["fx_aura", "fx_slash", "fx_hit", "fx_burst", "fx_strike", "fx_shield", "fx_poof", "fx_fireball"]
+const FX_SHEETS := ["fx_aura", "fx_hit", "fx_burst", "fx_strike", "fx_shield", "fx_poof", "fx_fireball"]
 
 func _needed() -> Array:
-    var names: Array = ["angel_body", "angel_armor", "angel_boots", "angel_gloves", "angel_sword",
+    var names: Array = ["angel_body", "angel_armor", "angel_boots", "angel_gloves",
         "angel_wings_0", "angel_wings_1", "angel_wings_2", "angel_wings_3",
         "ally", "sword_orbit", "torch", "ground", "fx_flame", "ui_icons", "avatars"]
     names.append_array(FX_SHEETS)
@@ -41,7 +41,7 @@ func test_animation_ranges_are_valid() -> void:
 
 func test_angel_layers_are_aligned() -> void:
     var ref: Dictionary = SpriteManifest.DATA["angel_body"]
-    for n in ["angel_armor", "angel_boots", "angel_gloves", "angel_sword", "angel_wings_0", "angel_wings_1", "angel_wings_2", "angel_wings_3"]:
+    for n in ["angel_armor", "angel_boots", "angel_gloves", "angel_wings_0", "angel_wings_1", "angel_wings_2", "angel_wings_3"]:
         var m: Dictionary = SpriteManifest.DATA[n]
         check(int(m["fw"]) == int(ref["fw"]) and int(m["fh"]) == int(ref["fh"]), n + ": mesmo tamanho de quadro")
         check(int(m["frames"]) == int(ref["frames"]), n + ": mesma quantidade de quadros")
@@ -70,7 +70,6 @@ func test_fx_sheets_have_play_animation() -> void:
         check(SpriteManifest.DATA[n]["anims"].has("play"), n + " tem 'play'")
     check(SpriteManifest.DATA["fx_aura"]["anims"]["play"]["loop"], "aura repete")
     check(SpriteManifest.DATA["fx_shield"]["anims"]["play"]["loop"], "escudo repete")
-    check(not SpriteManifest.DATA["fx_slash"]["anims"]["play"]["loop"], "golpe toca uma vez")
 
 func test_sprite_frames_build_for_every_sheet() -> void:
     for n in SpriteManifest.DATA.keys():

@@ -35,25 +35,6 @@ def aura():
         fr.append(c)
     return fr
 
-# ---------------------------------------------------------------- GOLPE (arco de espada) 48x48 x5
-def slash():
-    fr = []
-    for f in range(5):
-        c = Canvas(48, 48)
-        prog = (f + 1) / 5.0
-        fade = 1.0 if f < 3 else (1.0 - (f - 2) / 3.0)
-        a_start, a_end = math.radians(75), math.radians(75 - 150 * prog)
-        steps = 40
-        for s in range(steps + 1):
-            t = s / steps
-            a = a_start + (a_end - a_start) * t
-            w = 15 * math.sin(math.pi * min(1.0, 0.15 + t * 0.9)) * (0.55 + 0.45 * prog)
-            ro, ri = 27, 27 - max(1.0, w)
-            col = mix(GOLDL, WHITE, t)
-            c.line(10 + math.cos(a) * ri, 24 - math.sin(a) * ri, 10 + math.cos(a) * ro, 24 - math.sin(a) * ro, A(col, 255 * fade * (0.5 + 0.5 * t)))
-        fr.append(c)
-    return fr
-
 # ---------------------------------------------------------------- IMPACTO (faíscas) 24x24 x4
 def hit():
     fr = []
@@ -224,7 +205,6 @@ def ground():
 
 SHEETS = {
     "fx_aura": (aura, dict(play=dict(start=0, count=8, fps=10, loop=True))),
-    "fx_slash": (slash, dict(play=dict(start=0, count=5, fps=22, loop=False))),
     "fx_hit": (hit, dict(play=dict(start=0, count=4, fps=24, loop=False))),
     "fx_burst": (burst, dict(play=dict(start=0, count=6, fps=16, loop=False))),
     "fx_strike": (strike, dict(play=dict(start=0, count=6, fps=16, loop=False))),

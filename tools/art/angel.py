@@ -122,25 +122,6 @@ def gloves_frame(p):
     c.finish(EQ_OUT, 0.3, 0.3)
     return c
 
-def sword_frame(p):
-    c = Canvas(W, H)
-    d = p['dy'] + OY
-    hx, hy = p['rh'][0], p['rh'][1] + d
-    a = math.radians(p['sw'])
-    dx, dyy = math.cos(a), -math.sin(a)
-    nx, ny = -dyy, dx
-    L = 21
-    tip = (hx + dx * L, hy + dyy * L)
-    c.line(hx - dx * 6, hy - dyy * 6, hx, hy, LG_D, 3)                                    # cabo
-    c.ell(hx - dx * 7, hy - dyy * 7, 2.0, 2.0, LG)                                        # pomo
-    c.poly([(hx + nx * 3.2 + dx * 3, hy + ny * 3.2 + dyy * 3), (hx + nx * 2.4 + dx * (L - 5), hy + ny * 2.4 + dyy * (L - 5)), tip,
-            (hx - nx * 2.4 + dx * (L - 5), hy - ny * 2.4 + dyy * (L - 5)), (hx - nx * 3.2 + dx * 3, hy - ny * 3.2 + dyy * 3)], LG_L)  # lâmina larga
-    c.line(hx + dx * 4, hy + dyy * 4, hx + dx * (L - 3), hy + dyy * (L - 3), LG_D)       # friso central
-    c.line(hx + nx * 4.6 + dx * 2, hy + ny * 4.6 + dyy * 2, hx - nx * 4.6 + dx * 2, hy - ny * 4.6 + dyy * 2, LG, 2)  # guarda curta
-    c.ell(hx + dx * 2.5, hy + dyy * 2.5, 1.6, 1.6, LG_D)                                  # gema
-    c.finish(EQ_OUT, 0.1, 0.2)
-    return c
-
 def wings_frame(p, stage):
     L = [22, 26, 29, 31][stage]
     nf = [7, 8, 9, 10][stage]
@@ -198,7 +179,6 @@ def build():
     sheets['angel_armor'] = [armor_frame(p) for p in POSES]
     sheets['angel_boots'] = [boots_frame(p) for p in POSES]
     sheets['angel_gloves'] = [gloves_frame(p) for p in POSES]
-    sheets['angel_sword'] = [sword_frame(p) for p in POSES]
     for s in range(4):
         sheets['angel_wings_%d' % s] = [wings_frame(p, s) for p in POSES]
     return sheets

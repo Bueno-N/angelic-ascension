@@ -103,31 +103,6 @@ const DATA := {
    }
   }
  },
- "angel_sword": {
-  "fw": 72,
-  "fh": 64,
-  "frames": 11,
-  "anims": {
-   "idle": {
-    "start": 0,
-    "count": 4,
-    "fps": 6,
-    "loop": true
-   },
-   "attack": {
-    "start": 4,
-    "count": 4,
-    "fps": 14,
-    "loop": false
-   },
-   "cast": {
-    "start": 8,
-    "count": 3,
-    "fps": 10,
-    "loop": false
-   }
-  }
- },
  "angel_wings_0": {
   "fw": 72,
   "fh": 64,
@@ -417,19 +392,6 @@ const DATA := {
     "count": 8,
     "fps": 10,
     "loop": true
-   }
-  }
- },
- "fx_slash": {
-  "fw": 48,
-  "fh": 48,
-  "frames": 5,
-  "anims": {
-   "play": {
-    "start": 0,
-    "count": 5,
-    "fps": 22,
-    "loop": false
    }
   }
  },
