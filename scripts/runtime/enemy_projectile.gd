@@ -13,21 +13,23 @@ var player: Player
 var art := ""                        # pasta do chefe com bola de fogo própria (ex.: "mordath"); "" = sprite antigo
 var _spr: AnimatedSprite2D
 var _rot_off := 0.0
+var _rotate := true                  # projétil redondo (orbe do Azazel) não gira com a direção
 
 func _ready() -> void:
     z_index = Enemy.BOSS_Z   # mesmo nível do chefe e criado depois dele: a bola sai da mão, na frente do corpo
     if art != "" and BossFx.has_fireball(art):
         _spr = BossFx.fireball(art)    # projétil desenhado do chefe (Mordath: bola de fogo, Azazel: orbe)
         _rot_off = -BossFx.proj_angle(art)
+        _rotate = BossFx.proj_rotates(art)
     else:
         _spr = SpriteLib.make("fx_fireball", "play", 1.6)
         _spr.modulate = tint
-    _spr.rotation = velocity.angle() + _rot_off
+    _spr.rotation = velocity.angle() + _rot_off if _rotate else 0.0
     add_child(_spr)
 
-func _end() -> void:
+func _end(hit: bool = true) -> void:
     if art != "" and BossFx.has_fireball(art) and get_parent() != null:
-        BossFx.explode(get_parent(), position, art)
+        BossFx.explode(get_parent(), position, art, hit)
     queue_free()
 
 func _process(delta: float) -> void:
@@ -35,7 +37,7 @@ func _process(delta: float) -> void:
     if homing > 0.0 and player != null and is_instance_valid(player):
         var want: float = (player.global_position - global_position).angle()
         velocity = velocity.rotated(clampf(angle_difference(velocity.angle(), want), -homing * delta, homing * delta))
-        if _spr != null:
+        if _spr != null and _rotate:
             _spr.rotation = velocity.angle() + _rot_off
     position += velocity * delta
     if player != null and is_instance_valid(player) and player.global_position.distance_to(global_position) <= hit_radius + 16.0:
@@ -43,4 +45,4 @@ func _process(delta: float) -> void:
         _end()
         return
     if life <= 0.0:
-        _end()
+        _end(false)   # sumiu sem acertar

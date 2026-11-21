@@ -136,7 +136,7 @@ func test_azazel_frames_and_fx() -> void:
         check(BossArt.ability_anim("boss_azazel", ab, 0) != "" and BossArt.ability_anim("boss_azazel", ab, 1) != "", "Azazel: %s animada" % ab)
     check(str(EnemiesDB.BOSSES[3].get("basic", "")) == "ranged_orb", "Azazel: golpe básico à distância (arremesso de orbe)")
     check(BossFx.has_fireball("azazel") and BossFx.has_shadow_portal("azazel") and not BossFx.has_shadow_portal("mordath"), "orbe e portal de sombra do Azazel")
-    for f in ["orb_0", "orb_1", "orb_fly", "orb_boom", "orb_fade", "shadow_0", "shadow_1", "shadow_2", "shadow_3", "shadow_4", "shadow_5"]:
+    for f in ["soul_1", "soul_2", "soul_3", "soul_vanish", "soul_hit", "shadow_0", "shadow_1", "shadow_2", "shadow_3", "shadow_4", "shadow_5"]:
         check(BossFx.tex("azazel", f) != null, "Azazel fx: %s" % f)
     var parent := Node2D.new()
     var p := EnemyProjectile.new()
@@ -144,7 +144,16 @@ func test_azazel_frames_and_fx() -> void:
     p.velocity = Vector2(200.0, 0.0)
     parent.add_child(p)
     p._ready()
-    check(p._spr.sprite_frames.has_animation("fly") and absf(p._spr.rotation + BossFx.proj_angle("azazel")) < 0.01, "orbe do Azazel girado para a direção do voo")
+    var sfa: SpriteFrames = p._spr.sprite_frames
+    check(sfa.get_frame_count("launch") == 3 and sfa.get_frame_count("fly") == 1 and sfa.get_frame_texture("fly", 0) == BossFx.tex("azazel", "soul_2"), "orbe: surge 1-2-3 e persegue no 2")
+    check(p._spr.rotation == 0.0, "orbe redondo não gira")
+    var before := parent.get_child_count()
+    p._end(false)
+    var last: Node = parent.get_child(parent.get_child_count() - 1)
+    check(parent.get_child_count() == before + 1 and (last.get_child(0) as Sprite2D).texture == BossFx.tex("azazel", "soul_vanish"), "sumiu: estrela (quadro 7)")
+    BossFx.explode(parent, Vector2.ZERO, "azazel", true)
+    last = parent.get_child(parent.get_child_count() - 1)
+    check((last.get_child(0) as Sprite2D).texture == BossFx.tex("azazel", "soul_hit"), "acertou: fumaça (quadro 8)")
     var sp := BossFx.shadow_portal(parent, Vector2(10, 10), 1.0, "azazel")
     check(sp.texture == BossFx.tex("azazel", "shadow_0") and sp.position == Vector2(10, 10), "portal de sombra abre no destino")
     parent.free()

@@ -17,8 +17,9 @@ const FIREBALL_SCALE := 0.36         # quadros de 220 px -> bola de ~40 px na te
 const PROJECTILES := {
     "mordath": {"launch": ["fireball_0", "fireball_1", "fireball_2"], "fly": ["fireball_1", "fireball_2"],
         "angle": FIREBALL_NATIVE_ANGLE, "scale": FIREBALL_SCALE, "boom": "boom", "smoke": "smoke"},
-    "azazel": {"launch": ["orb_0", "orb_1"], "fly": ["orb_fly"],
-        "angle": PI + 0.45, "scale": 0.5, "boom": "orb_boom", "smoke": "orb_fade"},   # orbe vai para a esquerda (rastro p/ baixo-direita)
+    # orbe de alma: surge 1 -> 2 -> 3, volta ao 2 e persegue o anjo nele; some = "vanish" (estrela), acerta = "hit" (fumaça)
+    "azazel": {"launch": ["soul_1", "soul_2", "soul_3"], "fly": ["soul_2"], "rotate": false,
+        "angle": 0.0, "scale": 0.55, "vanish": "soul_vanish", "hit": "soul_hit"},
 }
 const SHADOW_FRAMES := ["shadow_0", "shadow_1", "shadow_2", "shadow_3"]
 const SHADOW_SCALE := 1.0            # portal de ~260 px (recortado a 0,7) = diâmetro da explosão de 130 px de raio
@@ -48,6 +49,9 @@ static func has_fireball(boss_dir: String) -> bool:
     return PROJECTILES.has(boss_dir) and tex(boss_dir, PROJECTILES[boss_dir]["launch"][0]) != null
 
 ## Ângulo para onde a arte do projétil aponta (para girar na direção do voo).
+static func proj_rotates(boss_dir: String) -> bool:
+    return bool(PROJECTILES.get(boss_dir, {}).get("rotate", true))
+
 static func proj_angle(boss_dir: String) -> float:
     return float(PROJECTILES[boss_dir]["angle"]) if PROJECTILES.has(boss_dir) else FIREBALL_NATIVE_ANGLE
 
@@ -75,12 +79,24 @@ static func fireball(boss_dir: String) -> AnimatedSprite2D:
     return s
 
 ## Explosão roxa onde a bola de fogo acertou (ou sumiu): explosão e depois a fumaça.
-static func explode(parent: Node, pos: Vector2, boss_dir: String) -> Node2D:
+## hit = acertou o anjo (false = sumiu no fim da vida). Chefes com "hit"/"vanish" usam 1 quadro próprio para cada caso.
+static func explode(parent: Node, pos: Vector2, boss_dir: String, hit: bool = true) -> Node2D:
     var n := Node2D.new()
     n.position = pos
     n.z_index = 5
     var s := Sprite2D.new()
     var cfg: Dictionary = PROJECTILES[boss_dir]
+    if cfg.has("hit"):
+        s.texture = tex(boss_dir, str(cfg["hit"] if hit else cfg["vanish"]))
+        s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+        s.scale = Vector2(float(cfg["scale"]), float(cfg["scale"]))
+        n.add_child(s)
+        parent.add_child(n)
+        var tw0 := n.create_tween()
+        tw0.tween_property(s, "scale", s.scale * 1.25, 0.15)
+        tw0.parallel().tween_property(s, "modulate:a", 0.0, 0.35).set_delay(0.1)
+        tw0.tween_callback(n.queue_free)
+        return n
     s.texture = tex(boss_dir, str(cfg["boom"]))
     s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
     s.scale = Vector2(float(cfg["scale"]), float(cfg["scale"])) * 0.8
