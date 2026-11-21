@@ -22,11 +22,9 @@ Esta pasta tem `.gdignore`: o Godot NÃO importa nem exporta nada daqui (não pe
 
 O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuário, em resolução original (1672x941).
 
-## Cenário em tiles (mundo maior que a tela)
+## Mapas (imagem única por mapa)
 
-- `tile_floor.webp` -> `assets/env/floor.png` (640 px, emendas misturadas para repetir sem costura).
-- `tile_lava_pure.webp` -> `assets/env/lava.png` (lava pura, 320 px, emendas misturadas).
-- `tile_corner.webp` -> `assets/env/corner.png` (canto: pedra em cima/direita, lava embaixo/esquerda; bordas esmaecidas; girado para cada canto em `Backdrop`).
-- `tile_lava.webp` -> `assets/env/shore.png` (faixa da margem lava -> rochas, lava à esquerda; a lava dos canais foi apagada na metade de dentro).
-- Gerados por um script de recorte (`seam`: mistura com a imagem deslocada em meio tile). Tamanho do mundo em `Arena.WORLD`; desenho em `Backdrop`.
-- `arena_bg.png` (fundo antigo de tela única) ficou sem uso.
+- `maps/map_gate.webp`, `map_forge.webp`, `map_graveyard.webp` -> `assets/env/maps/gate.png`, `forge.png`, `graveyard.png` (2000x1125).
+- Contorno andável e objetos bloqueados em `data/arena_maps.gd` (pixels da imagem); a lava é tirada automaticamente pela cor.
+- Uso: portão e cemitério alternam a cada 10 fases; forja nas fases de chefe e no boss semanal (`ArenaMaps.for_stage`).
+- `tile_*.webp` (tentativa anterior com tiles) ficaram sem uso.

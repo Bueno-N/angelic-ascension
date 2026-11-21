@@ -37,6 +37,9 @@ func setup(p: Player, c: Node2D) -> void:
 func start_stage(s: int) -> void:
     stage = StageLogic.clamp_stage(s)
     GameState.set_stage(stage)
+    Arena.use_map(ArenaMaps.for_stage(stage))           # mapa da fase (portão/cemitério; forja nos chefes)
+    if player != null:
+        player.position = Arena.clamp_floor(player.position)
     for e in container.get_children():
         e.queue_free()
     alive = 0
@@ -165,6 +168,8 @@ func start_weekly() -> void:
     _w_dealt = 0.0
     _w_max_hp = WeeklyBoss.lucifer_hp()
     _w_clock = -1
+    Arena.use_map(ArenaMaps.for_stage(stage, true))
+    player.position = Arena.clamp_floor(player.position)
     var luc := Enemy.new()
     luc.position = Arena.clamp_floor(player.global_position + Vector2(0.0, -330.0), 60.0)
     container.add_child(luc)

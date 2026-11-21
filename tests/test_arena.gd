@@ -1,34 +1,73 @@
 extends TestCase
-## Mundo maior que a tela: chão no meio, lava em volta, anjo nunca na lava, mobs nascendo da lava perto do anjo.
+## Mapas desenhados (ArenaMaps): o anjo nunca anda na lava nem atravessa objetos; mobs nascem na lava.
 
-func test_world_bigger_than_screen() -> void:
-    var f := Arena.floor_rect()
-    check(Arena.WORLD.x > 1280.0 * 1.5 and Arena.WORLD.y > 720.0 * 1.5, "mundo bem maior que a tela")
-    check(f.size.x > 1280.0 and f.size.y > 720.0, "chão jogável maior que a tela")
-    check(Arena.world_rect().encloses(f) and f.position.x == Arena.LAVA, "lava em volta do chão")
+func test_maps_exist_and_rotate_by_stage() -> void:
+    for id in ArenaMaps.ids():
+        check(ResourceLoader.exists(str(ArenaMaps.MAPS[id]["image"])), "imagem do mapa %s" % id)
+    check(ArenaMaps.for_stage(10) == "forge" and ArenaMaps.for_stage(300) == "forge", "fases de chefe na forja")
+    check(ArenaMaps.for_stage(1, true) == "forge", "boss semanal na forja")
+    check(ArenaMaps.for_stage(3) == "gate" and ArenaMaps.for_stage(13) == "graveyard" and ArenaMaps.for_stage(23) == "gate", "portão/cemitério alternam a cada 10 fases")
+    check(Arena.WORLD.x > 1280.0 * 1.5 and Arena.WORLD.y > 720.0 * 1.5, "mundo maior que a tela")
 
-func test_player_never_on_lava() -> void:
-    for p in [Vector2(-500, -500), Vector2(5000, 300), Vector2(100, 2000), Vector2(Arena.LAVA + 1.0, Arena.LAVA + 1.0)]:
-        var q := Arena.clamp_floor(p)
-        check(Arena.on_floor(q, Arena.PLAYER_MARGIN - 0.01), "ponto %s vira %s, fora da lava" % [p, q])
-    check(Arena.clamp_floor(Arena.center()) == Arena.center(), "no meio do chão não mexe")
+func test_walkable_never_lava_or_block() -> void:
+    for id in ArenaMaps.ids():
+        Arena.use_map(id)
+        var m: Dictionary = ArenaMaps.MAPS[id]
+        var img: Image = Arena.texture().get_image()
+        if img.is_compressed():
+            img.decompress()
+        check(Arena.walkable_cells() > 4000, "%s: área andável grande" % id)
+        check(Arena.on_floor(Arena.start_point(), Arena.PLAYER_MARGIN), "%s: ponto de partida andável" % id)
+        var bad_lava := 0
+        var bad_block := 0
+        var bad_out := 0
+        for y in range(4, 1125, 6):
+            for x in range(4, 2000, 6):
+                var ip := Vector2(x, y)
+                if not Arena.on_floor(ip * Arena.SCALE, 0.0):
+                    continue
+                if Arena.is_lava_color(img.get_pixel(x, y)):
+                    bad_lava += 1
+                for b in m["block"]:
+                    if Geometry2D.is_point_in_polygon(ip, PackedVector2Array(b)):
+                        bad_block += 1
+                var inside := false
+                for w in m["walk"]:
+                    if Geometry2D.is_point_in_polygon(ip, PackedVector2Array(w)):
+                        inside = true
+                if not inside:
+                    bad_out += 1
+        check(bad_lava <= 6, "%s: andável quase sem pixel de lava (%d, só bordas de célula)" % [id, bad_lava])
+        check(bad_block <= 6 and bad_out <= 6, "%s: andável fora de objetos (%d) e dentro do contorno (%d)" % [id, bad_block, bad_out])
+    Arena.use_map("gate")
 
-func test_mobs_spawn_from_lava_near_angel() -> void:
+func test_angel_cannot_leave_walkable() -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 11
+    for id in ArenaMaps.ids():
+        Arena.use_map(id)
+        var p := Arena.start_point()
+        var outside := 0
+        for i in 6000:   # passeio aleatório forçando as bordas
+            var dir := Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(4.0, 14.0)
+            p = Arena.slide(p, p + dir)
+            if not Arena.on_floor(p, Arena.PLAYER_MARGIN - 0.01):
+                outside += 1
+        check(outside == 0, "%s: anjo nunca sai da área andável (%d)" % [id, outside])
+        for far in [Vector2(-500, -500), Vector2(5000, 300), Vector2(100, 2000)]:
+            check(Arena.on_floor(Arena.clamp_floor(far), Arena.PLAYER_MARGIN - 0.01), "%s: ponto fora volta para o chão" % id)
+    Arena.use_map("gate")
+
+func test_mobs_spawn_from_lava() -> void:
     var rng := RandomNumberGenerator.new()
     rng.seed = 7
-    var f := Arena.floor_rect()
-    var near_left := Vector2(f.position.x + 60.0, Arena.center().y)
-    var left := 0
-    for i in 60:
-        var p := Arena.lava_spawn(near_left, rng)
-        check(Arena.in_lava(p), "nasce na lava")
-        check(p.distance_to(near_left) >= Arena.SPAWN_MIN_DIST - 0.01, "não nasce colado no anjo")
-        if p.x < f.position.x:
-            left += 1
-    check(left >= 30, "anjo perto da lava da esquerda: a maioria sai de lá (%d/60)" % left)
-    var mid := Arena.center()
-    for i in 20:
-        check(Arena.in_lava(Arena.lava_spawn(mid, rng)), "anjo no meio: ainda nasce na lava")
+    for id in ArenaMaps.ids():
+        Arena.use_map(id)
+        check(Arena.spawn_points().size() > 200, "%s: vários pontos de nascimento na lava" % id)
+        for i in 30:
+            var p := Arena.lava_spawn(Arena.start_point(), rng)
+            check(Arena.in_lava(p) and not Arena.on_floor(p), "%s: nasce na lava" % id)
+    Arena.use_map("gate")
 
 func test_boss_pointer_edge() -> void:
     var r := Rect2(0, 0, 100, 50)

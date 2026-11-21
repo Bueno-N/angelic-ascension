@@ -128,7 +128,7 @@ func _process(delta: float) -> void:
         dir = joystick.output
     if dir == Vector2.ZERO:
         dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-    position = Arena.clamp_floor(position + dir * get_stat("speed") * delta)   # nunca entra na lava
+    position = Arena.slide(position, position + dir * get_stat("speed") * delta)   # nunca sai da área andável (lava, muros, objetos)
     if dir.x != 0.0:
         visual.face(dir.x)
     visual.set_moving(dir != Vector2.ZERO)   # andando: quadros de voo

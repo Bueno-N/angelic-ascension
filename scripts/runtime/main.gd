@@ -50,7 +50,7 @@ func _ready() -> void:
     enemies = Node2D.new()
     add_child(enemies)
     player = Player.new()
-    player.position = Arena.center()
+    player.position = Arena.start_point()
     player.z_index = Enemy.BOSS_Z     # anjo e efeitos no mesmo nível do chefe (que fica acima dos mobs);
     add_child(player)                 # a ordem na árvore mantém: chefe < anjo < efeitos
     camera = Camera2D.new()            # câmera segue o anjo pelo mundo (Arena.WORLD), sem mostrar além da lava
