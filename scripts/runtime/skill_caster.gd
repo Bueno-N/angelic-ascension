@@ -152,7 +152,10 @@ func execute(id: String) -> void:
                 var lance := LanceFx.spawn(fx_layer, player.global_position, t)
                 lance.hit.connect(func(_at: Vector2): deal_damage(t, id, atk, glow))
         "holy_shield":
-            _ring(player.global_position, float(e["radius"]), BLUE)
+            if SkillFx.has_art("holy_shield"):
+                SkillFx.shield(player, player.buffs, float(e["radius"]))   # explosão azul, escudo em volta e quebra no fim
+            else:
+                _ring(player.global_position, float(e["radius"]), BLUE)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)
             player.buffs.add(id, float(sk["duration"]), {}, SkillsDB.scaled_absorb(id, glow))
         "rain_of_light":
@@ -224,6 +227,14 @@ func _rain(id: String, atk: float, glow: float, e: Dictionary) -> void:
         get_tree().create_timer(spread * float(i) / float(n)).timeout.connect(_rain_hit.bind(pos, r, id, atk, glow))
 
 func _rain_hit(pos: Vector2, r: float, id: String, atk: float, glow: float) -> void:
+    if SkillFx.has_art("rain_of_light"):
+        # projétil desenhado cai do céu; som, anel e dano quando ele toca o chão
+        var k: float = r / SkillFx.IMPACT_RING_R * 0.6
+        var d := SkillFx.rain_drop(fx_layer, pos, k)
+        d.landed.connect(func(at: Vector2):
+            AudioHub.play("sk_rain_hit", 1.0, 0.12)
+            _damage_radius(at, r, id, atk, glow))
+        return
     AudioHub.play("sk_rain_hit", 1.0, 0.12)
     _strike(pos, GOLD, 2.0)
     _damage_radius(pos, r, id, atk, glow)

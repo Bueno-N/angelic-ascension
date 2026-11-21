@@ -29,3 +29,9 @@ O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuári
 - Uso: portão e cemitério alternam a cada 10 fases; forja nas fases de chefe e no boss semanal (`ArenaMaps.for_stage`).
 - `tile_*.webp` (tentativa anterior com tiles) ficaram sem uso.
 - `lava_portal_sheet.webp` (12 quadros, fundo branco) -> `assets/env/portal/portal_00..11.png` (144 px): portal de lava de onde os mobs nascem (`LavaPortal`).
+
+## Habilidades
+
+- `skills/rain_of_light.webp` (com transparência) -> `assets/skills/rain_of_light/` (fall_0..3, flash, impact_0..4; reduzidos a 60%).
+- `skills/holy_shield.webp` (4x4, com transparência) -> `assets/skills/holy_shield/shield_00..15` (00-05 ativação, 06-11 escudo em laço, 12-15 quebra).
+- Código: `scripts/runtime/skill_fx.gd`.

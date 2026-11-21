@@ -254,5 +254,31 @@ func test_celestial_lance_animation() -> void:
     check(l.phase == "fade" and l.current_frame() == "frame_6", "luz se desfaz (quadro 6)")
     parent.free()
 
+func test_rain_and_shield_art() -> void:
+    check(SkillFx.has_art("rain_of_light") and SkillFx.has_art("holy_shield"), "arte da Chuva de Luz e do Escudo Sagrado")
+    for n in SkillFx.FALL_FRAMES + SkillFx.IMPACT_FRAMES + ["flash"]:
+        check(SkillFx.tex("rain_of_light", n) != null, "chuva: %s" % n)
+    for n in SkillFx.SHIELD_OPEN + SkillFx.SHIELD_LOOP + SkillFx.SHIELD_BREAK:
+        check(SkillFx.tex("holy_shield", n) != null, "escudo: %s" % n)
+    var parent := Node2D.new()
+    var d := SkillFx.rain_drop(parent, Vector2(100, 100))
+    var hits: Array = []
+    d.landed.connect(func(at: Vector2): hits.append(at))
+    check(d.position == Vector2(100, 100) + SkillFx.FALL_FROM and hits.is_empty(), "projétil começa no alto, sem dano")
+    d._process(SkillFx.FALL_TIME + 0.01)
+    check(hits == [Vector2(100, 100)], "dano quando toca o chão")
+    var pl := Node2D.new()
+    var buffs := BuffState.new()
+    buffs.add("holy_shield", 3.0, {}, 0.4)
+    var sh := SkillFx.shield(pl, buffs, 170.0)
+    check(sh.current_mode() == "shield_open" and is_equal_approx(sh.scale.x, 340.0 / SkillFx.SHIELD_RING_D), "ativação do tamanho da explosão")
+    sh._process(1.0)
+    check(sh.current_mode() == "shield_loop", "depois vira o escudo em volta do anjo")
+    buffs.tick(5.0)
+    sh._process(0.016)
+    check(sh.current_mode() == "once", "acabou a absorção: escudo quebra")
+    parent.free()
+    pl.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")

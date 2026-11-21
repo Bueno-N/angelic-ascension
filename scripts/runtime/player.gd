@@ -159,7 +159,7 @@ func _process(delta: float) -> void:
                 e.take_damage(tick)
 
     _update_aura(delta)
-    shield_fx.visible = buffs.absorb() > 0.0
+    shield_fx.visible = buffs.absorb() > 0.0 and get_node_or_null("HolyShieldFx") == null   # o escudo desenhado substitui o antigo
     if _hurt > 0.0:
         _hurt -= delta
         if _hurt <= 0.0:
