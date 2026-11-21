@@ -25,7 +25,7 @@ var _spr: Node2D
 var _art := false
 var _anim := "appear"
 var _at := 0.0
-var _target: Node2D
+var _target: Variant = null
 var _hit_done := false
 
 func _ready() -> void:
@@ -92,7 +92,8 @@ func _process(delta: float) -> void:
             _show(frame_for("attack", _at))
         if not _hit_done and int(_at * FPS) >= HIT_FRAME:
             _hit_done = true
-            _strike(_target)
+            if is_instance_valid(_target):   # o alvo pode ter morrido durante o golpe
+                _strike(_target)
         if _at >= float(ATTACK.size()) / FPS:
             _anim = "idle"
             _at = 0.0
@@ -124,7 +125,7 @@ func _process(delta: float) -> void:
             else:
                 _strike(best)
 
-func _strike(t: Node2D) -> void:
+func _strike(t: Variant) -> void:
     if t == null or not is_instance_valid(t) or t.hp <= 0.0:
         return
     SkillCaster.deal_damage(t, id, atk, glow)
