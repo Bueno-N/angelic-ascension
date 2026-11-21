@@ -27,7 +27,8 @@ const BOSSES := [
     {"id": "mordath", "sprite": "boss_mordath", "name": "Mordath, Senhor das Sombras", "color": "#2a1a4a", "abilities": ["summon_demons", "hellfire_projectiles"],
      "basic": "ranged_orb"},   # golpe básico À DISTÂNCIA (1 bola de fogo, mesma arte dos projéteis infernais)
     {"id": "ignarr", "sprite": "boss_ignarr", "name": "Ignarr, Fera Infernal", "color": "#a8410f", "abilities": ["meteor_rain", "flame_breath"]},
-    {"id": "azazel", "sprite": "boss_azazel", "name": "Azazel, Arauto do Abismo", "color": "#4a0f3a", "abilities": ["shadow_step", "soul_orbs"]},
+    {"id": "azazel", "sprite": "boss_azazel", "name": "Azazel, Arauto do Abismo", "color": "#4a0f3a", "abilities": ["shadow_step", "soul_orbs"],
+     "basic": "ranged_orb"},   # golpe básico À DISTÂNCIA (1 orbe, a arte da folha de ataque é um arremesso)
 ]
 
 # LUCIFER: chefe único semanal, FORA da lista BOSSES (que tem 2 habilidades por chefe). Números em Balance.WEEKLY_*.

@@ -42,16 +42,29 @@ const SHEETS := {
             "roar_hit": ["roar_3", "roar_4"],           # anéis de fogo nos pés enquanto os meteoros caem
             "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
         }},
+    "boss_azazel": {"dir": "azazel", "cell": Vector2i(320, 300), "feet": Vector2(160.0, 256.0), "walk_h": 205.0,
+        "hand": Vector2(62.0, -150.0),               # mão que arremessa o orbe (golpe à distância)
+        "anims": {
+            "walk": ["walk_0", "walk_1", "walk_2", "walk_3", "walk_4", "walk_5"],   # voando
+            "attack": ["atk_3", "atk_4", "atk_5"],      # golpe à distância: estende o braço e arremessa 1 orbe
+            "orbs_wind": ["orbs_0", "orbs_1", "orbs_2"],  # Orbes de almas: ergue o orbe e abre o anel (aviso)
+            "orbs_hit": ["orbs_3", "orbs_4"],           # solta os orbes (os de verdade perseguem o anjo)
+            "step_wind": ["depart_0", "depart_1", "depart_2", "depart_3", "depart_4"],   # Passo sombrio: afunda no portal
+            "step_hit": ["arrive_0", "arrive_1", "arrive_2", "arrive_3", "arrive_4"],    # surge do portal perto do anjo
+            "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
+        }},
 }
 ## habilidade -> [animação do aviso, animação do golpe]
 const ABILITY_ANIMS := {
     "boss_baal": {"area_slam": ["slam_wind", "slam_hit"], "charge": ["charge_wind", "dash"]},
     "boss_mordath": {"summon_demons": ["summon_wind", "summon_hit"], "hellfire_projectiles": ["proj_wind", "proj_hit"]},
     "boss_ignarr": {"meteor_rain": ["roar_wind", "roar_hit"], "flame_breath": ["breath_wind", "breath_hit"]},
+    "boss_azazel": {"shadow_step": ["step_wind", "step_hit"], "soul_orbs": ["orbs_wind", "orbs_hit"]},
 }
 const FPS := {"walk": 8.0, "attack": 10.0, "slam_wind": 3.0, "slam_hit": 5.0, "charge_wind": 3.0, "dash": 14.0, "die": 6.0,
     "proj_wind": 3.0, "proj_hit": 5.0, "summon_wind": 3.0, "summon_hit": 2.0,
-    "breath_wind": 2.4, "breath_hit": 6.0, "roar_wind": 2.2, "roar_hit": 3.0}
+    "breath_wind": 2.4, "breath_hit": 6.0, "roar_wind": 2.2, "roar_hit": 3.0,
+    "orbs_wind": 3.2, "orbs_hit": 4.0, "step_wind": 5.6, "step_hit": 9.0}
 const LOOP := {"walk": true, "dash": true}
 const BASE_HEIGHT := 150.0         # altura do chefe andando na tela, na escala normal (EnemiesDB.SPRITE_SCALE)
 const DEATH_HOLD := 0.6            # segundos caído no chão antes de sumir

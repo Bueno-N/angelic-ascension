@@ -17,8 +17,8 @@ var _rot_off := 0.0
 func _ready() -> void:
     z_index = Enemy.BOSS_Z   # mesmo nível do chefe e criado depois dele: a bola sai da mão, na frente do corpo
     if art != "" and BossFx.has_fireball(art):
-        _spr = BossFx.fireball(art)    # bola de fogo desenhada (Mordath)
-        _rot_off = -BossFx.FIREBALL_NATIVE_ANGLE
+        _spr = BossFx.fireball(art)    # projétil desenhado do chefe (Mordath: bola de fogo, Azazel: orbe)
+        _rot_off = -BossFx.proj_angle(art)
     else:
         _spr = SpriteLib.make("fx_fireball", "play", 1.6)
         _spr.modulate = tint

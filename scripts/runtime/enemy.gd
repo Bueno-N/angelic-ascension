@@ -256,6 +256,8 @@ func _start_cast(id: String, to: Vector2) -> void:
     _cast_dir = to.normalized()
     _cast_pts = _plan_targets(id)
     var fx_dir := _fx_dir()
+    if id == "shadow_step" and fx_dir != "" and BossFx.has_shadow_portal(fx_dir) and not _cast_pts.is_empty():
+        BossFx.shadow_portal(get_parent(), _cast_pts[0], _cast_t, fx_dir)   # o portal abre onde ele vai surgir
     if (id == "meteor_rain" or id == "inferno_storm") and fx_dir != "" and BossFx.has_meteor(fx_dir):
         for pt in _cast_pts:   # meteoros desenhados: caem durante o aviso e batem no chão quando o dano entra
             BossFx.meteor(get_parent(), pt, _cast_t, fx_dir)
@@ -348,18 +350,25 @@ func _execute_ability() -> void:
             if inside:
                 player.take_damage(dmg * float(cfg["dmg_mult"]))
         "shadow_step":
-            _burst(float(cfg["radius"]) * 0.6, Color(0.5, 0.2, 0.8))      # some no ponto de partida
+            var drawn_step: bool = _fx_dir() != "" and BossFx.has_shadow_portal(_fx_dir())
+            if not drawn_step:
+                _burst(float(cfg["radius"]) * 0.6, Color(0.5, 0.2, 0.8))      # some no ponto de partida
             if not _cast_pts.is_empty():
                 position = _cast_pts[0]
-                _burst(float(cfg["radius"]), Color(0.6, 0.25, 0.9))       # surge no destino avisado
+                if not drawn_step:
+                    _burst(float(cfg["radius"]), Color(0.6, 0.25, 0.9))       # surge no destino avisado
                 if player.global_position.distance_to(global_position) <= float(cfg["radius"]):
                     player.take_damage(dmg * float(cfg["dmg_mult"]))
         "soul_orbs", "soul_harvest":
-            _burst(70.0, Color(0.6, 0.3, 0.9) if id == "soul_orbs" else Color(0.9, 0.2, 0.3))
+            var orb_art := ""
+            if _fx_dir() != "" and BossFx.has_fireball(_fx_dir()):
+                orb_art = _fx_dir()   # orbes desenhados (Azazel)
+            else:
+                _burst(70.0, Color(0.6, 0.3, 0.9) if id == "soul_orbs" else Color(0.9, 0.2, 0.3))
             var n_orbs: int = int(cfg["count"])
             var base_ang: float = randf() * TAU
             for i in range(n_orbs):
-                var p := _shoot(Vector2.from_angle(base_ang + TAU * float(i) / float(n_orbs)), cfg, 1.0)
+                var p := _shoot(Vector2.from_angle(base_ang + TAU * float(i) / float(n_orbs)), cfg, 1.0, null, orb_art)
                 p.homing = float(cfg["homing"])
                 p.life = float(cfg["life"])
                 p.tint = Color(0.7, 0.4, 1.0) if id == "soul_orbs" else Color(1.0, 0.3, 0.35)
