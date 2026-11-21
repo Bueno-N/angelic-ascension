@@ -86,3 +86,15 @@ func test_mordath_ranged_basic_attack() -> void:
     check(float(c["hold"]) < float(c["range"]), "fica dentro do alcance para conseguir atirar")
     check(float(c["cooldown"]) >= 1.0, "1 bola por vez, sem metralhar")
     check(BossArt.SHEETS["boss_mordath"]["anims"]["attack"][0] == "cast_3", "animação do golpe: braço estendido")
+
+func test_facing_does_not_flicker() -> void:
+    check(Enemy.face_left(false, -100.0, 42.0) and not Enemy.face_left(true, 100.0, 42.0), "vira quando o anjo está claramente do outro lado")
+    var cur := false
+    var flips := 0
+    for i in 40:
+        var x: float = 6.0 * (1.0 if i % 2 == 0 else -1.0)   # andando para cima/baixo: anjo quase na mesma coluna
+        var nxt := Enemy.face_left(cur, x, 42.0)
+        if nxt != cur: flips += 1
+        cur = nxt
+    check(flips == 0, "anjo quase alinhado na vertical: não fica virando a cada passo")
+    check(Enemy.face_left(true, 5.0, 10.0) == true and Enemy.face_left(false, -5.0, 10.0) == false, "margem mínima também vale para mobs pequenos")

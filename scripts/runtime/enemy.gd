@@ -171,13 +171,23 @@ func _play(anim: String) -> void:
     if _spr != null and _spr.sprite_frames != null and _spr.sprite_frames.has_animation(anim) and _spr.animation != anim:
         _spr.play(anim)
 
+## Para que lado olhar. Só vira quando o anjo está CLARAMENTE do outro lado (margem): andando para cima/baixo,
+## com o anjo quase na mesma coluna, não fica trocando de lado a cada passo (parecia "olhar para trás").
+static func face_left(current: bool, to_x: float, r: float) -> bool:
+    var margin: float = maxf(12.0, r * 0.6)
+    if to_x < -margin:
+        return true
+    if to_x > margin:
+        return false
+    return current
+
 func _think(delta: float) -> void:
     _hit = maxf(0.0, _hit - delta)
     abilities.tick(delta)
     var to := player.global_position - global_position
     var dist := to.length()
-    if _spr != null and absf(to.x) > 2.0:
-        _spr.flip_h = to.x < 0.0
+    if _spr != null and _dash_t <= 0.0:
+        _spr.flip_h = face_left(_spr.flip_h, to.x, radius)
 
     if _dash_t > 0.0:
         _process_dash(delta)
