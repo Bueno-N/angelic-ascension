@@ -174,8 +174,13 @@ func execute(id: String) -> void:
         "divine_judgment":
             var t2 := _strongest()
             if t2 != null:
-                _strike(t2.global_position, WHITE, 3.0)
-                deal_damage(t2, id, atk, glow)
+                if SkillFx.has_art("divine_judgment"):
+                    # selo sobre o alvo e o raio do céu; o dano entra quando o raio cai
+                    var j := SkillFx.judgment(fx_layer, t2)
+                    j.landed.connect(func(_at: Vector2): deal_damage(t2, id, atk, glow))
+                else:
+                    _strike(t2.global_position, WHITE, 3.0)
+                    deal_damage(t2, id, atk, glow)
         "wings_of_redemption":
             _ring(player.global_position, float(e["radius"]), GOLD)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)

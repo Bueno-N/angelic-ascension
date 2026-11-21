@@ -280,5 +280,27 @@ func test_rain_and_shield_art() -> void:
     parent.free()
     pl.free()
 
+func test_swords_and_judgment_art() -> void:
+    check(SkillFx.has_art("swords_of_paradise") and SkillFx.has_art("divine_judgment"), "arte das Espadas e do Julgamento")
+    for n in OrbitSwords.APPEAR + OrbitSwords.LOOP + OrbitSwords.VANISH:
+        check(SkillFx.tex("swords_of_paradise", n) != null, "espada: %s" % n)
+    check(OrbitSwords.frame_for(0.0, 4.0) == "sword_00", "espadas surgem")
+    check(OrbitSwords.LOOP.has(OrbitSwords.frame_for(2.0, 4.0)), "espadas brilham em laço")
+    check(OrbitSwords.frame_for(3.99, 4.0) == "sword_11", "espadas se desfazem no fim")
+    for i in SkillFx.JUDGMENT_FRAMES:
+        check(SkillFx.tex("divine_judgment", "judgment_%02d" % i) != null, "julgamento: quadro %d" % i)
+    var parent := Node2D.new()
+    var target := Node2D.new()
+    parent.add_child(target)
+    target.position = Vector2(300, 200)
+    var j := SkillFx.judgment(parent, target)
+    var hits: Array = []
+    j.landed.connect(func(at: Vector2): hits.append(at))
+    j._process(0.1)
+    check(hits.is_empty(), "sem dano durante o selo")
+    j._process(float(SkillFx.JUDGMENT_BEAM) / SkillFx.JUDGMENT_FPS)
+    check(hits.size() == 1, "dano quando o raio cai")
+    parent.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")

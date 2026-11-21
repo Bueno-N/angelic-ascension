@@ -3,6 +3,8 @@ extends Sprite2D
 ## Efeitos desenhados das habilidades (assets/skills/<habilidade>/*.png, de art_source/skills/).
 ##   Chuva de Luz: cada projétil CAI do céu (fall_0..3), clareia no chão (flash) e abre o anel de impacto (impact_0..4).
 ##               O dano entra quando ele toca o chão (sinal `landed`).
+##   Julgamento Divino: selo no alvo (judgment_00..03, segue o alvo), raio do céu (04..09; o dano entra no 1º quadro
+##               do raio, sinal `landed`) e dissipar (10..13).
 ##   Escudo Sagrado: ativação (shield_00..05, cresce até o raio da explosão), escudo em volta do anjo
 ##               (shield_06..11 em laço enquanto houver absorção) e quebra (shield_12..15).
 ## As texturas são carregadas uma vez (cache estático).
@@ -26,6 +28,14 @@ const SHIELD_BREAK := ["shield_12", "shield_13", "shield_14", "shield_15"]
 const SHIELD_RING_D := 250.0     # diâmetro do anel no quadro (px)
 const SHIELD_AROUND_R := 78.0    # raio do escudo em volta do anjo
 
+# Julgamento Divino
+const JUDGMENT_FRAMES := 14
+const JUDGMENT_BEAM := 4          # 1º quadro do raio (o dano entra aqui)
+const JUDGMENT_FPS := 14.0
+const JUDGMENT_SCALE := 2.1
+const JUDGMENT_RING_AT := Vector2(71.5, 73.0)   # centro do selo (quadros 0..3)
+const JUDGMENT_BASE_AT := Vector2(71.5, 92.0)   # base do raio no chão (quadros 4..13)
+
 static var _tex: Dictionary = {}
 
 var _seq: Array = []
@@ -37,6 +47,8 @@ var _from := Vector2.ZERO
 var _to := Vector2.ZERO
 var _owner_buffs: BuffState
 var _loop_scale := 1.0
+var _follow: Node2D
+var _landed_sent := false
 
 static func tex(skill: String, name: String) -> Texture2D:
     var p := DIR + skill + "/" + name + ".png"
@@ -50,6 +62,10 @@ static func has_art(skill: String) -> bool:
             return tex(skill, "fall_0") != null and tex(skill, "impact_0") != null
         "holy_shield":
             return tex(skill, "shield_00") != null
+        "divine_judgment":
+            return tex(skill, "judgment_00") != null
+        "swords_of_paradise":
+            return tex(skill, "sword_00") != null
     return false
 
 func _make(skill: String) -> void:
@@ -59,6 +75,8 @@ func _make(skill: String) -> void:
 
 func _set_frame(name: String) -> void:
     texture = tex(str(get_meta("skill")), name)
+    if str(get_meta("skill")) == "divine_judgment":
+        offset = -(JUDGMENT_RING_AT if int(name.right(2)) < JUDGMENT_BEAM else JUDGMENT_BASE_AT)
 
 # ---------------------------------------------------------------- Chuva de Luz
 ## Projétil que cai em `at` (coordenadas do `parent`); emite `landed` ao tocar o chão.
@@ -75,6 +93,25 @@ static func rain_drop(parent: Node, at: Vector2, scale_k: float = 0.6) -> SkillF
     s.offset = Vector2(-t.get_width() / 2.0, -t.get_height()) if t != null else Vector2.ZERO   # ponta embaixo
     s.scale = Vector2(scale_k, scale_k) / 0.6
     s.z_index = 6
+    parent.add_child(s)
+    return s
+
+# ---------------------------------------------------------------- Julgamento Divino
+## Selo sobre `target` (acompanha o alvo), raio do céu e dissipar. `landed` sai no 1º quadro do raio.
+static func judgment(parent: Node, target: Node2D) -> SkillFx:
+    var s := SkillFx.new()
+    s._make("divine_judgment")
+    s.centered = false
+    s._follow = target
+    s._mode = "judgment"
+    s._fps = JUDGMENT_FPS
+    s._seq = []
+    for i in JUDGMENT_FRAMES:
+        s._seq.append("judgment_%02d" % i)
+    s.scale = Vector2(JUDGMENT_SCALE, JUDGMENT_SCALE)
+    s.position = target.global_position
+    s.z_index = 6
+    s._set_frame(s._seq[0])
     parent.add_child(s)
     return s
 
@@ -125,6 +162,19 @@ func _process(delta: float) -> void:
                 _fps = IMPACT_FPS
                 centered = false
                 offset = -IMPACT_CENTER
+        "judgment":
+            var f: int = int(_t * _fps)
+            if f < JUDGMENT_BEAM and is_instance_valid(_follow):
+                position = _follow.global_position + Vector2(0.0, 14.0)   # o selo fica sob os pés do alvo
+            if f >= JUDGMENT_BEAM and not _landed_sent:
+                _landed_sent = true
+                landed.emit(position)
+            if f >= _seq.size():
+                queue_free()
+                return
+            if f != _i:
+                _i = f
+                _set_frame(_seq[f])
         "shield_loop":
             var n: int = int(_t * _fps) % SHIELD_LOOP.size()
             _set_frame(SHIELD_LOOP[n])

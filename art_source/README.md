@@ -34,4 +34,6 @@ O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuári
 
 - `skills/rain_of_light.webp` (com transparência) -> `assets/skills/rain_of_light/` (fall_0..3, flash, impact_0..4; reduzidos a 60%).
 - `skills/holy_shield.webp` (4x4, com transparência) -> `assets/skills/holy_shield/shield_00..15` (00-05 ativação, 06-11 escudo em laço, 12-15 quebra).
+- `skills/swords_of_paradise.webp` (12 quadros) -> `assets/skills/swords_of_paradise/sword_00..11` (00-02 surgem, 03-08 laço, 09-11 somem; `OrbitSwords`).
+- `skills/divine_judgment.webp` (14 quadros) -> `assets/skills/divine_judgment/judgment_00..13` (00-03 selo, 04-09 raio com o topo esmaecido, 10-13 dissipar).
 - Código: `scripts/runtime/skill_fx.gd`.
