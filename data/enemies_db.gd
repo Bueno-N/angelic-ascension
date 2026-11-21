@@ -24,7 +24,8 @@ const BOSS_BASE := {"hp": 20.0, "dmg": 5.0, "speed": 55.0, "gold": 2.0, "radius"
 # Cada chefe tem exatamente 2 habilidades, e NENHUMA é repetida entre chefes (cada um tem as suas).
 const BOSSES := [
     {"id": "baal", "sprite": "boss_baal", "name": "Baal, o Devorador", "color": "#7a0f0f", "abilities": ["area_slam", "charge"]},
-    {"id": "mordath", "sprite": "boss_mordath", "name": "Mordath, Senhor das Sombras", "color": "#2a1a4a", "abilities": ["summon_demons", "hellfire_projectiles"]},
+    {"id": "mordath", "sprite": "boss_mordath", "name": "Mordath, Senhor das Sombras", "color": "#2a1a4a", "abilities": ["summon_demons", "hellfire_projectiles"],
+     "basic": "ranged_orb"},   # golpe básico À DISTÂNCIA (1 bola de fogo, mesma arte dos projéteis infernais)
     {"id": "ignarr", "sprite": "boss_ignarr", "name": "Ignarr, Fera Infernal", "color": "#a8410f", "abilities": ["meteor_rain", "flame_breath"]},
     {"id": "azazel", "sprite": "boss_azazel", "name": "Azazel, Arauto do Abismo", "color": "#4a0f3a", "abilities": ["shadow_step", "soul_orbs"]},
 ]
@@ -72,6 +73,12 @@ const ABILITIES := {
         "speed": 300.0, "dmg_mult": 1.0, "hit_radius": 12.0},
     "life_steal": {"name": "Drenar vida", "cooldown": 4.0, "telegraph": 0.5, "min_range": 0.0, "max_range": 200.0,
         "dmg_mult": 0.8, "heal_pct": 0.5},
+}
+
+# Golpe básico à distância de alguns chefes (no lugar do corpo a corpo): mantém `hold` de distância e,
+# a cada `cooldown` s com o anjo a até `range`, dispara 1 projétil. dmg_mult multiplica o dano do chefe.
+const BASIC_ATTACKS := {
+    "ranged_orb": {"range": 420.0, "hold": 300.0, "cooldown": 1.3, "speed": 280.0, "dmg_mult": 1.0, "hit_radius": 14.0},
 }
 
 # Mini-chefes: versão "campeã" (maior, mais forte) de um demônio comum, com 1 habilidade. Ciclam a cada 10 fases.

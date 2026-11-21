@@ -23,6 +23,7 @@ var _sprite_name := "imp"
 var _sprite_scale := 2.0
 var _base_mod := Color.WHITE
 var _atk_cd := 0.0
+var _basic: Dictionary = {}          # golpe básico à distância (EnemiesDB.BASIC_ATTACKS); vazio = corpo a corpo
 var _hit := 0.0
 var _cast_id := ""
 var _cast_t := 0.0
@@ -52,6 +53,7 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
         radius = float(EnemiesDB.BOSS_BASE["radius"])
         ability_ids = b["abilities"]
         sprite_name = str(b["sprite"])
+        _basic = EnemiesDB.BASIC_ATTACKS.get(str(b.get("basic", "")), {})
         if b["id"] == "lucifer":     # chefe final da fase 300: maior que os outros
             radius = Balance.WEEKLY_RADIUS
             boss_scale = Balance.WEEKLY_SCALE
@@ -132,6 +134,7 @@ func setup_boss_summon(boss_def: Dictionary, target: Player, frac: float = 1.0) 
     speed = float(EnemiesDB.BOSS_BASE["speed"])
     radius = 34.0
     _base_mod = Color(0.85, 0.6, 1.0, 0.95)
+    _basic = EnemiesDB.BASIC_ATTACKS.get(str(boss_def.get("basic", "")), {})
     _build(str(boss_def["sprite"]), EnemiesDB.SPRITE_SCALE, [boss_def["abilities"][1]])
 
 func take_damage(amount: float) -> void:
@@ -190,9 +193,17 @@ func _think(delta: float) -> void:
     var hold: float = radius + 18.0
     if str(def.get("ability", "")) == "fire_bolt":
         hold = float(EnemiesDB.ABILITIES["fire_bolt"]["max_range"]) * 0.8   # atirador: mantém distância
+    if not _basic.is_empty():
+        hold = float(_basic["hold"])   # chefe que ataca à distância: mantém distância
     if dist > hold:
         position += to / maxf(dist, 0.001) * speed * delta
-    if dist <= radius + 18.0:
+    if not _basic.is_empty():
+        if dist <= float(_basic["range"]):
+            _atk_cd -= delta
+            if _atk_cd <= 0.0:
+                _atk_cd = float(_basic["cooldown"])
+                _ranged_basic()
+    elif dist <= radius + 18.0:
         _atk_cd -= delta
         if _atk_cd <= 0.0:
             player.take_damage(dmg)
@@ -368,6 +379,21 @@ func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float, from: Variant = nul
     p.hit_radius = float(cfg["hit_radius"])
     p.player = player
     get_parent().add_child(p)
+    return p
+
+## Golpe básico à distância: 1 projétil saindo da mão, com a mesma arte dos projéteis da habilidade.
+func _ranged_basic() -> EnemyProjectile:
+    var hand := Vector2.ZERO
+    var art := ""
+    if BossArt.has(_sprite_name) and _spr != null:
+        hand = BossArt.hand_offset(_sprite_name, _sprite_scale, _spr.flip_h)
+        var dir_name: String = str(BossArt.SHEETS[_sprite_name]["dir"])
+        if BossFx.has_fireball(dir_name):
+            art = dir_name
+    var from: Vector2 = global_position + hand
+    var p := _shoot((player.global_position - from).normalized(), _basic, 1.0, from, art)
+    AudioHub.play(AudioLogic.ability_sfx("hellfire_projectiles"), 0.6, 0.05)
+    _play_attack()
     return p
 
 func _fan(cfg: Dictionary) -> void:

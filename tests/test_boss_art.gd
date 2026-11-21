@@ -75,3 +75,14 @@ func test_mordath_fireball_and_portal() -> void:
     var por := BossFx.portal(parent, Vector2(5, 5), "mordath")
     check(por.texture == BossFx.tex("mordath", "portal_0") and por.z_index < 0, "portal abre no chão, atrás dos demônios")
     parent.free()
+
+func test_mordath_ranged_basic_attack() -> void:
+    check(str(EnemiesDB.BOSSES[1].get("basic", "")) == "ranged_orb", "Mordath: golpe básico à distância")
+    for b in [EnemiesDB.BOSSES[0], EnemiesDB.BOSSES[2], EnemiesDB.BOSSES[3]]:
+        check(not b.has("basic"), "%s continua corpo a corpo" % b["id"])
+    var c: Dictionary = EnemiesDB.BASIC_ATTACKS["ranged_orb"]
+    for k in ["range", "hold", "cooldown", "speed", "dmg_mult", "hit_radius"]:
+        check(c.has(k), "golpe à distância tem %s" % k)
+    check(float(c["hold"]) < float(c["range"]), "fica dentro do alcance para conseguir atirar")
+    check(float(c["cooldown"]) >= 1.0, "1 bola por vez, sem metralhar")
+    check(BossArt.SHEETS["boss_mordath"]["anims"]["attack"][0] == "cast_3", "animação do golpe: braço estendido")

@@ -23,7 +23,7 @@ const SHEETS := {
         "hand": Vector2(65.0, -155.0),               # mão que lança os projéteis (px do quadro, a partir dos pés)
         "anims": {
             "walk": ["walk_0", "walk_1", "walk_2", "walk_3", "walk_4", "walk_5"],   # flutuando
-            "attack": ["cast_2", "cast_4"],             # golpe básico: chama na mão e gesto à frente
+            "attack": ["cast_3", "cast_4"],             # golpe básico à distância: braço estendido soltando 1 bola de fogo
             "proj_wind": ["cast_0", "cast_1"],          # Projéteis infernais: junta a energia (aviso)
             "proj_hit": ["cast_3", "cast_4"],           # lança o leque de bolas de fogo
             "summon_wind": ["summon_0", "summon_1"],    # Invocação: ergue os braços (aviso)
