@@ -50,8 +50,10 @@ func _ready() -> void:
     add_child(enemies)
     player = Player.new()
     player.position = get_viewport_rect().size / 2.0
-    add_child(player)
+    player.z_index = Enemy.BOSS_Z     # anjo e efeitos no mesmo nível do chefe (que fica acima dos mobs);
+    add_child(player)                 # a ordem na árvore mantém: chefe < anjo < efeitos
     fx_layer = Node2D.new()
+    fx_layer.z_index = Enemy.BOSS_Z
     add_child(fx_layer)
     player.fx_layer = fx_layer
     caster = SkillCaster.new()

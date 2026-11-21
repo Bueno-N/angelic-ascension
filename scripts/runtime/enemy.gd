@@ -21,6 +21,7 @@ var abilities := AbilityCooldowns.new()
 var _spr: AnimatedSprite2D
 var _sprite_name := "imp"
 var _sprite_scale := 2.0
+const BOSS_Z := 1                    # ordem de desenho: mobs (0) < chefe, projéteis, anjo e efeitos (1; nessa ordem)
 var _base_mod := Color.WHITE
 var _atk_cd := 0.0
 var _basic: Dictionary = {}          # golpe básico à distância (EnemiesDB.BASIC_ATTACKS); vazio = corpo a corpo
@@ -90,6 +91,8 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
 func _build(sprite_name: String, sprite_scale: float, ability_ids: Array) -> void:
     _sprite_name = sprite_name
     _sprite_scale = sprite_scale
+    if is_boss:
+        z_index = BOSS_Z   # o chefe fica POR CIMA dos mobs (inclusive dos que ele invoca)
     if BossArt.has(sprite_name):
         _spr = BossArt.make(sprite_name, sprite_scale)    # arte nova dos chefes (andar, golpes das habilidades, morte)
         _spr.animation_finished.connect(_on_anim_finished)
