@@ -6,6 +6,9 @@ extends RefCounted
 ##            e o portal de invocação (portal_0..2) onde cada demônio surge.
 ##   Azazel:  orbe de alma (orb_0..1 surgindo, orb_fly voando com rastro, orb_boom/orb_fade ao acertar)
 ##            e o portal de sombra do passo sombrio (shadow_0..5: abre no destino durante o aviso, explode ao chegar).
+##   Lucifer: almas (soul_0 surge, soul_3..4 voando, soul_hit), explosões da tempestade (boom_0..5),
+##            raio do abismo (beam_0..5, origem no centro do quadro, para a DIREITA), anel da nova (ring_0..5)
+##            e o portal de invocação dos chefes (portal_0..5).
 ##   Ignarr:  sopro de fogo (breath_0..5, ponta do cone no centro do quadro, apontando para a DIREITA)
 ##            e o meteoro (meteor_0 brilho no chão, 1..2 caindo, 3..5 impacto/explosão/fumaça; referência = ponto de impacto).
 
@@ -18,6 +21,8 @@ const PROJECTILES := {
     "mordath": {"launch": ["fireball_0", "fireball_1", "fireball_2"], "fly": ["fireball_1", "fireball_2"],
         "angle": FIREBALL_NATIVE_ANGLE, "scale": FIREBALL_SCALE, "boom": "boom", "smoke": "smoke"},
     # orbe de alma: surge 1 -> 2 -> 3, volta ao 2 e persegue o anjo nele; some = "vanish" (estrela), acerta = "hit" (fumaça)
+    "lucifer": {"launch": ["soul_0"], "fly": ["soul_3", "soul_4"], "angle": -0.55, "scale": 0.45,
+        "vanish": "soul_hit", "hit": "soul_hit"},   # alma flamejante: cabeça para cima-direita, rastro para baixo-esquerda
     "azazel": {"launch": ["soul_1", "soul_2", "soul_3"], "fly": ["soul_2"], "rotate": false,
         "angle": 0.0, "scale": 0.55, "vanish": "soul_vanish", "hit": "soul_hit"},
 }
@@ -204,3 +209,65 @@ static func shadow_portal(parent: Node, pos: Vector2, land_in: float, boss_dir: 
     tw.tween_property(s, "modulate:a", 0.0, 0.4)
     tw.tween_callback(s.queue_free)
     return s
+
+# ---------------- Lucifer
+const BEAM_NATIVE_LEN := 380.0       # comprimento do raio no quadro mais longo (px do quadro)
+const BEAM_NATIVE_W := 70.0          # espessura do núcleo do raio
+const RING_NATIVE_D := 400.0         # diâmetro do anel de fogo no quadro maior
+const BOOM_SCALE := 0.8              # explosão de ~220 px -> ~175 px (cobre o raio de 80 px)
+
+static func has_lucifer_fx(boss_dir: String) -> bool:
+    return tex(boss_dir, "beam_0") != null and tex(boss_dir, "ring_0") != null
+
+## Sequência de quadros num Sprite2D: `times` = segundos de cada quadro; some no final.
+static func _frames(parent: Node, pos: Vector2, boss_dir: String, names: Array, times: Array, sc: Vector2, z: int, fade: float = 0.25) -> Sprite2D:
+    var s := Sprite2D.new()
+    s.texture = tex(boss_dir, names[0])
+    s.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+    s.scale = sc
+    s.position = pos
+    s.z_index = z
+    parent.add_child(s)
+    var tw := s.create_tween()
+    for i in range(names.size()):
+        if i > 0:
+            var f: String = names[i]
+            tw.tween_callback(func(): s.texture = tex(boss_dir, f))
+        tw.tween_interval(float(times[i]))
+    tw.tween_property(s, "modulate:a", 0.0, fade)
+    tw.tween_callback(s.queue_free)
+    return s
+
+## Raio do abismo saindo de `from` na direção `dir`, com o comprimento e a espessura da área de dano.
+static func abyss_beam(parent: Node, from: Vector2, dir: Vector2, length: float, width: float, boss_dir: String) -> Sprite2D:
+    var sc := Vector2(length / BEAM_NATIVE_LEN, maxf(0.8, width / BEAM_NATIVE_W))
+    var s := _frames(parent, from, boss_dir, ["beam_0", "beam_1", "beam_2", "beam_3", "beam_4", "beam_5"],
+        [0.06, 0.06, 0.08, 0.14, 0.14, 0.12], sc, 2)
+    s.rotation = dir.angle()
+    return s
+
+## Anel de fogo da Nova infernal: cresce durante o aviso (quadros 0..2), explode quando o dano entra (3..4) e vira fumaça (5).
+static func hell_ring(parent: Node, pos: Vector2, land_in: float, radius: float, boss_dir: String) -> Sprite2D:
+    var k: float = radius * 2.0 / RING_NATIVE_D
+    var step: float = land_in / 3.0
+    return _frames(parent, pos, boss_dir, ["ring_0", "ring_1", "ring_2", "ring_3", "ring_4", "ring_5"],
+        [step, step, step, 0.14, 0.18, 0.3], Vector2(k, k), -1, 0.35)
+
+## Explosão da Tempestade infernal que estoura em `pos` daqui a `land_in` s (o aviso fica no chão até lá).
+static func storm_boom(parent: Node, pos: Vector2, land_in: float, boss_dir: String) -> Node2D:
+    var n := Node2D.new()
+    n.position = pos
+    parent.add_child(n)
+    var tw := n.create_tween()
+    tw.tween_interval(maxf(0.0, land_in - 0.08))
+    tw.tween_callback(func():
+        _frames(n, Vector2.ZERO, boss_dir, ["boom_0", "boom_1", "boom_2", "boom_3", "boom_4", "boom_5"],
+            [0.05, 0.06, 0.08, 0.12, 0.2, 0.22], Vector2(BOOM_SCALE, BOOM_SCALE), 2))
+    tw.tween_interval(1.2)
+    tw.tween_callback(n.queue_free)
+    return n
+
+## Portal de onde sai o chefe invocado (círculo de runas, coluna de sombra e fumaça).
+static func summon_portal(parent: Node, pos: Vector2, boss_dir: String) -> Sprite2D:
+    return _frames(parent, pos, boss_dir, ["portal_0", "portal_1", "portal_2", "portal_3", "portal_4", "portal_5"],
+        [0.08, 0.1, 0.12, 0.2, 0.25, 0.25], Vector2(0.9, 0.9), -1, 0.3)

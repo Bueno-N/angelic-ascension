@@ -53,6 +53,25 @@ const SHEETS := {
             "step_hit": ["arrive_0", "arrive_1", "arrive_2", "arrive_3", "arrive_4"],    # surge do portal perto do anjo
             "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
         }},
+    # LUCIFER (fase 300 e chefe semanal): desenhado na escala Balance.WEEKLY_SCALE; "height" é na escala normal
+    "boss_lucifer": {"dir": "lucifer", "cell": Vector2i(376, 370), "feet": Vector2(188.0, 318.0), "walk_h": 200.0,
+        "height": 150.0, "death_scale": Balance.WEEKLY_SCALE,
+        "hand": Vector2(95.0, -128.0),               # mão que aponta (origem do Raio do abismo)
+        "anims": {
+            "walk": ["walk_0", "walk_1", "walk_2", "walk_3", "walk_4", "walk_5"],
+            "attack": ["atk_0", "atk_1", "atk_2", "atk_3"],     # golpe de espada: ergue, estoca e volta
+            "summon_wind": ["summon_0", "summon_1", "summon_2"], # Invocar chefe: ergue a espada (aviso)
+            "summon_hit": ["summon_3", "summon_4"],
+            "nova_wind": ["nova_0", "nova_1", "nova_2"],         # Nova infernal: abre os braços e as asas
+            "nova_hit": ["nova_3", "nova_4"],
+            "beam_wind": ["point_0", "point_1", "point_2"],      # Raio do abismo: aponta para o anjo
+            "beam_hit": ["point_3", "point_4"],
+            "storm_wind": ["storm_0", "storm_1", "storm_2"],     # Tempestade infernal: espada erguida com as duas mãos
+            "storm_hit": ["storm_3", "storm_4"],
+            "harvest_wind": ["float_0", "float_1", "float_2"],   # Colheita de almas: flutua sobre a fumaça
+            "harvest_hit": ["float_3", "float_4"],
+            "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
+        }},
 }
 ## habilidade -> [animação do aviso, animação do golpe]
 const ABILITY_ANIMS := {
@@ -60,11 +79,16 @@ const ABILITY_ANIMS := {
     "boss_mordath": {"summon_demons": ["summon_wind", "summon_hit"], "hellfire_projectiles": ["proj_wind", "proj_hit"]},
     "boss_ignarr": {"meteor_rain": ["roar_wind", "roar_hit"], "flame_breath": ["breath_wind", "breath_hit"]},
     "boss_azazel": {"shadow_step": ["step_wind", "step_hit"], "soul_orbs": ["orbs_wind", "orbs_hit"]},
+    "boss_lucifer": {"summon_boss": ["summon_wind", "summon_hit"], "hell_nova": ["nova_wind", "nova_hit"],
+        "abyss_beam": ["beam_wind", "beam_hit"], "inferno_storm": ["storm_wind", "storm_hit"],
+        "soul_harvest": ["harvest_wind", "harvest_hit"]},
 }
 const FPS := {"walk": 8.0, "attack": 10.0, "slam_wind": 3.0, "slam_hit": 5.0, "charge_wind": 3.0, "dash": 14.0, "die": 6.0,
     "proj_wind": 3.0, "proj_hit": 5.0, "summon_wind": 3.0, "summon_hit": 2.0,
     "breath_wind": 2.4, "breath_hit": 6.0, "roar_wind": 2.2, "roar_hit": 3.0,
-    "orbs_wind": 3.2, "orbs_hit": 4.0, "step_wind": 5.6, "step_hit": 9.0}
+    "orbs_wind": 3.2, "orbs_hit": 4.0, "step_wind": 5.6, "step_hit": 9.0,
+    "nova_wind": 2.4, "nova_hit": 5.0, "beam_wind": 2.8, "beam_hit": 5.0,
+    "storm_wind": 2.0, "storm_hit": 4.0, "harvest_wind": 3.0, "harvest_hit": 5.0}
 const LOOP := {"walk": true, "dash": true}
 const BASE_HEIGHT := 150.0         # altura do chefe andando na tela, na escala normal (EnemiesDB.SPRITE_SCALE)
 const DEATH_HOLD := 0.6            # segundos caído no chão antes de sumir
@@ -134,7 +158,7 @@ static func spawn_death(layer: Node, pos: Vector2, def: Dictionary) -> AnimatedS
     var sprite: String = str(def.get("sprite", ""))
     if not has(sprite):
         return null
-    var s := make(sprite, EnemiesDB.SPRITE_SCALE, "die")
+    var s := make(sprite, float(SHEETS[sprite].get("death_scale", EnemiesDB.SPRITE_SCALE)), "die")
     s.position = pos
     s.flip_h = bool(def.get("_flip", false))
     if bool(def.get("summon", false)):

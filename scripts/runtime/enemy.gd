@@ -115,7 +115,7 @@ func setup_lucifer(target: Player) -> void:
     is_boss = true
     stage = Balance.MAX_STAGE
     add_to_group("enemies")
-    def = {"id": "lucifer", "special": false, "weekly": true, "name": str(EnemiesDB.LUCIFER["name"])}
+    def = {"id": "lucifer", "special": false, "weekly": true, "name": str(EnemiesDB.LUCIFER["name"]), "sprite": str(EnemiesDB.LUCIFER["sprite"])}
     max_hp = WeeklyBoss.lucifer_hp()
     dmg = WeeklyBoss.lucifer_dmg()
     gold = 0
@@ -258,6 +258,12 @@ func _start_cast(id: String, to: Vector2) -> void:
     var fx_dir := _fx_dir()
     if id == "shadow_step" and fx_dir != "" and BossFx.has_shadow_portal(fx_dir) and not _cast_pts.is_empty():
         BossFx.shadow_portal(get_parent(), _cast_pts[0], _cast_t, fx_dir)   # o portal abre onde ele vai surgir
+    if fx_dir != "" and BossFx.has_lucifer_fx(fx_dir):
+        if id == "hell_nova":   # anel de fogo cresce em volta dele durante o aviso
+            BossFx.hell_ring(get_parent(), global_position, _cast_t, float(EnemiesDB.ABILITIES[id]["radius"]), fx_dir)
+        elif id == "inferno_storm":
+            for pt in _cast_pts:
+                BossFx.storm_boom(get_parent(), pt, _cast_t, fx_dir)
     if (id == "meteor_rain" or id == "inferno_storm") and fx_dir != "" and BossFx.has_meteor(fx_dir):
         for pt in _cast_pts:   # meteoros desenhados: caem durante o aviso e batem no chão quando o dano entra
             BossFx.meteor(get_parent(), pt, _cast_t, fx_dir)
@@ -310,15 +316,20 @@ func _execute_ability() -> void:
         "hellfire_projectiles":
             _fan(cfg)
         "hell_nova":
-            _burst(float(cfg["radius"]), Color(1.0, 0.2, 0.1))
-            _burst(float(cfg["inner"]), Color(0.3, 0.0, 0.2))
+            if not _luc_fx():
+                _burst(float(cfg["radius"]), Color(1.0, 0.2, 0.1))
+                _burst(float(cfg["inner"]), Color(0.3, 0.0, 0.2))
             var dn: float = player.global_position.distance_to(global_position)
             if dn >= float(cfg["inner"]) and dn <= float(cfg["radius"]):   # a "rosca": seguro colado nele ou longe
                 player.take_damage(dmg * float(cfg["dmg_mult"]))
         "abyss_beam":
             var blen: float = float(cfg["length"])
-            for f in [0.15, 0.35, 0.55, 0.75, 0.95]:
-                _burst_at(global_position + _cast_dir * blen * f, float(cfg["width"]) * 1.2, Color(0.8, 0.1, 0.6))
+            if _luc_fx():   # raio desenhado saindo da mão que aponta
+                var hand: Vector2 = BossArt.hand_offset(_sprite_name, _sprite_scale, _spr.flip_h)
+                BossFx.abyss_beam(get_parent(), global_position + hand, _cast_dir, blen, float(cfg["width"]), _fx_dir())
+            else:
+                for f in [0.15, 0.35, 0.55, 0.75, 0.95]:
+                    _burst_at(global_position + _cast_dir * blen * f, float(cfg["width"]) * 1.2, Color(0.8, 0.1, 0.6))
             var rel: Vector2 = player.global_position - global_position
             var along: float = rel.dot(_cast_dir)
             if along >= 0.0 and along <= blen and absf(rel.cross(_cast_dir)) <= float(cfg["width"]) * 0.5 + 12.0:
@@ -328,7 +339,7 @@ func _execute_ability() -> void:
             _summon_boss()
         "meteor_rain", "inferno_storm":
             var hit_by_meteor := false
-            var drawn: bool = _fx_dir() != "" and BossFx.has_meteor(_fx_dir())
+            var drawn: bool = _fx_dir() != "" and (BossFx.has_meteor(_fx_dir()) or _luc_fx())
             for pt in _cast_pts:
                 if not drawn:
                     SpriteFx.spawn(get_parent(), "fx_fireball", pt, 3.0, Color(1.0, 0.5, 0.15))
@@ -428,6 +439,9 @@ func _ranged_basic() -> EnemyProjectile:
     _play_attack()
     return p
 
+func _luc_fx() -> bool:
+    return _fx_dir() != "" and BossFx.has_lucifer_fx(_fx_dir())
+
 ## Pasta de efeitos do chefe com arte nova ("" se não tiver).
 func _fx_dir() -> String:
     return str(BossArt.SHEETS[_sprite_name]["dir"]) if BossArt.has(_sprite_name) else ""
@@ -465,6 +479,8 @@ func _summon_boss() -> void:
     var b: Dictionary = EnemiesDB.BOSSES[(_boss_summons - 1) % EnemiesDB.BOSSES.size()]
     var m := Enemy.new()
     m.position = position + Vector2.from_angle(randf() * TAU) * (radius + 70.0)
+    if _luc_fx():
+        BossFx.summon_portal(get_parent(), m.position, _fx_dir())   # o chefe sai do portal de runas
     get_parent().add_child(m)
     m.setup_boss_summon(b, player, 1.0 if bool(def.get("weekly", false)) else Balance.LUCIFER_STAGE_SUMMON_FRAC)
 

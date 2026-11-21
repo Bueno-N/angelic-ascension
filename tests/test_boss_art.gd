@@ -3,7 +3,7 @@ extends TestCase
 
 func test_baal_frames_load_and_match_cell() -> void:
     check(BossArt.has("boss_baal"), "Baal tem arte nova")
-    check(not BossArt.has("boss_lucifer"), "Lucifer ainda usa a folha antiga")
+    check(not BossArt.has("boss_nope"), "chefe inexistente não tem arte")
     var m: Dictionary = BossArt.SHEETS["boss_baal"]
     var sf := BossArt.frames("boss_baal")
     check(sf != null, "SpriteFrames do Baal")
@@ -22,7 +22,7 @@ func test_baal_ability_animations() -> void:
         check(wind != "" and hit != "", "Baal: %s tem aviso e golpe animados" % ab)
         check(BossArt.frames("boss_baal").has_animation(wind) and BossArt.frames("boss_baal").has_animation(hit), "Baal: animações de %s existem" % ab)
     check(BossArt.ability_anim("boss_baal", "meteor_rain", 0) == "", "habilidade sem arte: usa a pose padrão")
-    check(BossArt.ability_anim("boss_lucifer", "hell_nova", 0) == "", "chefe sem arte nova: pose padrão")
+    check(BossArt.ability_anim("boss_nope", "hell_nova", 0) == "", "chefe sem arte nova: pose padrão")
 
 func test_baal_size_and_death() -> void:
     var s := BossArt.make("boss_baal", EnemiesDB.SPRITE_SCALE)
@@ -33,7 +33,7 @@ func test_baal_size_and_death() -> void:
     var layer := Node2D.new()
     var d := BossArt.spawn_death(layer, Vector2(10, 20), {"sprite": "boss_baal", "_flip": true})
     check(d != null and d.animation == "die" and d.flip_h and d.position == Vector2(10, 20), "animação de morte do Baal no lugar dele")
-    check(BossArt.spawn_death(layer, Vector2.ZERO, {"sprite": "boss_lucifer"}) == null, "chefe sem arte nova: sem animação de morte")
+    check(BossArt.spawn_death(layer, Vector2.ZERO, {"sprite": "boss_nope"}) == null, "chefe sem arte nova: sem animação de morte")
     layer.free()
 
 func test_mordath_frames_and_abilities() -> void:
@@ -156,4 +156,34 @@ func test_azazel_frames_and_fx() -> void:
     check((last.get_child(0) as Sprite2D).texture == BossFx.tex("azazel", "soul_hit"), "acertou: fumaça (quadro 8)")
     var sp := BossFx.shadow_portal(parent, Vector2(10, 10), 1.0, "azazel")
     check(sp.texture == BossFx.tex("azazel", "shadow_0") and sp.position == Vector2(10, 10), "portal de sombra abre no destino")
+    parent.free()
+
+func test_lucifer_frames_and_fx() -> void:
+    check(BossArt.has("boss_lucifer"), "Lucifer tem arte nova")
+    var m: Dictionary = BossArt.SHEETS["boss_lucifer"]
+    var sf := BossArt.frames("boss_lucifer")
+    for anim in m["anims"]:
+        check(sf.has_animation(anim) and sf.get_frame_count(anim) == m["anims"][anim].size(), "Lucifer/%s: quadros" % anim)
+        for i in sf.get_frame_count(anim):
+            var t: Texture2D = sf.get_frame_texture(anim, i)
+            check(t != null and t.get_size() == Vector2(m["cell"]), "Lucifer/%s/%d: mesmo tamanho de quadro" % [anim, i])
+    for ab in EnemiesDB.LUCIFER["abilities"]:
+        check(BossArt.ability_anim("boss_lucifer", ab, 0) != "" and BossArt.ability_anim("boss_lucifer", ab, 1) != "", "Lucifer: %s animada" % ab)
+    check(BossFx.has_lucifer_fx("lucifer") and BossFx.has_fireball("lucifer") and not BossFx.has_lucifer_fx("baal"), "efeitos do Lucifer")
+    for pre in ["soul_", "boom_", "beam_", "ring_", "portal_"]:
+        for i in 5:
+            var nm: String = pre + str(i)
+            if pre == "soul_" and i in [1, 2]:
+                continue
+            check(BossFx.tex("lucifer", nm) != null, "Lucifer fx: %s" % nm)
+    var parent := Node2D.new()
+    var b := BossFx.abyss_beam(parent, Vector2.ZERO, Vector2(-1, 0), 1100.0, 70.0, "lucifer")
+    check(absf(absf(b.rotation) - PI) < 0.01 and is_equal_approx(b.scale.x, 1100.0 / BossFx.BEAM_NATIVE_LEN), "raio aponta para o alvo com o alcance do dano")
+    var r := BossFx.hell_ring(parent, Vector2(5, 5), 1.3, 340.0, "lucifer")
+    check(is_equal_approx(r.scale.x, 680.0 / BossFx.RING_NATIVE_D) and r.position == Vector2(5, 5), "anel da nova do tamanho da área")
+    BossFx.storm_boom(parent, Vector2.ZERO, 1.5, "lucifer")
+    BossFx.summon_portal(parent, Vector2.ZERO, "lucifer")
+    check(parent.get_child_count() == 4, "explosão e portal criados")
+    var d := BossArt.spawn_death(parent, Vector2.ZERO, {"sprite": "boss_lucifer"})
+    check(d != null and is_equal_approx(d.scale.x, BossArt.scale_for("boss_lucifer", Balance.WEEKLY_SCALE)), "morte do Lucifer no tamanho dele")
     parent.free()
