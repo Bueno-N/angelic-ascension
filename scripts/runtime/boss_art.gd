@@ -19,12 +19,25 @@ const SHEETS := {
             "dash": ["run_0", "run_1", "run_2", "run_3", "run_4", "run_5"],   # correndo na investida
             "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
         }},
+    "boss_mordath": {"dir": "mordath", "cell": Vector2i(218, 285), "feet": Vector2(109.0, 223.0), "walk_h": 195.0,
+        "hand": Vector2(65.0, -155.0),               # mão que lança os projéteis (px do quadro, a partir dos pés)
+        "anims": {
+            "walk": ["walk_0", "walk_1", "walk_2", "walk_3", "walk_4", "walk_5"],   # flutuando
+            "attack": ["cast_2", "cast_4"],             # golpe básico: chama na mão e gesto à frente
+            "proj_wind": ["cast_0", "cast_1"],          # Projéteis infernais: junta a energia (aviso)
+            "proj_hit": ["cast_3", "cast_4"],           # lança o leque de bolas de fogo
+            "summon_wind": ["summon_0", "summon_1"],    # Invocação: ergue os braços (aviso)
+            "summon_hit": ["summon_2"],                 # círculo de runas no chão (os portais surgem nos demônios)
+            "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
+        }},
 }
 ## habilidade -> [animação do aviso, animação do golpe]
 const ABILITY_ANIMS := {
     "boss_baal": {"area_slam": ["slam_wind", "slam_hit"], "charge": ["charge_wind", "dash"]},
+    "boss_mordath": {"summon_demons": ["summon_wind", "summon_hit"], "hellfire_projectiles": ["proj_wind", "proj_hit"]},
 }
-const FPS := {"walk": 8.0, "attack": 10.0, "slam_wind": 3.0, "slam_hit": 5.0, "charge_wind": 3.0, "dash": 14.0, "die": 6.0}
+const FPS := {"walk": 8.0, "attack": 10.0, "slam_wind": 3.0, "slam_hit": 5.0, "charge_wind": 3.0, "dash": 14.0, "die": 6.0,
+    "proj_wind": 3.0, "proj_hit": 5.0, "summon_wind": 3.0, "summon_hit": 2.0}
 const LOOP := {"walk": true, "dash": true}
 const BASE_HEIGHT := 150.0         # altura do chefe andando na tela, na escala normal (EnemiesDB.SPRITE_SCALE)
 const DEATH_HOLD := 0.6            # segundos caído no chão antes de sumir
@@ -59,6 +72,15 @@ static func ability_anim(sprite: String, ability: String, i: int) -> String:
 
 static func scale_for(sprite: String, sprite_scale: float) -> float:
     return BASE_HEIGHT * sprite_scale / EnemiesDB.SPRITE_SCALE / float(SHEETS[sprite]["walk_h"])
+
+## Posição da mão (relativa ao nó, já na escala e no lado para onde o chefe olha); Vector2.ZERO se não houver.
+static func hand_offset(sprite: String, sprite_scale: float, flip: bool) -> Vector2:
+    var m: Dictionary = SHEETS.get(sprite, {})
+    if not m.has("hand"):
+        return Vector2.ZERO
+    var h: Vector2 = m["hand"]
+    var rel := Vector2(h.x, h.y + float(m["walk_h"]) / 2.0) * scale_for(sprite, sprite_scale)   # relativo ao centro do corpo
+    return Vector2(-rel.x if flip else rel.x, rel.y)
 
 ## Deslocamento que põe o CENTRO do corpo (meia altura acima dos pés) na posição do nó.
 static func body_offset(sprite: String) -> Vector2:

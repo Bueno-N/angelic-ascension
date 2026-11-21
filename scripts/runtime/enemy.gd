@@ -20,6 +20,7 @@ var player: Player
 var abilities := AbilityCooldowns.new()
 var _spr: AnimatedSprite2D
 var _sprite_name := "imp"
+var _sprite_scale := 2.0
 var _base_mod := Color.WHITE
 var _atk_cd := 0.0
 var _hit := 0.0
@@ -86,6 +87,7 @@ func setup(d: Dictionary, st: int, boss: bool, target: Player, summon: bool = fa
 ## Sprite, habilidades e vida cheia (comum a todos os tipos de inimigo).
 func _build(sprite_name: String, sprite_scale: float, ability_ids: Array) -> void:
     _sprite_name = sprite_name
+    _sprite_scale = sprite_scale
     if BossArt.has(sprite_name):
         _spr = BossArt.make(sprite_name, sprite_scale)    # arte nova dos chefes (andar, golpes das habilidades, morte)
         _spr.animation_finished.connect(_on_anim_finished)
@@ -357,9 +359,10 @@ func _burst(r: float, col: Color) -> void:
 func _burst_at(pos: Vector2, r: float, col: Color) -> void:
     SpriteFx.spawn(get_parent(), "fx_burst", pos, r * 2.0 / 64.0, col)
 
-func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float) -> EnemyProjectile:
+func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float, from: Variant = null, art := "") -> EnemyProjectile:
     var p := EnemyProjectile.new()
-    p.position = global_position
+    p.position = global_position if from == null else from
+    p.art = art
     p.velocity = dir * float(cfg["speed"])
     p.damage = dmg * float(cfg["dmg_mult"]) * dmg_scale
     p.hit_radius = float(cfg["hit_radius"])
@@ -370,10 +373,18 @@ func _shoot(dir: Vector2, cfg: Dictionary, dmg_scale: float) -> EnemyProjectile:
 func _fan(cfg: Dictionary) -> void:
     var n: int = int(cfg["count"])
     var spread: float = deg_to_rad(float(cfg["spread_deg"]))
-    var base_dir: Vector2 = (player.global_position - global_position).normalized()
+    # chefe com arte nova: as bolas saem da MÃO e usam a bola de fogo desenhada dele
+    var hand: Vector2 = Vector2.ZERO
+    var art := ""
+    if BossArt.has(_sprite_name) and _spr != null:
+        hand = BossArt.hand_offset(_sprite_name, _sprite_scale, _spr.flip_h)
+        var dir_name: String = str(BossArt.SHEETS[_sprite_name]["dir"])
+        if BossFx.has_fireball(dir_name):
+            art = dir_name
+    var base_dir: Vector2 = (player.global_position - (global_position + hand)).normalized()
     for i in range(n):
         var t: float = 0.5 if n == 1 else float(i) / float(n - 1)
-        _shoot(base_dir.rotated(-spread / 2.0 + spread * t), cfg, 1.0)
+        _shoot(base_dir.rotated(-spread / 2.0 + spread * t), cfg, 1.0, global_position + hand, art)
 
 func _summon(n: int) -> void:
     var rng := RandomNumberGenerator.new()
@@ -381,6 +392,8 @@ func _summon(n: int) -> void:
     for i in range(n):
         var m := Enemy.new()
         m.position = position + Vector2.from_angle(TAU * float(i) / float(maxi(1, n)) + rng.randf()) * (radius + 30.0)
+        if BossArt.has(_sprite_name) and BossFx.tex(str(BossArt.SHEETS[_sprite_name]["dir"]), "portal_0") != null:
+            BossFx.portal(get_parent(), m.position, str(BossArt.SHEETS[_sprite_name]["dir"]))   # portal onde o demônio surge
         get_parent().add_child(m)
         m.setup(EnemiesDB.pick_normal(stage, rng), stage, false, player, true)
 
