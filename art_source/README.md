@@ -28,3 +28,4 @@ O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuári
 - Contorno andável e objetos bloqueados em `data/arena_maps.gd` (pixels da imagem); a lava é tirada automaticamente pela cor.
 - Uso: portão e cemitério alternam a cada 10 fases; forja nas fases de chefe e no boss semanal (`ArenaMaps.for_stage`).
 - `tile_*.webp` (tentativa anterior com tiles) ficaram sem uso.
+- `lava_portal_sheet.webp` (12 quadros, fundo branco) -> `assets/env/portal/portal_00..11.png` (144 px): portal de lava de onde os mobs nascem (`LavaPortal`).

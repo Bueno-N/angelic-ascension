@@ -147,6 +147,7 @@ func _spawn(boss: bool, forced: Dictionary = {}, mini: Dictionary = {}) -> Enemy
     e.position = Arena.lava_spawn(player.global_position, rng)   # sai da lava mais perto do anjo
     container.add_child(e)
     e.setup({} if boss else (forced if not forced.is_empty() else EnemiesDB.pick_type(stage, rng)), stage, boss, player, false, mini)
+    LavaPortal.open(container, e.position, e, boss or not mini.is_empty())   # surge de um portal de lava
     alive += 1
     return e
 

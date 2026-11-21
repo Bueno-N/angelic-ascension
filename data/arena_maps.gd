@@ -41,27 +41,63 @@ const MAPS := {
             [Vector2(1672, 645), Vector2(1740, 645), Vector2(1740, 695), Vector2(1672, 695)],  # fogueira direita
             [Vector2(1420, 825), Vector2(1478, 825), Vector2(1478, 865), Vector2(1420, 865)],  # fogueira embaixo
         ]},
-    # Cemitério: caminho em volta, cripta no centro, bolsões com túmulos.
+    # Cemitério: toda a ilha até a borda de rochas; cada túmulo/mausoléu/arco/coluna é bloqueado (lápides são sólidas).
     "graveyard": {"image": "res://assets/env/maps/graveyard.png", "start": Vector2(1000, 760),
-        "walk": [[Vector2(295, 250), Vector2(660, 252), Vector2(720, 322), Vector2(790, 360), Vector2(910, 350),
-            Vector2(895, 150), Vector2(1040, 142), Vector2(1058, 252), Vector2(1048, 355), Vector2(1160, 355),
-            Vector2(1210, 290), Vector2(1305, 265), Vector2(1400, 300), Vector2(1580, 330), Vector2(1640, 470),
-            Vector2(1600, 525), Vector2(1690, 545), Vector2(1700, 900), Vector2(1600, 912), Vector2(1450, 900),
-            Vector2(1240, 900), Vector2(1100, 958), Vector2(1080, 1020), Vector2(950, 1020), Vector2(930, 960),
-            Vector2(850, 900), Vector2(600, 890), Vector2(300, 880)]],
+        "walk": [[Vector2(160, 240), Vector2(175, 120), Vector2(300, 92), Vector2(420, 62), Vector2(500, 40), Vector2(625, 40), Vector2(700, 70), Vector2(790, 92), Vector2(815, 130), Vector2(830, 190), Vector2(870, 120), Vector2(950, 96), Vector2(1060, 92), Vector2(1180, 88), Vector2(1300, 110), Vector2(1340, 168), Vector2(1420, 195), Vector2(1500, 142), Vector2(1580, 150), Vector2(1640, 190), Vector2(1690, 250), Vector2(1760, 262), Vector2(1840, 322), Vector2(1880, 420), Vector2(1870, 520), Vector2(1840, 560), Vector2(1830, 700), Vector2(1840, 820), Vector2(1830, 950), Vector2(1800, 1020), Vector2(1650, 1040), Vector2(1400, 1050), Vector2(1240, 1050), Vector2(1100, 1060), Vector2(940, 1045), Vector2(800, 1042), Vector2(600, 1042), Vector2(450, 1050), Vector2(300, 1030), Vector2(220, 1000), Vector2(160, 930), Vector2(150, 800), Vector2(150, 600), Vector2(142, 400)]],
         "block": [
-            [Vector2(395, 300), Vector2(600, 288), Vector2(655, 360), Vector2(635, 472), Vector2(520, 522), Vector2(405, 472)],   # bolsão de cima (mausoléu)
-            [Vector2(355, 640), Vector2(620, 598), Vector2(705, 635), Vector2(745, 780), Vector2(640, 862), Vector2(420, 862), Vector2(348, 780)],  # bolsão de baixo (mausoléu + arco)
             [Vector2(815, 545), Vector2(968, 445), Vector2(1125, 560), Vector2(962, 665)],   # cripta do centro
-            [Vector2(1228, 348), Vector2(1345, 348), Vector2(1352, 502), Vector2(1228, 472)],  # arco
-            [Vector2(1455, 365), Vector2(1505, 365), Vector2(1505, 455), Vector2(1455, 455)],  # coluna
-            [Vector2(1535, 305), Vector2(1625, 305), Vector2(1625, 405), Vector2(1535, 405)],  # pilares com corrente
-            [Vector2(1595, 555), Vector2(1655, 555), Vector2(1655, 645), Vector2(1595, 645)],  # coluna
-            [Vector2(1295, 755), Vector2(1512, 745), Vector2(1505, 895), Vector2(1295, 885)],  # túmulos embaixo à direita
-            [Vector2(1205, 755), Vector2(1265, 755), Vector2(1265, 805), Vector2(1205, 805)],  # lápide
-            [Vector2(1585, 685), Vector2(1665, 685), Vector2(1665, 765), Vector2(1585, 765)],  # lápide
-            [Vector2(1045, 755), Vector2(1145, 755), Vector2(1145, 875), Vector2(1045, 875)],  # correntes
-            [Vector2(735, 415), Vector2(778, 415), Vector2(778, 452), Vector2(735, 452)],    # bloco
+            [Vector2(170, 80), Vector2(310, 80), Vector2(310, 245), Vector2(170, 245)],   # mausoléu em cima à esquerda
+            [Vector2(350, 90), Vector2(425, 90), Vector2(425, 175), Vector2(350, 175)],   # lápide
+            [Vector2(425, 60), Vector2(475, 60), Vector2(475, 125), Vector2(425, 125)],   # lápide
+            [Vector2(495, 25), Vector2(630, 25), Vector2(630, 175), Vector2(495, 175)],   # mausoléu em cima
+            [Vector2(680, 75), Vector2(745, 75), Vector2(745, 140), Vector2(680, 140)],   # lápide
+            [Vector2(440, 295), Vector2(605, 295), Vector2(605, 440), Vector2(440, 440)],   # túmulo no bolsão de cima
+            [Vector2(575, 285), Vector2(645, 285), Vector2(645, 375), Vector2(575, 375)],   # lápide no bolsão de cima
+            [Vector2(700, 200), Vector2(750, 200), Vector2(750, 285), Vector2(700, 285)],   # lápide
+            [Vector2(750, 250), Vector2(785, 250), Vector2(785, 300), Vector2(750, 300)],   # fogo
+            [Vector2(785, 235), Vector2(905, 235), Vector2(905, 335), Vector2(785, 335)],   # lápides
+            [Vector2(160, 245), Vector2(205, 245), Vector2(205, 305), Vector2(160, 305)],   # lápide
+            [Vector2(195, 370), Vector2(255, 370), Vector2(255, 445), Vector2(195, 445)],   # lápide
+            [Vector2(195, 515), Vector2(265, 515), Vector2(265, 605), Vector2(195, 605)],   # lápide
+            [Vector2(155, 580), Vector2(205, 580), Vector2(205, 655), Vector2(155, 655)],   # lápide
+            [Vector2(290, 495), Vector2(355, 495), Vector2(355, 590), Vector2(290, 590)],   # lápides perto da escada
+            [Vector2(205, 700), Vector2(255, 700), Vector2(255, 770), Vector2(205, 770)],   # lápide
+            [Vector2(150, 795), Vector2(275, 795), Vector2(275, 905), Vector2(150, 905)],   # mausoléu à esquerda
+            [Vector2(210, 900), Vector2(270, 900), Vector2(270, 975), Vector2(210, 975)],   # lápide
+            [Vector2(275, 915), Vector2(380, 915), Vector2(380, 1010), Vector2(275, 1010)],   # túmulo embaixo à esquerda
+            [Vector2(400, 685), Vector2(455, 685), Vector2(455, 765), Vector2(400, 765)],   # lápide no bolsão de baixo
+            [Vector2(445, 705), Vector2(615, 705), Vector2(615, 845), Vector2(445, 845)],   # túmulo no bolsão de baixo
+            [Vector2(645, 615), Vector2(795, 615), Vector2(795, 785), Vector2(645, 785)],   # arco no bolsão de baixo
+            [Vector2(435, 960), Vector2(505, 960), Vector2(505, 1045), Vector2(435, 1045)],   # lápide
+            [Vector2(515, 945), Vector2(585, 945), Vector2(585, 1045), Vector2(515, 1045)],   # lápide
+            [Vector2(605, 915), Vector2(675, 915), Vector2(675, 1000), Vector2(605, 1000)],   # lápide
+            [Vector2(695, 875), Vector2(775, 875), Vector2(775, 955), Vector2(695, 955)],   # lápide
+            [Vector2(755, 965), Vector2(805, 965), Vector2(805, 1005), Vector2(755, 1005)],   # túmulo raso
+            [Vector2(800, 895), Vector2(955, 895), Vector2(955, 1045), Vector2(800, 1045)],   # correntes e arco embaixo
+            [Vector2(735, 415), Vector2(778, 415), Vector2(778, 452), Vector2(735, 452)],   # bloco
+            [Vector2(1075, 20), Vector2(1145, 20), Vector2(1145, 120), Vector2(1075, 120)],   # lápide em cima
+            [Vector2(1060, 255), Vector2(1105, 255), Vector2(1105, 310), Vector2(1060, 310)],   # lápide
+            [Vector2(1105, 290), Vector2(1160, 290), Vector2(1160, 345), Vector2(1105, 345)],   # lápide
+            [Vector2(1160, 110), Vector2(1285, 110), Vector2(1285, 250), Vector2(1160, 250)],   # mausoléu em cima
+            [Vector2(1235, 190), Vector2(1325, 190), Vector2(1325, 275), Vector2(1235, 275)],   # lápides
+            [Vector2(1230, 345), Vector2(1370, 345), Vector2(1370, 505), Vector2(1230, 505)],   # arco
+            [Vector2(1450, 360), Vector2(1510, 360), Vector2(1510, 455), Vector2(1450, 455)],   # coluna
+            [Vector2(1540, 230), Vector2(1665, 230), Vector2(1665, 425), Vector2(1540, 425)],   # obelisco e correntes
+            [Vector2(1420, 135), Vector2(1570, 135), Vector2(1570, 285), Vector2(1420, 285)],   # mausoléu
+            [Vector2(1640, 270), Vector2(1870, 270), Vector2(1870, 540), Vector2(1640, 540)],   # mausoléu grande
+            [Vector2(1700, 500), Vector2(1760, 500), Vector2(1760, 570), Vector2(1700, 570)],   # lápide
+            [Vector2(1775, 525), Vector2(1825, 525), Vector2(1825, 595), Vector2(1775, 595)],   # lápide
+            [Vector2(1595, 555), Vector2(1665, 555), Vector2(1665, 650), Vector2(1595, 650)],   # coluna
+            [Vector2(1580, 680), Vector2(1665, 680), Vector2(1665, 770), Vector2(1580, 770)],   # lápides
+            [Vector2(1690, 725), Vector2(1810, 725), Vector2(1810, 870), Vector2(1690, 870)],   # mausoléu à direita
+            [Vector2(1045, 755), Vector2(1150, 755), Vector2(1150, 875), Vector2(1045, 875)],   # correntes
+            [Vector2(1205, 755), Vector2(1265, 755), Vector2(1265, 810), Vector2(1205, 810)],   # lápide
+            [Vector2(1290, 775), Vector2(1510, 775), Vector2(1510, 905), Vector2(1290, 905)],   # túmulos embaixo à direita
+            [Vector2(1440, 740), Vector2(1495, 740), Vector2(1495, 800), Vector2(1440, 800)],   # lápide
+            [Vector2(1085, 895), Vector2(1245, 895), Vector2(1245, 1045), Vector2(1085, 1045)],   # arco embaixo
+            [Vector2(1375, 955), Vector2(1450, 955), Vector2(1450, 1035), Vector2(1375, 1035)],   # lápides embaixo
+            [Vector2(1480, 960), Vector2(1600, 960), Vector2(1600, 1050), Vector2(1480, 1050)],   # lápides embaixo
+            [Vector2(1660, 915), Vector2(1800, 915), Vector2(1800, 1040), Vector2(1660, 1040)],   # mausoléu embaixo à direita
         ]},
 }
 

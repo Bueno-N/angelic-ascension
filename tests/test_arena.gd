@@ -74,3 +74,22 @@ func test_boss_pointer_edge() -> void:
     check(BossPointer.edge_point(r, Vector2(500, 25)) == Vector2(100, 25), "chefe à direita: seta na borda direita")
     check(BossPointer.edge_point(r, Vector2(50, -300)).y == 0.0, "chefe em cima: seta na borda de cima")
     check(BossPointer.edge_point(r, Vector2(60, 30)) == Vector2(60, 30), "dentro do retângulo: o próprio ponto")
+
+func test_lava_portal_light_and_capped() -> void:
+    check(LavaPortal.frames().get_frame_count("default") == LavaPortal.FRAMES, "portal: 12 quadros")
+    check(LavaPortal.frames() == LavaPortal.frames(), "quadros carregados uma vez e compartilhados")
+    var parent := Node2D.new()
+    var root := Engine.get_main_loop() as SceneTree
+    root.root.add_child(parent)
+    LavaPortal.active = 0
+    var mob := Node2D.new()
+    parent.add_child(mob)
+    var p := LavaPortal.open(parent, Vector2(10, 10), mob)
+    check(p != null and p.sprite_frames == LavaPortal.frames() and mob.modulate.a == 0.0, "portal abre e o mob começa invisível")
+    var made := 1
+    for i in 20:
+        if LavaPortal.open(parent, Vector2.ZERO, null) != null:
+            made += 1
+    check(made == LavaPortal.MAX_ACTIVE and LavaPortal.active == LavaPortal.MAX_ACTIVE, "no máximo %d portais ao mesmo tempo" % LavaPortal.MAX_ACTIVE)
+    parent.free()
+    check(LavaPortal.active == 0, "contagem volta a zero quando os portais saem")

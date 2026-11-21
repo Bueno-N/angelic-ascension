@@ -13,6 +13,7 @@ const CELL := 8.0                      # px da imagem por célula da grade
 const PLAYER_MARGIN := 14.0            # o anjo fica a essa distância (mundo) da borda da área andável
 const SPAWN_BAND := Vector2i(3, 70)    # mobs nascem na lava a 3..70 células da área andável (a mais perto do anjo é a escolhida)
 const SPAWN_MIN_DIST := 220.0          # não nasce colado no anjo
+const SPAWN_NEAR := 750.0              # preferência: lava até essa distância do anjo
 
 static var _id := ""
 static var _cols := 0
@@ -235,14 +236,21 @@ static func lava_spawn(near: Vector2, rng: RandomNumberGenerator) -> Vector2:
     _ensure()
     if _spawns.is_empty():
         return clamp_world(near + Vector2.from_angle(rng.randf() * TAU) * 700.0, 10.0)
-    var cands: Array = []
-    for k in 18:
-        cands.append(_spawns[rng.randi_range(0, _spawns.size() - 1)])
-    var far: Array = cands.filter(func(q: Vector2) -> bool: return q.distance_to(near) >= SPAWN_MIN_DIST)
-    if not far.is_empty():
-        cands = far
-    cands.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.distance_to(near) < b.distance_to(near))
-    return cands[rng.randi_range(0, mini(3, cands.size() - 1))]
+    # sorteia vários pontos e prefere os que estão PERTO do anjo (mas não colados): eles saem da lava ao lado dele
+    var near_ok: Array = []
+    var best := Vector2.ZERO
+    var best_d := INF
+    for k in 80:
+        var q: Vector2 = _spawns[rng.randi_range(0, _spawns.size() - 1)]
+        var d := q.distance_to(near)
+        if d >= SPAWN_MIN_DIST and d <= SPAWN_NEAR:
+            near_ok.append(q)
+        elif d >= SPAWN_MIN_DIST and d < best_d:
+            best_d = d
+            best = q
+    if not near_ok.is_empty():
+        return near_ok[rng.randi_range(0, near_ok.size() - 1)]
+    return best if best_d < INF else _spawns[rng.randi_range(0, _spawns.size() - 1)]
 
 ## Para testes/ferramentas.
 static func spawn_points() -> PackedVector2Array:

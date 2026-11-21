@@ -204,6 +204,8 @@ func _nearest_enemy(max_dist: float) -> Node2D:
     var best: Node2D = null
     var best_d := max_dist
     for e in get_tree().get_nodes_in_group("enemies"):
+        if e.modulate.a < 0.5:
+            continue   # ainda saindo do portal de lava
         var d: float = e.global_position.distance_to(global_position)
         if d < best_d:
             best_d = d
