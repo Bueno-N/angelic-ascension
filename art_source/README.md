@@ -38,4 +38,6 @@ O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuári
 - `skills/divine_judgment.webp` (14 quadros) -> `assets/skills/divine_judgment/judgment_00..13` (00-03 selo, 04-09 raio com o topo esmaecido, 10-13 dissipar).
 - `skills/wings_of_redemption.png` (7) + `skills/wings_ring.png` (5) -> `assets/skills/wings_of_redemption/wings_0..6`, `ring_0..4`.
 - `skills/army_of_archangels.webp` (16, 125 px) -> `assets/skills/army_of_archangels/angel_00..15` (00-03 surgir, 04-07 parado, 08-11 golpe, 12-15 sumir; `ArchangelAlly`).
+- `skills/fury_burst.png` (7) + `fury_aura.png` (6) -> `assets/skills/celestial_fury/burst_0..6`, `aura_0..5`.
+- `skills/apocalypse_seal.png` (7), `apocalypse_pillar.png` (5), `apocalypse_blast.png` (6) -> `assets/skills/holy_apocalypse/seal_*`, `pillar_*`, `blast_*`.
 - Código: `scripts/runtime/skill_fx.gd`.

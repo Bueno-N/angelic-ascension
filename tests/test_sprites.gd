@@ -318,5 +318,31 @@ func test_wings_and_archangels_art() -> void:
     check(is_equal_approx(ring.scale.x, 560.0 / SkillFx.RING_D), "onda do tamanho da área")
     pl.free()
 
+func test_fury_and_apocalypse_art() -> void:
+    check(SkillFx.has_art("celestial_fury") and SkillFx.has_art("holy_apocalypse"), "arte da Fúria e do Apocalipse")
+    for n in SkillFx.BURST_FRAMES + SkillFx.AURA_FRAMES:
+        check(SkillFx.tex("celestial_fury", n) != null, "fúria: %s" % n)
+    for n in SkillFx.SEAL_FRAMES + SkillFx.BLAST_FRAMES + SkillFx.PILLAR_FRAMES:
+        check(SkillFx.tex("holy_apocalypse", n) != null, "apocalipse: %s" % n)
+    var pl := Node2D.new()
+    var buffs := BuffState.new()
+    buffs.add("celestial_fury", 5.0, {})
+    SkillFx.fury(pl, buffs, 240.0)
+    var aura: SkillFx = pl.get_node("FuryAuraFx")
+    check(aura != null and aura.current_mode() == "aura_loop", "anel de fogo em volta do anjo")
+    aura._process(1.0)
+    check(is_instance_valid(aura) and aura.modulate.a > 0.9, "anel fica enquanto a Fúria dura")
+    buffs.tick(6.0)
+    aura._process(1.0)
+    check(aura.is_queued_for_deletion(), "acabou a Fúria: o anel some")
+    var seal := SkillFx.apocalypse_seal(pl)
+    var done: Array = []
+    seal.finished.connect(func(): done.append(true))
+    seal._process(0.1)
+    check(done.is_empty(), "selo ainda abrindo")
+    seal._process(1.0)
+    check(done.size() == 1, "selo terminou: hora da explosão e do dano")
+    pl.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")

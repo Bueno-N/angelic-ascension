@@ -6,11 +6,16 @@ extends Sprite2D
 ##   Julgamento Divino: selo no alvo (judgment_00..03, segue o alvo), raio do céu (04..09; o dano entra no 1º quadro
 ##               do raio, sinal `landed`) e dissipar (10..13).
 ##   Asas da Redenção: asas de luz se abrem atrás do anjo (wings_0..6) + onda de cura (ring_0..4) do tamanho da área.
+##   Fúria Celestial: explosão de fogo (burst_0..6) do tamanho da área + anel de fogo em volta do anjo
+##               (aura_0..5 em laço) enquanto o buff durar.
+##   Apocalipse Sagrado: selo de runas se abre no chão (seal_0..6); ao terminar (`finished`) sai a explosão
+##               dourada (blast_0..5) e um pilar de luz (pillar_0..4) em cada inimigo.
 ##   Escudo Sagrado: ativação (shield_00..05, cresce até o raio da explosão), escudo em volta do anjo
 ##               (shield_06..11 em laço enquanto houver absorção) e quebra (shield_12..15).
 ## As texturas são carregadas uma vez (cache estático).
 
 signal landed(at: Vector2)
+signal finished
 
 const DIR := "res://assets/skills/"
 # Chuva de Luz
@@ -71,6 +76,10 @@ static func has_art(skill: String) -> bool:
             return tex(skill, "wings_0") != null and tex(skill, "ring_0") != null
         "army_of_archangels":
             return tex(skill, "angel_00") != null
+        "celestial_fury":
+            return tex(skill, "burst_0") != null and tex(skill, "aura_0") != null
+        "holy_apocalypse":
+            return tex(skill, "seal_0") != null and tex(skill, "blast_0") != null and tex(skill, "pillar_0") != null
     return false
 
 func _make(skill: String) -> void:
@@ -145,6 +154,58 @@ static func redemption(player: Node2D, radius: float) -> void:
     play_once(player, "wings_of_redemption", WINGS_FRAMES, 12.0, Vector2(0.0, -26.0), 0.95, -1)
     play_once(player, "wings_of_redemption", RING_FRAMES, 10.0, Vector2.ZERO, radius * 2.0 / RING_D, 1)
 
+# ---------------------------------------------------------------- Fúria Celestial
+const BURST_FRAMES := ["burst_0", "burst_1", "burst_2", "burst_3", "burst_4", "burst_5", "burst_6"]
+const AURA_FRAMES := ["aura_0", "aura_1", "aura_2", "aura_3", "aura_4", "aura_5"]
+const BURST_D := 180.0           # diâmetro do anel no quadro maior
+const AURA_D := 190.0
+const AURA_SCREEN_D := 135.0     # anel de fogo em volta do anjo
+
+## Explosão do tamanho da área + anel de fogo em laço em volta do anjo enquanto `buffs` tiver a Fúria.
+static func fury(player: Node2D, buffs: BuffState, radius: float) -> void:
+    var b := play_once(player, "celestial_fury", BURST_FRAMES, 16.0, Vector2.ZERO, radius * 2.0 / BURST_D, 2)
+    b.material = SpriteLib.additive()   # só soma luz (os últimos quadros são acinzentados e escureceriam a tela)
+    var old := player.get_node_or_null("FuryAuraFx")
+    if old != null:
+        old.free()
+    var a := SkillFx.new()
+    a.name = "FuryAuraFx"
+    a._make("celestial_fury")
+    a._mode = "aura_loop"
+    a._owner_buffs = buffs
+    a._fps = 12.0
+    var k: float = AURA_SCREEN_D / AURA_D
+    a.scale = Vector2(k, k)
+    a.position = Vector2(0.0, 6.0)
+    a.z_index = -1
+    a._set_frame(AURA_FRAMES[0])
+    player.add_child(a)
+
+# ---------------------------------------------------------------- Apocalipse Sagrado
+const SEAL_FRAMES := ["seal_0", "seal_1", "seal_2", "seal_3", "seal_4", "seal_5", "seal_6"]
+const BLAST_FRAMES := ["blast_0", "blast_1", "blast_2", "blast_3", "blast_4", "blast_5"]
+const PILLAR_FRAMES := ["pillar_0", "pillar_1", "pillar_2", "pillar_3", "pillar_4"]
+const SEAL_SCREEN_D := 560.0
+const SEAL_D := 205.0
+const BLAST_SCREEN_D := 900.0
+const BLAST_D := 190.0
+const PILLAR_BASE := Vector2(128.0, 214.0)   # base do pilar no quadro
+const PILLAR_SCALE := 1.25
+
+## Selo sob o anjo; quando termina emite `finished` (aí entram a explosão, os pilares e o dano).
+static func apocalypse_seal(player: Node2D) -> SkillFx:
+    return play_once(player, "holy_apocalypse", SEAL_FRAMES, 18.0, Vector2(0.0, 8.0), SEAL_SCREEN_D / SEAL_D, -1)
+
+static func apocalypse_blast(parent: Node, at: Vector2) -> void:
+    var s := play_once(parent, "holy_apocalypse", BLAST_FRAMES, 14.0, at, BLAST_SCREEN_D / BLAST_D, 6)
+    s.material = SpriteLib.additive()   # só soma luz (não escurece a tela no fim)
+
+static func apocalypse_pillar(parent: Node, at: Vector2) -> SkillFx:
+    var s := play_once(parent, "holy_apocalypse", PILLAR_FRAMES, 14.0, at + Vector2(0.0, 12.0), PILLAR_SCALE, 6)
+    s.centered = false
+    s.offset = -PILLAR_BASE
+    return s
+
 # ---------------------------------------------------------------- Escudo Sagrado
 ## Ativação + escudo em laço em volta do anjo enquanto `buffs.absorb() > 0` + quebra. `blast_r` = raio da explosão.
 static func shield(player: Node2D, buffs: BuffState, blast_r: float) -> SkillFx:
@@ -205,6 +266,13 @@ func _process(delta: float) -> void:
             if f != _i:
                 _i = f
                 _set_frame(_seq[f])
+        "aura_loop":
+            _set_frame(AURA_FRAMES[int(_t * _fps) % AURA_FRAMES.size()])
+            rotation += delta * 0.6
+            var on: bool = _owner_buffs != null and _owner_buffs.is_active("celestial_fury")
+            modulate.a = minf(1.0, _t / 0.2) if on else modulate.a - delta * 4.0
+            if not on and modulate.a <= 0.0:
+                queue_free()
         "shield_loop":
             var n: int = int(_t * _fps) % SHIELD_LOOP.size()
             _set_frame(SHIELD_LOOP[n])
@@ -224,6 +292,7 @@ func _process(delta: float) -> void:
                     _mode = "shield_loop"
                     _t = 0.0
                 else:
+                    finished.emit()
                     queue_free()
                 return
             _set_frame(_seq[f])

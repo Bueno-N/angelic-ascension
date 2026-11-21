@@ -204,10 +204,18 @@ func execute(id: String) -> void:
                 if not SkillFx.has_art(id):
                     _ring(a.position, 40.0, GOLD)
         "celestial_fury":
-            _ring(player.global_position, float(e["radius"]), ORANGE)
+            if not SkillFx.has_art(id):
+                _ring(player.global_position, float(e["radius"]), ORANGE)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)
             player.buffs.add(id, float(sk["duration"]), SkillsDB.buff_mods(id, glow))
+            if SkillFx.has_art(id):
+                SkillFx.fury(player, player.buffs, float(e["radius"]))   # explosão de fogo + anel de fogo durante o buff
         "holy_apocalypse":
+            if SkillFx.has_art(id):
+                # o selo se abre sob o anjo; quando fecha: clarão, explosão, pilar em cada inimigo e o dano
+                var seal := SkillFx.apocalypse_seal(player)
+                seal.finished.connect(func(): _apocalypse_strike(id, atk, glow))
+                return
             _flash(Color(1.0, 0.97, 0.8))
             _ring(player.global_position, 700.0, WHITE)
             var shown := 0
@@ -224,6 +232,20 @@ func execute(id: String) -> void:
                 deal_damage(en, id, atk, glow)
             _heal(id, glow)
             player.buffs.add(id, float(sk["duration"]), SkillsDB.buff_mods(id, glow))
+
+const APOCALYPSE_PILLARS := 14   # pilares desenhados no máximo (o dano vale para todos)
+
+func _apocalypse_strike(id: String, atk: float, glow: float) -> void:
+    if player == null or not is_instance_valid(player):
+        return
+    _flash(Color(1.0, 0.97, 0.8))
+    SkillFx.apocalypse_blast(fx_layer, player.global_position)
+    var shown := 0
+    for en in _enemies():
+        if shown < APOCALYPSE_PILLARS:
+            SkillFx.apocalypse_pillar(fx_layer, en.global_position)
+            shown += 1
+        deal_damage(en, id, atk, glow)
 
 func _rain(id: String, atk: float, glow: float, e: Dictionary) -> void:
     var n: int = int(e["projectiles"])
