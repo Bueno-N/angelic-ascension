@@ -36,4 +36,6 @@ O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuári
 - `skills/holy_shield.webp` (4x4, com transparência) -> `assets/skills/holy_shield/shield_00..15` (00-05 ativação, 06-11 escudo em laço, 12-15 quebra).
 - `skills/swords_of_paradise.webp` (12 quadros) -> `assets/skills/swords_of_paradise/sword_00..11` (00-02 surgem, 03-08 laço, 09-11 somem; `OrbitSwords`).
 - `skills/divine_judgment.webp` (14 quadros) -> `assets/skills/divine_judgment/judgment_00..13` (00-03 selo, 04-09 raio com o topo esmaecido, 10-13 dissipar).
+- `skills/wings_of_redemption.png` (7) + `skills/wings_ring.png` (5) -> `assets/skills/wings_of_redemption/wings_0..6`, `ring_0..4`.
+- `skills/army_of_archangels.webp` (16, 125 px) -> `assets/skills/army_of_archangels/angel_00..15` (00-03 surgir, 04-07 parado, 08-11 golpe, 12-15 sumir; `ArchangelAlly`).
 - Código: `scripts/runtime/skill_fx.gd`.

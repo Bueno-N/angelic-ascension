@@ -5,6 +5,7 @@ extends Sprite2D
 ##               O dano entra quando ele toca o chão (sinal `landed`).
 ##   Julgamento Divino: selo no alvo (judgment_00..03, segue o alvo), raio do céu (04..09; o dano entra no 1º quadro
 ##               do raio, sinal `landed`) e dissipar (10..13).
+##   Asas da Redenção: asas de luz se abrem atrás do anjo (wings_0..6) + onda de cura (ring_0..4) do tamanho da área.
 ##   Escudo Sagrado: ativação (shield_00..05, cresce até o raio da explosão), escudo em volta do anjo
 ##               (shield_06..11 em laço enquanto houver absorção) e quebra (shield_12..15).
 ## As texturas são carregadas uma vez (cache estático).
@@ -66,6 +67,10 @@ static func has_art(skill: String) -> bool:
             return tex(skill, "judgment_00") != null
         "swords_of_paradise":
             return tex(skill, "sword_00") != null
+        "wings_of_redemption":
+            return tex(skill, "wings_0") != null and tex(skill, "ring_0") != null
+        "army_of_archangels":
+            return tex(skill, "angel_00") != null
     return false
 
 func _make(skill: String) -> void:
@@ -114,6 +119,31 @@ static func judgment(parent: Node, target: Node2D) -> SkillFx:
     s._set_frame(s._seq[0])
     parent.add_child(s)
     return s
+
+# ---------------------------------------------------------------- Asas da Redenção
+const WINGS_FRAMES := ["wings_0", "wings_1", "wings_2", "wings_3", "wings_4", "wings_5", "wings_6"]
+const RING_FRAMES := ["ring_0", "ring_1", "ring_2", "ring_3", "ring_4"]
+const RING_D := 165.0            # diâmetro do anel no quadro maior (px)
+
+## Sequência simples de quadros que some no fim (presa ao `parent`, na posição `pos`).
+static func play_once(parent: Node, skill: String, frames: Array, fps: float, pos: Vector2, sc: float, z: int) -> SkillFx:
+    var s := SkillFx.new()
+    s._make(skill)
+    s._mode = "once"
+    s._seq = frames
+    s._fps = fps
+    s._i = 0
+    s.position = pos
+    s.scale = Vector2(sc, sc)
+    s.z_index = z
+    s._set_frame(frames[0])
+    parent.add_child(s)
+    return s
+
+## Asas atrás do anjo (acompanham ele) + onda de cura em volta, com o raio da área.
+static func redemption(player: Node2D, radius: float) -> void:
+    play_once(player, "wings_of_redemption", WINGS_FRAMES, 12.0, Vector2(0.0, -26.0), 0.95, -1)
+    play_once(player, "wings_of_redemption", RING_FRAMES, 10.0, Vector2.ZERO, radius * 2.0 / RING_D, 1)
 
 # ---------------------------------------------------------------- Escudo Sagrado
 ## Ativação + escudo em laço em volta do anjo enquanto `buffs.absorb() > 0` + quebra. `blast_r` = raio da explosão.

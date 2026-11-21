@@ -302,5 +302,21 @@ func test_swords_and_judgment_art() -> void:
     check(hits.size() == 1, "dano quando o raio cai")
     parent.free()
 
+func test_wings_and_archangels_art() -> void:
+    check(SkillFx.has_art("wings_of_redemption") and SkillFx.has_art("army_of_archangels"), "arte das Asas e dos Arcanjos")
+    for n in SkillFx.WINGS_FRAMES + SkillFx.RING_FRAMES:
+        check(SkillFx.tex("wings_of_redemption", n) != null, "asas: %s" % n)
+    for i in 16:
+        check(SkillFx.tex("army_of_archangels", "angel_%02d" % i) != null, "arcanjo: quadro %d" % i)
+    check(ArchangelAlly.frame_for("appear", 0.0) == 0 and ArchangelAlly.frame_for("vanish", 9.0) == 15, "arcanjo surge e some")
+    check(ArchangelAlly.frame_for("attack", float(ArchangelAlly.HIT_FRAME) / ArchangelAlly.FPS) == 10, "quadro do corte")
+    check(ArchangelAlly.IDLE.has(ArchangelAlly.frame_for("idle", 3.3)), "parado em laço")
+    var pl := Node2D.new()
+    SkillFx.redemption(pl, 280.0)
+    check(pl.get_child_count() == 2, "asas + onda de cura")
+    var ring: SkillFx = pl.get_child(1)
+    check(is_equal_approx(ring.scale.x, 560.0 / SkillFx.RING_D), "onda do tamanho da área")
+    pl.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")

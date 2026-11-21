@@ -182,10 +182,14 @@ func execute(id: String) -> void:
                     _strike(t2.global_position, WHITE, 3.0)
                     deal_damage(t2, id, atk, glow)
         "wings_of_redemption":
-            _ring(player.global_position, float(e["radius"]), GOLD)
+            if SkillFx.has_art(id):
+                SkillFx.redemption(player, float(e["radius"]))   # asas de luz atrás do anjo + onda de cura
+            else:
+                _ring(player.global_position, float(e["radius"]), GOLD)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)
             _heal(id, glow)
-            SpriteFx.spawn(fx_layer, "fx_hit", player.global_position, 4.0, GOLD)
+            if not SkillFx.has_art(id):
+                SpriteFx.spawn(fx_layer, "fx_hit", player.global_position, 4.0, GOLD)
         "army_of_archangels":
             var n: int = int(e["summons"])
             for i in range(n):
@@ -197,7 +201,8 @@ func execute(id: String) -> void:
                 a.tick = float(e["ally_tick"])
                 a.position = player.global_position + Vector2.from_angle(TAU * float(i) / float(maxi(1, n))) * 60.0
                 fx_layer.add_child(a)
-                _ring(a.position, 40.0, GOLD)
+                if not SkillFx.has_art(id):
+                    _ring(a.position, 40.0, GOLD)
         "celestial_fury":
             _ring(player.global_position, float(e["radius"]), ORANGE)
             _damage_radius(player.global_position, float(e["radius"]), id, atk, glow)
