@@ -3,7 +3,7 @@ extends TestCase
 
 func test_baal_frames_load_and_match_cell() -> void:
     check(BossArt.has("boss_baal"), "Baal tem arte nova")
-    check(not BossArt.has("boss_ignarr"), "Ignarr ainda usa a folha antiga")
+    check(not BossArt.has("boss_azazel"), "Azazel ainda usa a folha antiga")
     var m: Dictionary = BossArt.SHEETS["boss_baal"]
     var sf := BossArt.frames("boss_baal")
     check(sf != null, "SpriteFrames do Baal")
@@ -22,7 +22,7 @@ func test_baal_ability_animations() -> void:
         check(wind != "" and hit != "", "Baal: %s tem aviso e golpe animados" % ab)
         check(BossArt.frames("boss_baal").has_animation(wind) and BossArt.frames("boss_baal").has_animation(hit), "Baal: animações de %s existem" % ab)
     check(BossArt.ability_anim("boss_baal", "meteor_rain", 0) == "", "habilidade sem arte: usa a pose padrão")
-    check(BossArt.ability_anim("boss_ignarr", "meteor_rain", 0) == "", "chefe sem arte nova: pose padrão")
+    check(BossArt.ability_anim("boss_azazel", "shadow_step", 0) == "", "chefe sem arte nova: pose padrão")
 
 func test_baal_size_and_death() -> void:
     var s := BossArt.make("boss_baal", EnemiesDB.SPRITE_SCALE)
@@ -33,7 +33,7 @@ func test_baal_size_and_death() -> void:
     var layer := Node2D.new()
     var d := BossArt.spawn_death(layer, Vector2(10, 20), {"sprite": "boss_baal", "_flip": true})
     check(d != null and d.animation == "die" and d.flip_h and d.position == Vector2(10, 20), "animação de morte do Baal no lugar dele")
-    check(BossArt.spawn_death(layer, Vector2.ZERO, {"sprite": "boss_ignarr"}) == null, "chefe sem arte nova: sem animação de morte")
+    check(BossArt.spawn_death(layer, Vector2.ZERO, {"sprite": "boss_azazel"}) == null, "chefe sem arte nova: sem animação de morte")
     layer.free()
 
 func test_mordath_frames_and_abilities() -> void:
@@ -98,3 +98,27 @@ func test_facing_does_not_flicker() -> void:
         cur = nxt
     check(flips == 0, "anjo quase alinhado na vertical: não fica virando a cada passo")
     check(Enemy.face_left(true, 5.0, 10.0) == true and Enemy.face_left(false, -5.0, 10.0) == false, "margem mínima também vale para mobs pequenos")
+
+func test_ignarr_frames_and_fx() -> void:
+    check(BossArt.has("boss_ignarr"), "Ignarr tem arte nova")
+    var m: Dictionary = BossArt.SHEETS["boss_ignarr"]
+    var sf := BossArt.frames("boss_ignarr")
+    for anim in m["anims"]:
+        check(sf.has_animation(anim) and sf.get_frame_count(anim) == m["anims"][anim].size(), "Ignarr/%s: quadros" % anim)
+        for i in sf.get_frame_count(anim):
+            var t: Texture2D = sf.get_frame_texture(anim, i)
+            check(t != null and t.get_size() == Vector2(m["cell"]), "Ignarr/%s/%d: mesmo tamanho de quadro" % [anim, i])
+    for ab in EnemiesDB.BOSSES[2]["abilities"]:
+        check(BossArt.ability_anim("boss_ignarr", ab, 0) != "" and BossArt.ability_anim("boss_ignarr", ab, 1) != "", "Ignarr: %s animada" % ab)
+    var s := BossArt.make("boss_ignarr", EnemiesDB.SPRITE_SCALE)
+    check(absf(float(m["walk_h"]) * s.scale.y - float(m["height"])) < 0.5, "Ignarr com a altura própria")
+    s.free()
+    check(BossFx.has_breath("ignarr") and BossFx.has_meteor("ignarr") and not BossFx.has_breath("mordath"), "sopro e meteoro só do Ignarr")
+    for f in BossFx.BREATH_FRAMES + ["meteor_0", "meteor_1", "meteor_2", "meteor_3", "meteor_4", "meteor_5"]:
+        check(BossFx.tex("ignarr", f) != null, "Ignarr fx: %s" % f)
+    var parent := Node2D.new()
+    var b := BossFx.breath(parent, Vector2.ZERO, Vector2(-1, 0), 380.0, "ignarr")
+    check(absf(absf(b.rotation) - PI) < 0.01 and is_equal_approx(b.scale.x, 380.0 / BossFx.BREATH_NATIVE_LEN), "sopro aponta para o alvo com o alcance do cone")
+    var mt := BossFx.meteor(parent, Vector2(50, 60), 1.4, "ignarr")
+    check(mt.texture == BossFx.tex("ignarr", "meteor_0") and mt.position == Vector2(50, 60), "meteoro começa como brilho no ponto de impacto")
+    parent.free()

@@ -30,14 +30,28 @@ const SHEETS := {
             "summon_hit": ["summon_2"],                 # círculo de runas no chão (os portais surgem nos demônios)
             "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
         }},
+    "boss_ignarr": {"dir": "ignarr", "cell": Vector2i(588, 340), "feet": Vector2(294.0, 298.0), "walk_h": 210.0,
+        "height": 125.0,                             # quadrúpede: mais baixo e comprido que os outros
+        "hand": Vector2(126.0, -83.0),               # boca (de onde sai o sopro)
+        "anims": {
+            "walk": ["walk_0", "walk_1", "walk_2", "walk_3", "walk_4", "walk_5"],
+            "attack": ["atk_0", "atk_1", "atk_2"],      # golpe corpo a corpo: ergue a pata e arranha com fogo
+            "breath_wind": ["breath_0", "breath_1"],    # Sopro flamejante: ruge e abre a boca (aviso)
+            "breath_hit": ["breath_2", "breath_3", "breath_4"],   # sopra (o fogo é um efeito à parte, BossFx.breath)
+            "roar_wind": ["roar_0", "roar_1", "roar_2"],  # Chuva de meteoros: empina e ruge para o céu (aviso)
+            "roar_hit": ["roar_3", "roar_4"],           # anéis de fogo nos pés enquanto os meteoros caem
+            "die": ["death_0", "death_1", "death_2", "death_3", "death_4", "death_5"],
+        }},
 }
 ## habilidade -> [animação do aviso, animação do golpe]
 const ABILITY_ANIMS := {
     "boss_baal": {"area_slam": ["slam_wind", "slam_hit"], "charge": ["charge_wind", "dash"]},
     "boss_mordath": {"summon_demons": ["summon_wind", "summon_hit"], "hellfire_projectiles": ["proj_wind", "proj_hit"]},
+    "boss_ignarr": {"meteor_rain": ["roar_wind", "roar_hit"], "flame_breath": ["breath_wind", "breath_hit"]},
 }
 const FPS := {"walk": 8.0, "attack": 10.0, "slam_wind": 3.0, "slam_hit": 5.0, "charge_wind": 3.0, "dash": 14.0, "die": 6.0,
-    "proj_wind": 3.0, "proj_hit": 5.0, "summon_wind": 3.0, "summon_hit": 2.0}
+    "proj_wind": 3.0, "proj_hit": 5.0, "summon_wind": 3.0, "summon_hit": 2.0,
+    "breath_wind": 2.4, "breath_hit": 6.0, "roar_wind": 2.2, "roar_hit": 3.0}
 const LOOP := {"walk": true, "dash": true}
 const BASE_HEIGHT := 150.0         # altura do chefe andando na tela, na escala normal (EnemiesDB.SPRITE_SCALE)
 const DEATH_HOLD := 0.6            # segundos caído no chão antes de sumir
@@ -71,7 +85,8 @@ static func ability_anim(sprite: String, ability: String, i: int) -> String:
     return str(m[ability][i]) if m.has(ability) else ""
 
 static func scale_for(sprite: String, sprite_scale: float) -> float:
-    return BASE_HEIGHT * sprite_scale / EnemiesDB.SPRITE_SCALE / float(SHEETS[sprite]["walk_h"])
+    var m: Dictionary = SHEETS[sprite]
+    return float(m.get("height", BASE_HEIGHT)) * sprite_scale / EnemiesDB.SPRITE_SCALE / float(m["walk_h"])
 
 ## Posição da mão (relativa ao nó, já na escala e no lado para onde o chefe olha); Vector2.ZERO se não houver.
 static func hand_offset(sprite: String, sprite_scale: float, flip: bool) -> Vector2:

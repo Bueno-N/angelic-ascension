@@ -255,6 +255,10 @@ func _start_cast(id: String, to: Vector2) -> void:
     _cast_t = float(EnemiesDB.ABILITIES[id]["telegraph"])
     _cast_dir = to.normalized()
     _cast_pts = _plan_targets(id)
+    var fx_dir := _fx_dir()
+    if (id == "meteor_rain" or id == "inferno_storm") and fx_dir != "" and BossFx.has_meteor(fx_dir):
+        for pt in _cast_pts:   # meteoros desenhados: caem durante o aviso e batem no chão quando o dano entra
+            BossFx.meteor(get_parent(), pt, _cast_t, fx_dir)
     abilities.start(id, EnemiesDB.ABILITIES)
     if is_boss or is_mini:
         AudioHub.play("warn", 1.0, 0.0)   # alerta sonoro junto com o aviso visual
@@ -322,16 +326,22 @@ func _execute_ability() -> void:
             _summon_boss()
         "meteor_rain", "inferno_storm":
             var hit_by_meteor := false
+            var drawn: bool = _fx_dir() != "" and BossFx.has_meteor(_fx_dir())
             for pt in _cast_pts:
-                SpriteFx.spawn(get_parent(), "fx_fireball", pt, 3.0, Color(1.0, 0.5, 0.15))
-                SpriteFx.spawn(get_parent(), "fx_burst", pt, float(cfg["radius"]) * 2.0 / 64.0, Color(1.0, 0.45, 0.1))
+                if not drawn:
+                    SpriteFx.spawn(get_parent(), "fx_fireball", pt, 3.0, Color(1.0, 0.5, 0.15))
+                    SpriteFx.spawn(get_parent(), "fx_burst", pt, float(cfg["radius"]) * 2.0 / 64.0, Color(1.0, 0.45, 0.1))
                 if not hit_by_meteor and player.global_position.distance_to(pt) <= float(cfg["radius"]):
                     hit_by_meteor = true
                     player.take_damage(dmg * float(cfg["dmg_mult"]))
         "flame_breath":
             var rng_f: float = float(cfg["range"])
-            for f in [0.35, 0.65, 1.0]:
-                _burst_at(global_position + _cast_dir * rng_f * f, rng_f * f * 0.5, Color(1.0, 0.5, 0.1))
+            if _fx_dir() != "" and BossFx.has_breath(_fx_dir()):
+                var mouth: Vector2 = global_position + BossArt.hand_offset(_sprite_name, _sprite_scale, _spr.flip_h)
+                BossFx.breath(get_parent(), mouth, _cast_dir, rng_f, _fx_dir())   # sopro desenhado saindo da boca
+            else:
+                for f in [0.35, 0.65, 1.0]:
+                    _burst_at(global_position + _cast_dir * rng_f * f, rng_f * f * 0.5, Color(1.0, 0.5, 0.1))
             var to_p: Vector2 = player.global_position - global_position
             var inside: bool = to_p.length() <= rng_f + 20.0 \
                 and absf(angle_difference(_cast_dir.angle(), to_p.angle())) <= deg_to_rad(float(cfg["half_angle_deg"]))
@@ -408,6 +418,10 @@ func _ranged_basic() -> EnemyProjectile:
     AudioHub.play(AudioLogic.ability_sfx("hellfire_projectiles"), 0.6, 0.05)
     _play_attack()
     return p
+
+## Pasta de efeitos do chefe com arte nova ("" se não tiver).
+func _fx_dir() -> String:
+    return str(BossArt.SHEETS[_sprite_name]["dir"]) if BossArt.has(_sprite_name) else ""
 
 func _fan(cfg: Dictionary) -> void:
     var n: int = int(cfg["count"])
