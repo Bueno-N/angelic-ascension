@@ -276,7 +276,6 @@ func _start_cast(id: String, to: Vector2) -> void:
 ## Alvos escolhidos NO INÍCIO do aviso (o jogador vê onde vai cair e pode sair do lugar).
 func _plan_targets(id: String) -> Array:
     var cfg: Dictionary = EnemiesDB.ABILITIES[id]
-    var area := get_viewport().get_visible_rect().size
     var pts: Array = []
     if id == "meteor_rain" or id == "inferno_storm":
         var rng := RandomNumberGenerator.new()
@@ -285,11 +284,11 @@ func _plan_targets(id: String) -> Array:
             var p: Vector2 = player.global_position   # o primeiro cai exatamente onde o anjo está
             if i > 0:
                 p += Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(40.0, float(cfg["scatter"]))
-            pts.append(p.clamp(Vector2(20, 20), area - Vector2(20, 20)))
+            pts.append(Arena.clamp_floor(p, 10.0))
     elif id == "shadow_step":
         var ang: float = randf() * TAU
         var p2: Vector2 = player.global_position + Vector2.from_angle(ang) * float(cfg["land_offset"])
-        pts.append(p2.clamp(Vector2(20, 20), area - Vector2(20, 20)))
+        pts.append(Arena.clamp_floor(p2, 30.0))
     return pts
 
 func _execute_ability() -> void:
@@ -399,8 +398,7 @@ func _execute_ability() -> void:
 func _process_dash(delta: float) -> void:
     var cfg: Dictionary = EnemiesDB.ABILITIES["charge"]
     _dash_t -= delta
-    var area := get_viewport().get_visible_rect().size
-    position = (position + _cast_dir * float(cfg["speed"]) * delta).clamp(Vector2(-20, -20), area + Vector2(20, 20))
+    position = Arena.clamp_world(position + _cast_dir * float(cfg["speed"]) * delta)
     if not _dash_hit and player.global_position.distance_to(global_position) <= radius + float(cfg["width"]):
         _dash_hit = true
         player.take_damage(dmg * float(cfg["dmg_mult"]))

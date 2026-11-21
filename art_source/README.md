@@ -21,3 +21,10 @@ Esta pasta tem `.gdignore`: o Godot NÃO importa nem exporta nada daqui (não pe
 | `world_props_sheet.png` | Objetos do **mundo aberto** (portal, arcos, muralhas, estandartes, ilhas flutuantes, chão de lava) | **Guardada para depois.** Atenção: o fundo xadrez está DESENHADO na imagem (não é transparência de verdade); antes de usar, precisa remover o xadrez ou pedir a folha com fundo transparente |
 
 O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuário, em resolução original (1672x941).
+
+## Cenário em tiles (mundo maior que a tela)
+
+- `tile_floor.webp` -> `assets/env/floor.png` (640 px, emendas misturadas para repetir sem costura).
+- `tile_lava.webp` -> `assets/env/lava.png` (só a lava, repetida) e `assets/env/shore.png` (faixa da margem lava -> rochas, lava à esquerda; a lava dos canais foi apagada na metade de dentro).
+- Gerados por um script de recorte (`seam`: mistura com a imagem deslocada em meio tile). Tamanho do mundo em `Arena.WORLD`; desenho em `Backdrop`.
+- `arena_bg.png` (fundo antigo de tela única) ficou sem uso.

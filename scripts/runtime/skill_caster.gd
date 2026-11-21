@@ -217,9 +217,8 @@ func _rain(id: String, atk: float, glow: float, e: Dictionary) -> void:
     var r: float = float(e["radius"])
     var spread: float = float(e["spread_time"])
     var list := _enemies()
-    var area := get_viewport().get_visible_rect().size
     for i in range(n):
-        var pos := Vector2(randf_range(60.0, area.x - 60.0), randf_range(60.0, area.y - 60.0))
+        var pos := Arena.clamp_floor(player.global_position + Vector2(randf_range(-500.0, 500.0), randf_range(-280.0, 280.0)), 20.0)
         if not list.is_empty():
             pos = list[randi() % list.size()].global_position
         get_tree().create_timer(spread * float(i) / float(n)).timeout.connect(_rain_hit.bind(pos, r, id, atk, glow))

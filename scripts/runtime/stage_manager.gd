@@ -141,15 +141,7 @@ func debug_spawn_type(type_id: String, pos: Vector2, tanky: bool) -> void:
 
 func _spawn(boss: bool, forced: Dictionary = {}, mini: Dictionary = {}) -> Enemy:
     var e := Enemy.new()
-    var area := get_viewport().get_visible_rect().size
-    var side := rng.randi_range(0, 3)
-    var pos := Vector2.ZERO
-    match side:
-        0: pos = Vector2(rng.randf_range(0, area.x), -30)
-        1: pos = Vector2(rng.randf_range(0, area.x), area.y + 30)
-        2: pos = Vector2(-30, rng.randf_range(0, area.y))
-        _: pos = Vector2(area.x + 30, rng.randf_range(0, area.y))
-    e.position = pos
+    e.position = Arena.lava_spawn(player.global_position, rng)   # sai da lava mais perto do anjo
     container.add_child(e)
     e.setup({} if boss else (forced if not forced.is_empty() else EnemiesDB.pick_type(stage, rng)), stage, boss, player, false, mini)
     alive += 1
@@ -173,9 +165,8 @@ func start_weekly() -> void:
     _w_dealt = 0.0
     _w_max_hp = WeeklyBoss.lucifer_hp()
     _w_clock = -1
-    var area := get_viewport().get_visible_rect().size
     var luc := Enemy.new()
-    luc.position = Vector2(area.x * 0.5, 120.0)
+    luc.position = Arena.clamp_floor(player.global_position + Vector2(0.0, -330.0), 60.0)
     container.add_child(luc)
     luc.setup_lucifer(player)
     Events.weekly_started.emit()

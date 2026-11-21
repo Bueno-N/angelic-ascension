@@ -4,6 +4,7 @@ extends Node2D
 var backdrop: Backdrop
 var player: Player
 var enemies: Node2D
+var camera: Camera2D
 var fx_layer: Node2D
 var stage_mgr: StageManager
 var caster: SkillCaster
@@ -49,9 +50,18 @@ func _ready() -> void:
     enemies = Node2D.new()
     add_child(enemies)
     player = Player.new()
-    player.position = get_viewport_rect().size / 2.0
+    player.position = Arena.center()
     player.z_index = Enemy.BOSS_Z     # anjo e efeitos no mesmo nível do chefe (que fica acima dos mobs);
     add_child(player)                 # a ordem na árvore mantém: chefe < anjo < efeitos
+    camera = Camera2D.new()            # câmera segue o anjo pelo mundo (Arena.WORLD), sem mostrar além da lava
+    camera.limit_left = 0
+    camera.limit_top = 0
+    camera.limit_right = int(Arena.WORLD.x)
+    camera.limit_bottom = int(Arena.WORLD.y)
+    camera.position_smoothing_enabled = true
+    camera.position_smoothing_speed = 7.0
+    player.add_child(camera)
+    camera.make_current()
     fx_layer = Node2D.new()
     fx_layer.z_index = Enemy.BOSS_Z
     add_child(fx_layer)
@@ -67,6 +77,7 @@ func _ready() -> void:
     skill_bar = SkillBar.new()
     skill_bar.caster = caster
     hud.add_control(skill_bar)
+    hud.add_control(BossPointer.new())   # seta para o chefe fora da tela
     stage_mgr = StageManager.new()
     add_child(stage_mgr)
     stage_mgr.setup(player, enemies)
