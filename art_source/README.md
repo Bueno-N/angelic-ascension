@@ -25,6 +25,8 @@ O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuári
 ## Cenário em tiles (mundo maior que a tela)
 
 - `tile_floor.webp` -> `assets/env/floor.png` (640 px, emendas misturadas para repetir sem costura).
-- `tile_lava.webp` -> `assets/env/lava.png` (só a lava, repetida) e `assets/env/shore.png` (faixa da margem lava -> rochas, lava à esquerda; a lava dos canais foi apagada na metade de dentro).
+- `tile_lava_pure.webp` -> `assets/env/lava.png` (lava pura, 320 px, emendas misturadas).
+- `tile_corner.webp` -> `assets/env/corner.png` (canto: pedra em cima/direita, lava embaixo/esquerda; bordas esmaecidas; girado para cada canto em `Backdrop`).
+- `tile_lava.webp` -> `assets/env/shore.png` (faixa da margem lava -> rochas, lava à esquerda; a lava dos canais foi apagada na metade de dentro).
 - Gerados por um script de recorte (`seam`: mistura com a imagem deslocada em meio tile). Tamanho do mundo em `Arena.WORLD`; desenho em `Backdrop`.
 - `arena_bg.png` (fundo antigo de tela única) ficou sem uso.

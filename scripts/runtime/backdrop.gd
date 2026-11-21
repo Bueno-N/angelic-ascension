@@ -15,6 +15,7 @@ const PALETTES := [
 const TINTS := [Color(1.0, 1.0, 1.0), Color(1.0, 0.82, 0.78), Color(0.78, 0.92, 1.0), Color(0.9, 0.88, 0.86)]
 const TINT_STRENGTH := 0.55
 const SHORE_OUT := 110.0             # quanto a faixa da margem avança para dentro da lava (a parede de rocha fica ~25 px fora do chão)
+const CORNER_AT := Vector2(87.5, 175.0)   # ponto da peça de canto que fica no canto do chão (pedra acima/direita, lava abaixo/esquerda)
 const SHORE_END := 45.0              # quanto cada faixa passa do canto do chão (as faixas se cruzam nos cantos)
 const LAVA_EXTRA := 600.0            # lava desenhada além do mundo (telas muito largas nunca veem o vazio)
 
@@ -29,6 +30,7 @@ var _pulse := 0.0
 var _floor_tex: Texture2D
 var _lava_tex: Texture2D
 var _shore_tex: Texture2D
+var _corner_tex: Texture2D
 
 func _ready() -> void:
     z_index = -100
@@ -37,6 +39,7 @@ func _ready() -> void:
     _floor_tex = EnvArt.texture("floor.png")
     _lava_tex = EnvArt.texture("lava.png")
     _shore_tex = EnvArt.texture("shore.png")
+    _corner_tex = EnvArt.texture("corner.png")
     _lava = Node2D.new()
     _lava.show_behind_parent = true
     _lava.draw.connect(_draw_lava)
@@ -153,4 +156,12 @@ func _draw_shore() -> void:
     # baixo
     _shore.draw_set_transform(Vector2(f.position.x - SHORE_END, f.end.y + SHORE_OUT), -PI / 2.0)
     _shore.draw_texture_rect(_shore_tex, Rect2(0.0, 0.0, w, f.size.x + SHORE_END * 2.0), true, tint)
+    # cantos: peça própria (lava em 2 lados) girada para cada canto, por cima do encontro das faixas
+    if _corner_tex != null:
+        var cs: Vector2 = _corner_tex.get_size()
+        var corners := [[Vector2(f.position.x, f.end.y), 0.0], [f.position, PI / 2.0],
+            [Vector2(f.end.x, f.position.y), PI], [f.end, -PI / 2.0]]
+        for cr in corners:
+            _shore.draw_set_transform(cr[0], cr[1])
+            _shore.draw_texture_rect(_corner_tex, Rect2(-CORNER_AT, cs), false, tint)
     _shore.draw_set_transform(Vector2.ZERO, 0.0)
