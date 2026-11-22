@@ -40,4 +40,5 @@ O fundo da arena (`assets/env/arena_bg.png`) veio da imagem enviada pelo usuári
 - `skills/army_of_archangels.webp` (16, 125 px) -> `assets/skills/army_of_archangels/angel_00..15` (00-03 surgir, 04-07 parado, 08-11 golpe, 12-15 sumir; `ArchangelAlly`).
 - `skills/fury_burst.png` (7) + `fury_aura.png` (6) -> `assets/skills/celestial_fury/burst_0..6`, `aura_0..5`.
 - `skills/apocalypse_seal.png` (7), `apocalypse_pillar.png` (5), `apocalypse_blast.png` (6) -> `assets/skills/holy_apocalypse/seal_*`, `pillar_*`, `blast_*`.
+- `skills/hell_burst.webp` (9, 222 px) -> `assets/skills/death_of_hell/burst_0..8` (explosão de ativação da MORTE DO INFERNO).
 - Código: `scripts/runtime/skill_fx.gd`.

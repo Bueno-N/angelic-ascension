@@ -226,8 +226,11 @@ func execute(id: String) -> void:
                     shown += 1
         "death_of_hell":
             _flash(Color(1.0, 0.9, 0.6))
-            _ring(player.global_position, 900.0, WHITE)
-            _ring(player.global_position, 450.0, GOLD)
+            if SkillFx.has_art(id):
+                SkillFx.hell_burst(player)   # anel de chamas e penas saindo do anjo até cobrir a tela
+            else:
+                _ring(player.global_position, 900.0, WHITE)
+                _ring(player.global_position, 450.0, GOLD)
             for en in _enemies():
                 deal_damage(en, id, atk, glow)
             _heal(id, glow)

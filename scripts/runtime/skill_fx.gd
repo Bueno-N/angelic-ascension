@@ -10,6 +10,8 @@ extends Sprite2D
 ##               (aura_0..5 em laço) enquanto o buff durar.
 ##   Apocalipse Sagrado: selo de runas se abre no chão (seal_0..6); ao terminar (`finished`) sai a explosão
 ##               dourada (blast_0..5) e um pilar de luz (pillar_0..4) em cada inimigo.
+##   A MORTE DO INFERNO: explosão de ativação (hell_0..8), anel de chamas e penas douradas saindo do anjo
+##               até cobrir a tela (a maior de todas).
 ##   Escudo Sagrado: ativação (shield_00..05, cresce até o raio da explosão), escudo em volta do anjo
 ##               (shield_06..11 em laço enquanto houver absorção) e quebra (shield_12..15).
 ## As texturas são carregadas uma vez (cache estático).
@@ -80,6 +82,8 @@ static func has_art(skill: String) -> bool:
             return tex(skill, "burst_0") != null and tex(skill, "aura_0") != null
         "holy_apocalypse":
             return tex(skill, "seal_0") != null and tex(skill, "blast_0") != null and tex(skill, "pillar_0") != null
+        "death_of_hell":
+            return tex(skill, "burst_0") != null
     return false
 
 func _make(skill: String) -> void:
@@ -180,6 +184,16 @@ static func fury(player: Node2D, buffs: BuffState, radius: float) -> void:
     a.z_index = -1
     a._set_frame(AURA_FRAMES[0])
     player.add_child(a)
+
+# ---------------------------------------------------------------- A MORTE DO INFERNO
+const HELL_FRAMES := ["burst_0", "burst_1", "burst_2", "burst_3", "burst_4", "burst_5", "burst_6", "burst_7", "burst_8"]
+const HELL_D := 187.0            # diâmetro do anel no quadro maior (burst_6)
+const HELL_SCREEN_D := 1050.0    # no auge cobre a tela inteira (1280x720)
+
+## Explosão de ativação presa ao anjo (mistura normal: mantém o dourado/laranja da arte; com soma de luz estourava em branco).
+static func hell_burst(player: Node2D) -> SkillFx:
+    var b := play_once(player, "death_of_hell", HELL_FRAMES, 14.0, Vector2(0.0, -10.0), HELL_SCREEN_D / HELL_D, 2)
+    return b
 
 # ---------------------------------------------------------------- Apocalipse Sagrado
 const SEAL_FRAMES := ["seal_0", "seal_1", "seal_2", "seal_3", "seal_4", "seal_5", "seal_6"]

@@ -344,5 +344,19 @@ func test_fury_and_apocalypse_art() -> void:
     check(done.size() == 1, "selo terminou: hora da explosão e do dano")
     pl.free()
 
+func test_death_of_hell_burst_art() -> void:
+    check(SkillFx.has_art("death_of_hell"), "arte da explosão da Morte do Inferno")
+    for n in SkillFx.HELL_FRAMES:
+        check(SkillFx.tex("death_of_hell", n) != null, "morte do inferno: %s" % n)
+    var pl := Node2D.new()
+    var b := SkillFx.hell_burst(pl)
+    check(b.get_parent() == pl, "explosão presa ao anjo")
+    check(b.scale.x * SkillFx.HELL_D >= 1000.0, "no auge cobre a tela")
+    var done: Array = []
+    b.finished.connect(func(): done.append(true))
+    b._process(2.0)
+    check(done.size() == 1 and b.is_queued_for_deletion(), "explosão termina e some")
+    pl.free()
+
 func test_art_license_notice_exists() -> void:
     check(FileAccess.file_exists("res://assets/LICENSE.txt"), "aviso de licença da arte")
